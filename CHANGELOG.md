@@ -68,6 +68,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] References to previous project removed ([#1][]).
 
 
+### General: Config
+- [Added] `config.py` added with basic `ConfigParser` file loading, including
+      without a section header; and list parsing ([#1][]).
+
+
 ### General: Dirs
 - [Added] `dirs.py` added with basic dir resolution ([#1][]).
 
