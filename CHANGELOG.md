@@ -44,6 +44,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: CI Support
 - [Added] `dir_init_checker.py` added to new `ci_support` dir to run code for
       checking `__init__.py` files are up to date ([#5][]).
+- [Fixed] References to previous project removed ([#1][]).
 
 
 ### Project & Toolchain: CodeCov
@@ -64,6 +65,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: Pylint
 - [Added] `.pylintrc` added to configure pylint, with source code paths added
       ([#5][]).
+- [Fixed] References to previous project removed ([#1][]).
 
 
 ### General: Dirs

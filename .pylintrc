@@ -5,10 +5,10 @@ init-hook='from pylint.config import find_pylintrc;
         import os, sys;
         sys.path.append(os.path.dirname(find_pylintrc()));
         sys.path.append(os.path.join(
-                        os.path.dirname(find_pylintrc()), 'grand_trade_auto'));
+                        os.path.dirname(find_pylintrc()), 'asana_extensions'));
         sys.path.append(os.path.join(
                         os.path.join(os.path.dirname(find_pylintrc()),
-                                'grand_trade_auto'), 'general'));'
+                                'asana_extensions'), 'general'));'
 
 max-args=10
 
