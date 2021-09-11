@@ -85,6 +85,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: README
 - [Changed] Updated with project intro (mostly placeholder) ([#5][]).
 - [Added] Link to `setup.md`, `usage.md`, `CONTRIBUTING.md` added ([#5][]).
+- [Added] Code cov badge added ([#1][]).
 
 
 ### Docs: Setup
