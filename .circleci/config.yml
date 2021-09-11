@@ -1,0 +1,212 @@
+version: 2.1
+
+
+workflows:
+  lint-and-test:
+    jobs:
+      - pylint-app:
+          context:
+            - docker-hub-creds
+      - pylint-tests:
+          context:
+            - docker-hub-creds
+      - pylint-ci_support:
+          context:
+            - docker-hub-creds
+      - init-py-checker:
+          context:
+            - docker-hub-creds
+      - unit-tests:
+          context:
+            - docker-hub-creds
+  changelog-updated:
+    jobs:
+      - diff-changelog-last-commit:
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              only:
+                - stable
+                - develop
+      - diff-changelog-vs-develop:
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              ignore: develop
+      - find-changelog-pr-ref:
+          context:
+            - docker-hub-creds
+
+
+
+aliases:
+  - &default_python_image
+    docker:
+      - image: circleci/python:3.8
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          # By default there is no PYTHONPATH defined at all, so nothing to lose
+          PYTHONPATH: /home/circleci/project
+  
+  - &default_git_image
+    docker:
+      - image: docker:stable-git
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+
+  - &default_restore_cache
+    restore_cache:
+      key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
+  - &default_install_deps
+    run:
+      name: Install Python deps in a venv
+      command: |
+        python -m venv venv
+        . venv/bin/activate
+        pip install -r requirements.txt
+
+  - &default_save_cache
+    save_cache:
+      key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      paths:
+        - "venv"
+
+
+
+jobs:
+  pylint-app:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run pylint
+          command: |
+            . venv/bin/activate
+            python -m pylint asana_extensions
+  pylint-tests:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run pylint
+          command: |
+            . venv/bin/activate
+            python -m pylint tests
+  pylint-ci_support:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run pylint
+          command: |
+            . venv/bin/activate
+            python -m pylint ci_support
+  init-py-checker:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run init py dir checker on all dirs
+          command: |
+            . venv/bin/activate
+            python ci_support/dir_init_checker.py asana_extensions
+            python ci_support/dir_init_checker.py ci_support
+            python ci_support/dir_init_checker.py tests
+  unit-tests:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run pytest unit tests
+          command: |
+            . venv/bin/activate
+            pytest --cov-report=xml --cov=asana_extensions
+      - run:
+          name: Upload coverage results
+          command: |
+            . venv/bin/activate
+            bash <(curl -s https://codecov.io/bash)
+  diff-changelog-last-commit:
+    <<: *default_git_image
+    steps:
+      - checkout
+      - run:
+          name: Find additions to changelog since parent commit(s)
+          # Regex matches non-zero additions to CHANGELOG.md:
+          #   start of line
+          #   a non-zero digit (for number of additions)
+          #   followed by any other subsequent digits (part of same number)
+          #   a whitespace gap before the next number / contiguous digits
+          #   the next single-digit or multi-digit number
+          #   a whitespace gap before the next text
+          #   the exact text "CHANGELOG.md"
+          #   end of the line
+          # (See git diff-tree docs: https://git-scm.com/docs/git-diff-tree)
+          command: |
+            if [ $(git diff-tree --no-commit-id --numstat -b -m -c HEAD |
+                grep -c -E "^[1-9][[:digit:]]*\s+[[:digit:]]+\s+\CHANGELOG\.md$"
+                ) = 0 ]; then
+              exit 1
+            fi
+  diff-changelog-vs-develop:
+    <<: *default_git_image
+    steps:
+      - checkout
+      - run:
+          name: Find additions to changelog compared to develop
+          # Regex matches non-zero additions to CHANGELOG.md:
+          #   start of line
+          #   a non-zero digit (for number of additions)
+          #   followed by any other subsequent digits (part of same number)
+          #   a whitespace gap before the next number / contiguous digits
+          #   the next single-digit or multi-digit number
+          #   a whitespace gap before the next text
+          #   the exact text "CHANGELOG.md"
+          #   end of the line
+          # (See git diff-tree docs: https://git-scm.com/docs/git-diff-tree)
+          command: |
+            if [ $(git diff-tree --no-commit-id --numstat -b develop HEAD |
+                grep -c -E "^[1-9][[:digit:]]*\s+[[:digit:]]+\s+\CHANGELOG\.md$"
+                ) = 0 ]; then
+              exit 1
+            fi
+  find-changelog-pr-ref:
+    <<: *default_git_image
+    steps:
+      - checkout
+      - run:
+          name: Check if this is a PR build and if PR number is in changelog
+          # Regex matches pull request number reference in CHANGELOG.md:
+          #   the exact text "#"
+          #   the pull request number (extracted from end of URL)
+          #   any one of the following group (to avoid partial matches):
+          #     a non-digit character
+          #     the end of the line
+          command: |
+            if [[ ! -z $CIRCLE_PULL_REQUEST ]] ; then
+              if [ $(grep -c -E "#${CIRCLE_PULL_REQUEST##*/}([^0-9]|$)" CHANGELOG.md
+                  ) = 0 ]; then
+                exit 1
+              fi
+            fi
