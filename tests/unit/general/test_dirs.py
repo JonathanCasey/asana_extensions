@@ -11,7 +11,7 @@ Module Attributes:
   APP_NAME (str): The name of the app as it appears in its folder name in the
     repo root.
 
-(C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.
+(C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 import os.path
 

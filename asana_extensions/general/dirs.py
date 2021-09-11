@@ -7,7 +7,7 @@ project installation structure changes.
 Module Attributes:
   N/A
 
-(C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.
+(C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 import os.path
 
