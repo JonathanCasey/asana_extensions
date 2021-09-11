@@ -6,7 +6,7 @@ from the listing in `__init__.py` files.
 This uses python import, so this must be called from a proper python env where
 the directories-under-test are accessible.  In other words, it is best to call
 from project root as
-`python3 .circleci/dir_init_checker.py grand_trade_auto tests`.
+`python3 .circleci/dir_init_checker.py asana_extensions tests`.
 
 Entire file is excluded from unit testing / code cov; but is still linted.
 
