@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/JonathanCasey/asana_extensions.svg?style=shield)](https://circleci.com/gh/JonathanCasey/asana_extensions)
+
+
 # Asana Extensions
 
 Automation extensions for Asana that I use.  Configurable automations include:
