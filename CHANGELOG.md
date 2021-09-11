@@ -66,6 +66,10 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       ([#5][]).
 
 
+### General: Dirs
+- [Added] `dirs.py` added with basic dir resolution ([#1][]).
+
+
 ### Docs: CHANGELOG
 - [Added] This `CHANGELOG.md` file created and updated with all project work
       to-date (+1 self reference) ([#5][]).
@@ -96,6 +100,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Project: v1.0.0](https://github.com/JonathanCasey/asana_extensions/projects/1)
 
 #### Issues
+- [#1][]
 - [#5][]
 
 #### PRs
@@ -108,5 +113,6 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 Reference-style links here (see below, only in source) in develop-merge order.
 
 [#5]: https://github.com/JonathanCasey/asana_extensions/issues/5 'Issue #5'
+[#1]: https://github.com/JonathanCasey/asana_extensions/issues/1 'Issue #1'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
