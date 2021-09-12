@@ -4,7 +4,7 @@ Move Tasks Rule functionality to implement the generic interface components
 defined by the metaclass.
 
 Module Attributes:
-  N/A
+  logger (Logger): Logger for this module.
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
@@ -135,3 +135,18 @@ class MoveTasksRule(rule_meta.Rule):
             logger.error('Failed to create Move Tasks Rule from config.  Check'
                     f' Exception: {str(ex)}')
             return None
+
+
+
+    @classmethod
+    def get_rule_type_names(cls):
+        """
+        Get the list of names that can be used as the 'rule type' in the rules
+        conf to identify this rule.
+
+        Returns:
+          ([str]): A list of names that are valid to use as the type for this
+            rule.
+        """
+        return ['move tasks', 'auto-promote tasks', 'auto-promote',
+                'auto promote tasks', 'auto promote', 'promote tasks']

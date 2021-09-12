@@ -11,7 +11,7 @@ As of right now, this is hard-coded to access configuration files at a specific
 name and path.
 
 Module Attributes:
-  N/A
+  logger (Logger): Logger for this module.
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
@@ -88,6 +88,20 @@ class Rule(ABC):
         Returns:
           rule (Rule<>): The Rule<> object created and loaded from config, where
             Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+        """
+
+
+
+    @classmethod
+    @abstractmethod
+    def get_rule_type_names(cls):
+        """
+        Get the list of names that can be used as the 'rule type' in the rules
+        conf to identify this rule.
+
+        Returns:
+          ([str]): A list of names that are valid to use as the type for this
+            rule.
         """
 
 

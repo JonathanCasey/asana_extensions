@@ -4,7 +4,7 @@ The rules API module.  This is intended to be the item accessed outside of
 the rules submodule/folder.
 
 Module Attributes:
-
+  logger (Logger): Logger for this module.
   _RULES ((Class<Rule<>>)): All rule classes supported.
 
 (C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.

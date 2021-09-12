@@ -40,6 +40,13 @@ def test_init(caplog):
             """
             return
 
+        @classmethod
+        def get_rule_type_names(cls):
+            """
+            Not needed / will not be used.
+            """
+            return []
+
     caplog.set_level(logging.WARNING)
     caplog.clear()
 
