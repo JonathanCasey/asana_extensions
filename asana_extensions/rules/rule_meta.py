@@ -22,8 +22,6 @@ import string
 
 from dateutil.relativedelta import relativedelta
 
-
-
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 
 
@@ -59,6 +57,8 @@ class Rule(ABC):
           rule_type (str): The type of rule, such as "move tasks".
           test_report_only (bool): Whether or not this is for reporting for
             testing only or whether rule is live.
+          kwargs ({}): Should be empty since this is the base class.  Will log
+            warning if not empty.
         """
         self._rule_id = rule_id
         self._rule_type = rule_type
@@ -89,6 +89,7 @@ class Rule(ABC):
           rule (Rule<>): The Rule<> object created and loaded from config, where
             Rule<> is a subclass of Rule (e.g. MoveTasksRule).
         """
+
 
 
     @classmethod
@@ -136,6 +137,7 @@ class Rule(ABC):
                 {'years?': False, 'y': True})
 
         return relativedelta(**kwargs)
+
 
 
     @classmethod

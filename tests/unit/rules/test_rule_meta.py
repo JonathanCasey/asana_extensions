@@ -12,11 +12,52 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+#pylint: disable=protected-access  # Allow for purpose of testing those elements
+
+import logging
+
 from dateutil.relativedelta import relativedelta
 import pytest
 
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import rule_meta
+
+
+
+def test_init(caplog):
+    """
+    Tests `__init__()` method in `Rule`.
+    """
+
+    class BlankRule(rule_meta.Rule):
+        """
+        Simple blank rule to subclass Rule.
+        """
+        @classmethod
+        def load_specific_from_config(cls, rules_cp, rule_id, **kwargs):
+            """
+            Not needed / will not be used.
+            """
+            return
+
+    caplog.set_level(logging.WARNING)
+    caplog.clear()
+
+    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    assert blank_rule._rule_id == 'blank-rule-id'
+    assert blank_rule._rule_type == 'blank-rule-type'
+    assert blank_rule._test_report_only is True
+    assert caplog.record_tuples == []
+
+    blank_extra_rule = BlankRule('blank-rule-id', 'blank-rule-type', True,
+            extras='extra-kwarg')
+    assert blank_extra_rule._rule_id == 'blank-rule-id'
+    assert blank_extra_rule._rule_type == 'blank-rule-type'
+    assert blank_extra_rule._test_report_only is True
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.rule_meta', logging.WARNING,
+                'Discarded excess kwargs provided to BlankRule: extras')
+    ]
 
 
 
