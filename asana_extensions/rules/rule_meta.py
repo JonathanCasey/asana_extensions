@@ -133,16 +133,38 @@ class Rule(ABC):
     @classmethod
     def parse_timeframe(cls, tf_str, timeframes):
         """
+        Parses a specific timeframe indicator from a string.  A collection of
+        possible ways that timeframe can be specified can be given in regex
+        format (must be string Template compatible).  Each can specify whether
+        case sensitive or not.
+
+        Exactly 1 match is expected.  If no matches, will return nothing; but
+        more than 1 is considered an error condition.
+
+        Args:
+          tf_str (str): The string to search for timeframe indicators.
+          timeframes ({str:bool}): Timeframe indicators to search in string,
+            where the regex strings to search are the keys and the bool value
+            is whether or not it is case sensitive (True == case sensitive).
+
+        Returns:
+          (int): The number specified with the timeframe if exactly 1 match
+            found; 0 if no matches.
+
+        Raises:
+          (TimeframeArgDupeError): More than 1 match found.
         """
         # Pattern is generally:
-        #   Start of line, whitespace, letters, or comma
-        #   Possible neg sign and definitely digits
+        #   Start of line; or whitespace, letter, or comma (look behind)
+        #   Possible plus/neg sign and definitely digits
         #   Possible 1 whitespace
         #   <letter or word> depending on time keyword, word could have s at end
-        #   Whitespace, hyphen, digit, comma, or end of line (without consuming)
+        #   Whitespace, neg/plus sign, digit, comma, or end of line
+        #         (without consuming)
         # Note double $$ used for end of line since written as Template
-        ptn_template = string.Template(r'(^|[\s]+|[a-z]+|[A-Z]+|,)'
-                + r'(?P<num>-?\d+)\s?' + '$timeframe' + r'(?=[\s]+|-|\d+|,|$$)')
+        ptn_template = string.Template(r'(^|(?<=\s|[a-z]|[A-Z]|,))'
+                + r'(?P<num>(\+|-)?\d+)\s?' + '$timeframe'
+                + r'(?=\s|-|\d|,|\+|$$)')
 
         ptns = []
         for timeframe, case_sensitive in timeframes.items():
@@ -155,14 +177,15 @@ class Rule(ABC):
 
         matches = []
         for ptn in ptns:
-            matches.extend(ptn.findall(tf_str))
+            matches.extend(ptn.finditer(tf_str))
 
         if len(matches) == 0:
             return 0
-        elif len(matches) > 1:
+
+        if len(matches) > 1:
             '/'.join(timeframes.keys())
             raise TimeframeArgDupeError('Could not parse time frame - Found'
                     + f' {len(matches)} entries for'
                     + f' {"/".join(timeframes.keys())} when only 0-1 allowed.')
-        else:
-            return matches[0].group('num')
+
+        return int(matches[0].group('num'))
