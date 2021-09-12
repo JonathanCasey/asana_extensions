@@ -94,21 +94,29 @@ class Rule(ABC):
     @classmethod
     def parse_timedelta_arg(cls, arg_str):
         """
+        Parses a timedelta argument as might be specified in a config file.
 
-        (m) minutes
-        (h) hours
-        (d) days
-        (w) weeks
-        (M) Months
-        (y) years
-
-        Months and years will be converted to days with respect to today.  If
-        used in combination with other items, such as days, those will be added
-        AFTER converting months/years to days.
-
+        Possible timeframes to specify (with case-sensitive abbreviations in
+        parentheses) are:
+          (m) minutes
+          (h) hours
+          (d) days
+          (w) weeks
+          (M) Months
+          (y) years
         Shortnames are case sensitive; full names are not.
 
+        Months and years will be converted per dateutils.relativedelta's
+        handling.  If ever changed, the intention will be that months and years
+        will be converted to days with respect to today.  If used in combination
+        with other items, such as days, those will be added AFTER converting
+        months/years to days.
 
+        Args:
+          arg_str (str): The string to parse
+
+        Returns:
+          (relativedelta): The relative datetime delta specified by the string.
 
         Raises:
           Will pass thru any exceptions raised from timeframe parser.

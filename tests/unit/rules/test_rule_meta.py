@@ -12,7 +12,7 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
-
+from dateutil.relativedelta import relativedelta
 import pytest
 
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
@@ -20,27 +20,24 @@ from asana_extensions.rules import rule_meta
 
 
 
-# @pytest.fixture(name='blank_rule')
-# def fixture_blank_rule():
-#     """
-#     Makes a blank rule subclass of the abstract meta class so functionality can
-#     be tested.
+def test_parse_timedelta_arg():
+    """
+    Tests the `parse_timedelta_arg()` method in `Rule`.
+    """
+    test_str = '1m2h3d4w5M6y'   # How long it takes me to finish a "quick" proj
+    assert rule_meta.Rule.parse_timedelta_arg(test_str) == relativedelta(
+            minutes=1, hours=2, days=3, weeks=4, months=5, years=6)
 
-#     Returns:
-#       (Rule<>): A subclass of the Rule metaclass with bare minimum defined.
-#     """
-#     class BlankRule(rule_meta.Rule):
-#         """
-#         Simple blank rule to subclass Rule.
-#         """
-#         @classmethod
-#         def load_specific_from_config(cls, rules_cp, rule_id, **kwargs):
-#             """
-#             Not needed / will not be used.
-#             """
-#             return
+    test_str = '1 minutes, 2 hour 3 days4weeks-5MonTHs +6Years'
+    assert rule_meta.Rule.parse_timedelta_arg(test_str) == relativedelta(
+            minutes=1, hours=2, days=3, weeks=4, months=-5, years=6)
 
-#     return BlankRule('blank-rule-id', 'blank-rule-type', True)
+    test_str = ''
+    assert rule_meta.Rule.parse_timedelta_arg(test_str) == relativedelta()
+
+    test_str = '1h 2hours'
+    with pytest.raises(TimeframeArgDupeError):
+        rule_meta.Rule.parse_timedelta_arg(test_str)
 
 
 
