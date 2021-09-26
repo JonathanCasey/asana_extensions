@@ -42,6 +42,10 @@ def test_load_specific_from_config(caplog):
     #         'rule_type': move_tasks_rule.MoveTasksRule.get_rule_type_names()[0],
     # }
 
+    with pytest.raises(AssertionError):
+        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-full', {'dummy key': 'dummy val'})
+
     caplog.set_level(logging.WARNING)
     caplog.clear()
 
