@@ -21,9 +21,31 @@ logger = logging.getLogger(__name__)
 
 class MoveTasksRule(rule_meta.Rule):
     """
+    Rules to move tasks to the specified destination based on the specified
+    conditions.
+
+    Class Attributes:
+      N/A
+
+    Instance Attributes:
+      _rules_params ({str:str/int/bool/etc}): The generic dictionary that
+        defines the parameters for this rule.
+
+      [inherited from Rule]:
+        _rule_id (str): The id used as the section name in the rules conf.
+        _rule_type (str): The type of rule, such as "move tasks".
+        _test_report_only (bool): Whether or not this is for reporting for
+          testing only or whether rule is live.
     """
     def __init__(self, rule_params, **kwargs):
         """
+        Create the Move Tasks Rule.
+
+        Args:
+          rules_params ({str:str/int/bool/etc}): The generic dictionary that
+            defines the parameters for this rule.
+
+          See parent(s) for required kwargs.
         """
         super().__init__(**kwargs)
 
@@ -77,6 +99,7 @@ class MoveTasksRule(rule_meta.Rule):
             config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
         """
         try:
+            super_kwargs = super().load_specific_from_config(rules_cp, rule_id)
             rule_params = {}
             rule_params['project_name'] = rules_cp.get(rule_id, 'project name',
                     fallback=None)
@@ -124,16 +147,17 @@ class MoveTasksRule(rule_meta.Rule):
             rule_params['dst_section_gid'] = rules_cp.getint(rule_id,
                     'dst section gid', fallback=None)
 
-        except KeyError as ex:
+        except KeyError as ex: # TODO: Update exception type
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
-                    f' keys.  Exception: {str(ex)}')
+                    + f' keys.  Exception: {str(ex)}')
+            raise
 
         try:
-            rule = cls(rule_params, **kwargs, rule_id=rule_id)
+            rule = cls(rule_params, **kwargs, **super_kwargs, rule_id=rule_id)
             return rule
         except AssertionError as ex:
             logger.error('Failed to create Move Tasks Rule from config.  Check'
-                    f' Exception: {str(ex)}')
+                    + f' Exception: {str(ex)}')
             return None
 
 

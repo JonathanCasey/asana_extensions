@@ -89,6 +89,18 @@ class Rule(ABC):
           rule (Rule<>): The Rule<> object created and loaded from config, where
             Rule<> is a subclass of Rule (e.g. MoveTasksRule).
         """
+        try:
+            rule_params = {}
+            rule_params['rule_type'] = rules_cp[rule_id]['rule type']
+            rule_params['test_report_only'] = rules_cp.getboolean(rule_id,
+                    'test report only', fallback=None)
+        except KeyError as ex: # TODO: Update exception type
+            logger.error('Failed to parse Rule from config.  Check keys.'
+                    + f'  Exception: {str(ex)}')
+            raise
+
+        return rule_params
+
 
 
 
