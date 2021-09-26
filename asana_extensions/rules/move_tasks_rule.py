@@ -46,13 +46,18 @@ class MoveTasksRule(rule_meta.Rule):
             defines the parameters for this rule.
 
           See parent(s) for required kwargs.
+
+        Raises:
+          (AssertionError): Invalid data.
         """
         super().__init__(**kwargs)
 
         is_project_given = rule_params['project_name'] is not None \
                 or rule_params['project_gid'] is not None
         assert rule_params['is_my_tasks_list'] is False \
-                and rule_params['user_task_list_gid'] is not None
+                and rule_params['user_task_list_gid'] is not None, "Cannot" \
+                    + " specify 'is my tasks list' and 'user task list gid'" \
+                    + " together."
         is_user_task_list_given = rule_params['is_my_tasks_list'] \
                 or rule_params['user_task_list_gid'] is not None
         assert is_project_given ^ is_user_task_list_given
@@ -81,7 +86,8 @@ class MoveTasksRule(rule_meta.Rule):
 
 
     @classmethod
-    def load_specific_from_config(cls, rules_cp, rule_id, **kwargs):
+    def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+            **kwargs):
         """
         Loads the rule-specific config items for this rule from the
         configparsers from files provided.  Then creates the rule from the data
@@ -91,16 +97,25 @@ class MoveTasksRule(rule_meta.Rule):
           rule_cp (configparser): The full configparser from the rules conf.
           rule_id (str): The ID name for this rule as it appears as the
             section header in the rules_cp.
+          rule_params ({str: str/int/bool/etc}): The rule parameters loaded from
+            config.  Updated by super classes with their results.  Final sub
+            class expected to be None.
 
-          Note: kwargs must contain generic Rule args minus args named here.
+          Note: kwargs contains other args to pass thru to constructor.
 
         Returns:
           rule (Rule<> or None): The Rule<> object created and loaded from
             config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+
+        Raises:
+          (AssertionError): Invalid data.
         """
+        assert rule_params is None
         try:
-            super_kwargs = super().load_specific_from_config(rules_cp, rule_id)
             rule_params = {}
+            super_params = {}
+            super().load_specific_from_config(rules_cp, rule_id, super_params,
+                    **kwargs)
             rule_params['project_name'] = rules_cp.get(rule_id, 'project name',
                     fallback=None)
             rule_params['project_gid'] = rules_cp.getint(rule_id, 'project gid',
@@ -153,11 +168,10 @@ class MoveTasksRule(rule_meta.Rule):
             raise
 
         try:
-            rule = cls(rule_params, **kwargs, **super_kwargs, rule_id=rule_id)
+            rule = cls(rule_params, **kwargs, **super_params, rule_id=rule_id)
             return rule
         except AssertionError as ex:
-            logger.error('Failed to create Move Tasks Rule from config.  Check'
-                    + f' Exception: {str(ex)}')
+            logger.error(f'Failed to create Move Tasks Rule from config: {ex}')
             return None
 
 

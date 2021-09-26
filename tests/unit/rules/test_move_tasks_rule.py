@@ -14,6 +14,7 @@ Module Attributes:
 """
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
+import logging
 import os.path
 
 import pytest
@@ -24,7 +25,7 @@ from asana_extensions.rules import move_tasks_rule
 
 
 
-def test_load_specific_from_config():
+def test_load_specific_from_config(caplog):
     """
     Tests the `load_specific_from_config()` method in `MoveTasksRule`.
 
@@ -41,10 +42,17 @@ def test_load_specific_from_config():
     #         'rule_type': move_tasks_rule.MoveTasksRule.get_rule_type_names()[0],
     # }
 
-    with pytest.raises(AssertionError):
-        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
-                'test-full')
+    caplog.set_level(logging.WARNING)
+    caplog.clear()
 
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-full')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config: Cannot specify"
+                + " 'is my tasks list' and 'user task list gid' together.")
+    ]
 
 
 

@@ -72,7 +72,8 @@ class Rule(ABC):
 
     @classmethod
     @abstractmethod
-    def load_specific_from_config(cls, rules_cp, rule_id, **kwargs):
+    def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+                **kwargs):
         """
         Loads the rule-specific config items for this rule from the
         configparsers from files provided.  Then creates the rule from the data
@@ -82,15 +83,21 @@ class Rule(ABC):
           rule_cp (configparser): The full configparser from the rules conf.
           rule_id (str): The ID name for this rule as it appears as the
             section header in the rules_cp.
+          rule_params ({str: str/int/bool/etc}): The rule parameters loaded from
+            config.  Updated by super classes with their results.  Final sub
+            class expected to be None.
 
-          Note: kwargs must contain generic Rule args minus args named here.
+          Note: kwargs contains other args to pass thru to constructor.
 
         Returns:
           rule (Rule<>): The Rule<> object created and loaded from config, where
             Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+
+        Raises:
+          (AssertionError): Invalid data.
         """
+        assert rule_params is not None
         try:
-            rule_params = {}
             rule_params['rule_type'] = rules_cp[rule_id]['rule type']
             rule_params['test_report_only'] = rules_cp.getboolean(rule_id,
                     'test report only', fallback=None)
@@ -98,9 +105,6 @@ class Rule(ABC):
             logger.error('Failed to parse Rule from config.  Check keys.'
                     + f'  Exception: {str(ex)}')
             raise
-
-        return rule_params
-
 
 
 
