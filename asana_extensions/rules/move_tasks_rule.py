@@ -11,6 +11,7 @@ Module Attributes:
 import logging
 
 from asana_extensions.general import config
+from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import rule_meta
 
 
@@ -164,6 +165,10 @@ class MoveTasksRule(rule_meta.Rule):
         except KeyError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' keys.  Exception: {str(ex)}')
+            raise
+        except TimeframeArgDupeError as ex:
+            logger.error('Failed to parse Move Tasks Rule from config.  Check'
+                    + f' time args.  Exception: {str(ex)}')
             raise
 
         try:

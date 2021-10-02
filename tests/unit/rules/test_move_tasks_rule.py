@@ -20,6 +20,7 @@ import os.path
 import pytest
 
 from asana_extensions.general import config
+from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import move_tasks_rule
 from asana_extensions.rules import rule_meta
 
@@ -108,6 +109,17 @@ def test_load_specific_from_config(monkeypatch, caplog):
     ]
 
     caplog.clear()
+    with pytest.raises(TimeframeArgDupeError) as ex:
+        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+                'test-move-tasks-time-parse-fail')
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to parse Move Tasks Rule from config.  Check time args."
+                + "  Exception: Could not parse time frame - Found 2 entries"
+                + " for minutes?/m when only 0-1 allowed."),
+    ]
+
+    caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
             'test-move-tasks-both-time-until-and-no-due')
     assert rule is None
@@ -161,7 +173,7 @@ def test_load_specific_from_config(monkeypatch, caplog):
 
     caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
-            'test-move-tasks-time-parse-fail')
+            'test-move-tasks-time-parse-fake-fail')
     assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
