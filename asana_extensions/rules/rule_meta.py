@@ -101,7 +101,7 @@ class Rule(ABC):
             rule_params['rule_type'] = rules_cp[rule_id]['rule type']
             rule_params['test_report_only'] = rules_cp.getboolean(rule_id,
                     'test report only', fallback=None)
-        except KeyError as ex: # TODO: Update exception type
+        except KeyError as ex:
             logger.error('Failed to parse Rule from config.  Check keys.'
                     + f'  Exception: {str(ex)}')
             raise
@@ -144,14 +144,19 @@ class Rule(ABC):
         months/years to days.
 
         Args:
-          arg_str (str): The string to parse
+          arg_str (str or None): The string to parse.  Can be None for caller's
+                convenience.
 
         Returns:
-          (relativedelta): The relative datetime delta specified by the string.
+          (relativedelta or None): The relative datetime delta specified by the
+                string.  If None was passed in, None is returned.
 
         Raises:
           Will pass thru any exceptions raised from timeframe parser.
         """
+        if arg_str is None:
+            return None
+
         kwargs = {}
         kwargs['minutes'] = cls.parse_timeframe(arg_str,
                 {'minutes?': False, 'm': True})

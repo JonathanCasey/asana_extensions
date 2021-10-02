@@ -18,6 +18,9 @@ from asana_extensions.rules import rule_meta
 logger = logging.getLogger(__name__)
 
 
+# TODO: Check names and gids match when both given, including UTL
+# TODO: If no include sections, default to include all except exclude
+
 
 class MoveTasksRule(rule_meta.Rule):
     """
@@ -55,33 +58,28 @@ class MoveTasksRule(rule_meta.Rule):
         is_project_given = rule_params['project_name'] is not None \
                 or rule_params['project_gid'] is not None
         assert rule_params['is_my_tasks_list'] is False \
-                and rule_params['user_task_list_gid'] is not None, "Cannot" \
+                or rule_params['user_task_list_gid'] is None, "Cannot" \
                     + " specify 'is my tasks list' and 'user task list gid'" \
                     + " together."
         is_user_task_list_given = rule_params['is_my_tasks_list'] \
                 or rule_params['user_task_list_gid'] is not None
-        assert is_project_given ^ is_user_task_list_given
+        assert is_project_given ^ is_user_task_list_given, "Must specify to" \
+                + " use a project or user task list, but not both."
         assert rule_params['workspace_name'] is not None \
-                or rule_params['workspace_gid'] is not None
+                or rule_params['workspace_gid'] is not None, "Must specify" \
+                    + " workspace."
 
         is_time_given = rule_params['min_time_until_due_str'] is not None \
                 or rule_params['max_time_until_due_str'] is not None
         is_time_parsed = rule_params['min_time_until_due'] is not None \
                 or rule_params['max_time_until_due'] is not None
-        assert is_time_given == is_time_parsed
-        assert is_time_given ^ rule_params['match_no_due_date']
+        assert is_time_given == is_time_parsed, "Failed to parse min/max" \
+                + " time until due -- check format."
+        assert is_time_given ^ rule_params['match_no_due_date'], "Must" \
+                + " specify either min/max time until due or match no due" \
+                + " date (but not both)."
 
         self._rule_params = rule_params
-
-
-
-
-        # TODO: Check names and gids match when both given, including UTL
-        # TODO: If no include sections, default to include all except exclude
-
-
-
-
 
 
 
@@ -110,7 +108,8 @@ class MoveTasksRule(rule_meta.Rule):
         Raises:
           (AssertionError): Invalid data.
         """
-        assert rule_params is None
+        assert rule_params is None, "Should not pass anything in for" \
+                + " `rule_params`"
         try:
             rule_params = {}
             super_params = {}
@@ -162,7 +161,7 @@ class MoveTasksRule(rule_meta.Rule):
             rule_params['dst_section_gid'] = rules_cp.getint(rule_id,
                     'dst section gid', fallback=None)
 
-        except KeyError as ex: # TODO: Update exception type
+        except KeyError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' keys.  Exception: {str(ex)}')
             raise

@@ -21,11 +21,11 @@ import pytest
 
 from asana_extensions.general import config
 from asana_extensions.rules import move_tasks_rule
+from asana_extensions.rules import rule_meta
 
 
 
-
-def test_load_specific_from_config(caplog):
+def test_load_specific_from_config(monkeypatch, caplog):
     """
     Tests the `load_specific_from_config()` method in `MoveTasksRule`.
 
@@ -38,28 +38,136 @@ def test_load_specific_from_config(caplog):
     conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
     rules_cp = config.read_conf_file('mock_rules.conf', conf_dir)
 
-    # rule_kwargs = {
-    #         'rule_type': move_tasks_rule.MoveTasksRule.get_rule_type_names()[0],
-    # }
+    caplog.set_level(logging.WARNING)
 
-    with pytest.raises(AssertionError):
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-success')
+    assert rule is not None
+    assert caplog.record_tuples == []
+
+    with pytest.raises(AssertionError) as ex:
         move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
             'test-full', {'dummy key': 'dummy val'})
+    assert "Should not pass anything in for `rule_params`" in str(ex.value)
 
-    caplog.set_level(logging.WARNING)
     caplog.clear()
+    with pytest.raises(KeyError):
+        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-essential-missing-key')
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.rule_meta', logging.ERROR,
+                "Failed to parse Rule from config.  Check keys.  Exception:"
+                + " 'rule type'"),
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to parse Move Tasks Rule from config.  Check keys."
+                + "  Exception: 'rule type'"),
+    ]
 
+    caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
-            'test-full')
+            'test-move-tasks-full-is-utl-and-gid')
     assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-                "Failed to create Move Tasks Rule from config: Cannot specify"
-                + " 'is my tasks list' and 'user task list gid' together.")
+                "Failed to create Move Tasks Rule from config:" \
+                    " Cannot specify 'is my tasks list' and" \
+                    + " 'user task list gid' together.")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-no-proj-no-utl')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Must specify to use a project or user task list, but not"
+                + " both.")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-both-proj-and-utl')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Must specify to use a project or user task list, but not"
+                + " both.")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-no-workspace')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Must specify workspace.")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-both-time-until-and-no-due')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Must specify either min/max time until due or match no" \
+                + " due date (but not both).")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-time-neither-time-until-nor-no-due')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Must specify either min/max time until due or match no" \
+                + " due date (but not both).")
     ]
 
 
+    def mock_parse_timedelta_arg_pass(arg_str): # pylint: disable=unused-argument
+        """
+        Forces timedelta parser to return something.
+        """
+        return ''
 
+    monkeypatch.setattr(rule_meta.Rule, 'parse_timedelta_arg',
+            mock_parse_timedelta_arg_pass)
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-time-neither-time-until-nor-no-due')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Failed to parse min/max time until due -- check format.")
+    ]
+
+
+    def mock_parse_timedelta_arg_fail(arg_str): # pylint: disable=unused-argument
+        """
+        Forces timedelta parser to return as if nothing parsed.
+        """
+        return None
+
+    monkeypatch.setattr(rule_meta.Rule, 'parse_timedelta_arg',
+            mock_parse_timedelta_arg_fail)
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+            'test-move-tasks-time-parse-fail')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:"
+                + " Failed to parse min/max time until due -- check format.")
+    ]
 
 
 

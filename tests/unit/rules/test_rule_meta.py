@@ -68,6 +68,9 @@ def test_init(caplog):
 
 
 
+# TODO: Add test for load specific from config, test assertion and success
+
+
 def test_parse_timedelta_arg():
     """
     Tests the `parse_timedelta_arg()` method in `Rule`.
@@ -86,6 +89,8 @@ def test_parse_timedelta_arg():
     test_str = '1h 2hours'
     with pytest.raises(TimeframeArgDupeError):
         rule_meta.Rule.parse_timedelta_arg(test_str)
+
+    assert rule_meta.Rule.parse_timedelta_arg(None) is None
 
 
 
