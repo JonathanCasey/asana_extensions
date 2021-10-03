@@ -19,9 +19,6 @@ from asana_extensions.rules import rule_meta
 logger = logging.getLogger(__name__)
 
 
-# TODO: Check names and gids match when both given, including UTL
-# TODO: If no include sections, default to include all except exclude
-
 
 class MoveTasksRule(rule_meta.Rule):
     """

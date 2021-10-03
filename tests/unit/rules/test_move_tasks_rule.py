@@ -26,7 +26,7 @@ from asana_extensions.rules import rule_meta
 
 
 
-def test_load_specific_from_config(monkeypatch, caplog):
+def test_load_specific_from_config(caplog):
     """
     Tests the `load_specific_from_config()` method in `MoveTasksRule`.
 
@@ -141,6 +141,21 @@ def test_load_specific_from_config(monkeypatch, caplog):
                 + " due date (but not both).")
     ]
 
+
+
+def test_load_specific_from_config_impossible(monkeypatch, caplog):
+    """
+    Tests "impossible" cases in the `load_specific_from_config()` method in
+    `MoveTasksRule`.  These require mocking, as normally these are not possible
+    due to logic in submethods called.  This ensures that even if that logic
+    were to change in the future, this `load_specific_from_config()` would still
+    handle the situation.
+    """
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
+    rules_cp = config.read_conf_file('mock_rules.conf', conf_dir)
+
+    caplog.set_level(logging.WARNING)
 
     def mock_parse_timedelta_arg_pass(arg_str): # pylint: disable=unused-argument
         """
