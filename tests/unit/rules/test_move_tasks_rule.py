@@ -37,7 +37,7 @@ def test_load_specific_from_config(caplog):
     """
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
-    rules_cp = config.read_conf_file('mock_rules.conf', conf_dir)
+    rules_cp = config.read_conf_file('mock_move_tasks_rules.conf', conf_dir)
 
     caplog.set_level(logging.WARNING)
 
@@ -153,7 +153,7 @@ def test_load_specific_from_config_impossible(monkeypatch, caplog):
     """
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
-    rules_cp = config.read_conf_file('mock_rules.conf', conf_dir)
+    rules_cp = config.read_conf_file('mock_move_tasks_rules.conf', conf_dir)
 
     caplog.set_level(logging.WARNING)
 
