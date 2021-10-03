@@ -46,4 +46,10 @@ def test_load_all_from_config(monkeypatch, caplog):
             ('asana_extensions.rules.rules', logging.WARNING,
                 'Matched rule type but failed to parse for rules.conf section'
                 + ' "test-move-tasks-no-proj-no-utl"'),
+            ('asana_extensions.rules.rules', logging.WARNING,
+                'Failed to match any rule type for rules.conf section'
+                + ' "test-unknown-rule-type"'),
+            ('asana_extensions.rules.rules', logging.WARNING,
+                'Failed to match any rule type for rules.conf section'
+                + ' "test-no-rule-type"'),
     ]
