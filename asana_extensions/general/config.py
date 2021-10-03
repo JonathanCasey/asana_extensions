@@ -24,8 +24,8 @@ from asana_extensions.general import dirs
 
 
 
-def read_conf_file_fake_header(conf_rel_file,
-        conf_base_dir=dirs.get_conf_path(), fake_section='fake',):
+def read_conf_file_fake_header(conf_rel_file, conf_base_dir=None,
+        fake_section='fake',):
     """
     Read config file in configparser format, but insert a fake header for
     first section.  This is aimed at files that are close to configparser
@@ -42,6 +42,8 @@ def read_conf_file_fake_header(conf_rel_file,
     Returns:
       parser (ConfigParser): ConfigParser for file loaded.
     """
+    if conf_base_dir is None:
+        conf_base_dir=dirs.get_conf_path()
     conf_file = os.path.join(conf_base_dir, conf_rel_file)
 
     parser = configparser.ConfigParser()
@@ -52,7 +54,7 @@ def read_conf_file_fake_header(conf_rel_file,
 
 
 
-def read_conf_file(conf_rel_file, conf_base_dir=dirs.get_conf_path()):
+def read_conf_file(conf_rel_file, conf_base_dir=None):
     """
     Read config file in configparser format.
 
@@ -64,6 +66,8 @@ def read_conf_file(conf_rel_file, conf_base_dir=dirs.get_conf_path()):
     Returns:
       parser (ConfigParser): ConfigParser for file loaded.
     """
+    if conf_base_dir is None:
+        conf_base_dir=dirs.get_conf_path()
     conf_file = os.path.join(conf_base_dir, conf_rel_file)
 
     parser = configparser.ConfigParser()

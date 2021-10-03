@@ -2,4 +2,5 @@
 __all__ = [
         'test_move_tasks_rule',
         'test_rule_meta',
+        'test_rules',
 ]

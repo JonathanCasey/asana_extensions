@@ -24,30 +24,31 @@ _RULES = {
 
 
 
-def load_all_from_config():
+def load_all_from_config(conf_rel_file='rules.conf'):
     """
     Loads all rules from the rules config file.
+
+    Args:
+      conf_rel_file (str): The config file from which to load all rules.  Can
+        omit to use default rule file name.
 
     Returns:
       loaded rules ([Rule<>]): Returns list of rules successfully loaded from
         rules config file.
     """
     loaded_rules = []
-    rules_cp = config.read_conf_file('rules.conf')
+    rules_cp = config.read_conf_file(conf_rel_file)
     for rule_id in rules_cp.sections():
-        kwargs = {}
-        kwargs['rule_id'] = rule_id.strip()
-        kwargs['rule_type'] = rules_cp[rule_id]['rule type'].strip()
-        kwargs['test_report_only'] = rules_cp.getboolean(rule_id,
-                'test report only', fallback=False)
+        rule_id = rule_id.strip()
+        rule_type = rules_cp.get(rule_id, 'rule type', fallback='').strip()
 
         for rule_cls in _RULES:
-            if kwargs['rule_type'] in rule_cls.get_rule_type_names():
-                new_rule = rule_cls.load_specific_from_conf(rules_cp, **kwargs)
+            if rule_type in rule_cls.get_rule_type_names():
+                new_rule = rule_cls.load_specific_from_conf(rules_cp, rule_id)
                 if new_rule is not None:
                     loaded_rules.append(new_rule)
                 else:
                     logger.warning('Matched rule type but failed to parse'
-                            + f'for rules.conf section "{rule_id}"')
+                            + f' for rules.conf section "{rule_id}"')
 
     return loaded_rules

@@ -102,8 +102,8 @@ class MoveTasksRule(rule_meta.Rule):
         Returns:
           rule (Rule<> or None): The Rule<> object created and loaded from
             config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
-            Will return None if failed to load and create.  Abstract parent
-            classes such as Rule will return None.
+            Will return None if failed to load and create due to invalid config.
+            Abstract parent classes such as Rule will return None.
 
         Raises:
           (AssertionError): Invalid data.
@@ -164,11 +164,11 @@ class MoveTasksRule(rule_meta.Rule):
         except KeyError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' keys.  Exception: {str(ex)}')
-            raise
+            return None
         except TimeframeArgDupeError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' time args.  Exception: {str(ex)}')
-            raise
+            return None
 
         try:
             rule = cls(rule_params, **kwargs, **super_params, rule_id=rule_id)

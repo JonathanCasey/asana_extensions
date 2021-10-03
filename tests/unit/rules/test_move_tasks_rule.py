@@ -20,7 +20,6 @@ import os.path
 import pytest
 
 from asana_extensions.general import config
-from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import move_tasks_rule
 from asana_extensions.rules import rule_meta
 
@@ -53,9 +52,9 @@ def test_load_specific_from_conf(caplog):
     assert "Should not pass anything in for `rule_params`" in str(ex.value)
 
     caplog.clear()
-    with pytest.raises(KeyError):
-        move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-essential-missing-key')
+    assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.ERROR,
                 "Failed to parse Rule from config.  Check keys.  Exception:"
@@ -109,9 +108,9 @@ def test_load_specific_from_conf(caplog):
     ]
 
     caplog.clear()
-    with pytest.raises(TimeframeArgDupeError) as ex:
-        move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
                 'test-move-tasks-time-parse-fail')
+    assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to parse Move Tasks Rule from config.  Check time args."

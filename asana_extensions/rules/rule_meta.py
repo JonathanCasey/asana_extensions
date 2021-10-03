@@ -92,11 +92,12 @@ class Rule(ABC):
         Returns:
           rule (Rule<> or None): The Rule<> object created and loaded from
             config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
-            Will return None if failed to load and create.  Abstract parent
-            classes such as Rule will return None.
+            Will return None if failed to load and create due to invalid config.
+            Abstract parent classes such as Rule will return None.
 
         Raises:
           (AssertionError): Invalid data.
+          (KeyError): Missing critical config keys.
         """
         assert rule_params is not None, "Subclass must provide `rule_params`."
         try:
