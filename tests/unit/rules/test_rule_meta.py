@@ -36,7 +36,7 @@ def test_init(caplog):
         Simple blank rule to subclass Rule.
         """
         @classmethod
-        def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
                 **kwargs):
             """
             Not needed / will not be used.
@@ -71,9 +71,9 @@ def test_init(caplog):
 
 
 
-def test_load_specific_from_config(caplog):
+def test_load_specific_from_conf(caplog):
     """
-    Tests the `load_specific_from_config()` method in `Rule`.
+    Tests the `load_specific_from_conf()` method in `Rule`.
     """
     class BlankRule(rule_meta.Rule):
         """
@@ -87,12 +87,12 @@ def test_load_specific_from_config(caplog):
             self._rule_params = rule_params
 
         @classmethod
-        def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
                 **kwargs):
             """
             Only used to call super-under-test's method-under-test.
             """
-            super().load_specific_from_config(rules_cp, rule_id, rule_params,
+            super().load_specific_from_conf(rules_cp, rule_id, rule_params,
                     **kwargs)
             # Want to re-use rule_params to expand keywords for init,
             #  but also allow explicit tests that rule_params loaded properly
@@ -112,13 +112,13 @@ def test_load_specific_from_config(caplog):
     caplog.set_level(logging.WARNING)
 
     with pytest.raises(AssertionError) as ex:
-        BlankRule.load_specific_from_config(rules_cp,
+        BlankRule.load_specific_from_conf(rules_cp,
                 'test-essential-missing-key')
     assert  "Subclass must provide `rule_params`." in str(ex.value)
 
     caplog.clear()
     with pytest.raises(KeyError):
-        BlankRule.load_specific_from_config(rules_cp,
+        BlankRule.load_specific_from_conf(rules_cp,
                 'test-essential-missing-key', {})
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.ERROR,
@@ -127,7 +127,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = BlankRule.load_specific_from_config(rules_cp,
+    rule = BlankRule.load_specific_from_conf(rules_cp,
             'test-blank-success', {})
     assert rule is not None
     assert rule._rule_params['rule_type'] == 'blank rule'

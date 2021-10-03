@@ -72,7 +72,7 @@ class Rule(ABC):
 
     @classmethod
     @abstractmethod
-    def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+    def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
                 **kwargs):
         """
         Loads the rule-specific config items for this rule from the

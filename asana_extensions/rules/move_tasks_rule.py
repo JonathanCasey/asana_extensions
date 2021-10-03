@@ -82,7 +82,7 @@ class MoveTasksRule(rule_meta.Rule):
 
 
     @classmethod
-    def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+    def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
             **kwargs):
         """
         Loads the rule-specific config items for this rule from the
@@ -113,7 +113,7 @@ class MoveTasksRule(rule_meta.Rule):
         try:
             rule_params = {}
             super_params = {}
-            super().load_specific_from_config(rules_cp, rule_id, super_params,
+            super().load_specific_from_conf(rules_cp, rule_id, super_params,
                     **kwargs)
             rule_params['project_name'] = rules_cp.get(rule_id, 'project name',
                     fallback=None)

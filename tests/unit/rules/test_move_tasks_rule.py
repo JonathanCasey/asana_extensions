@@ -26,13 +26,13 @@ from asana_extensions.rules import rule_meta
 
 
 
-def test_load_specific_from_config(caplog):
+def test_load_specific_from_conf(caplog):
     """
-    Tests the `load_specific_from_config()` method in `MoveTasksRule`.
+    Tests the `load_specific_from_conf()` method in `MoveTasksRule`.
 
     Also effectively tests `__init__()` method in `MoveTasksRule`.  If logic
     added to `__init__()` that goes beyond what is relevant for this
-    `load_specific_from_config()` method, then a separate test for init should
+    `load_specific_from_conf()` method, then a separate test for init should
     be added.
     """
     this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -42,19 +42,19 @@ def test_load_specific_from_config(caplog):
     caplog.set_level(logging.WARNING)
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-success')
     assert rule is not None
     assert caplog.record_tuples == []
 
     with pytest.raises(AssertionError) as ex:
-        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+        move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-full', {'dummy key': 'dummy val'})
     assert "Should not pass anything in for `rule_params`" in str(ex.value)
 
     caplog.clear()
     with pytest.raises(KeyError):
-        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+        move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-essential-missing-key')
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.ERROR,
@@ -66,7 +66,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-full-is-utl-and-gid')
     assert rule is None
     assert caplog.record_tuples == [
@@ -77,7 +77,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-no-proj-no-utl')
     assert rule is None
     assert caplog.record_tuples == [
@@ -88,7 +88,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-both-proj-and-utl')
     assert rule is None
     assert caplog.record_tuples == [
@@ -99,7 +99,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-no-workspace')
     assert rule is None
     assert caplog.record_tuples == [
@@ -110,7 +110,7 @@ def test_load_specific_from_config(caplog):
 
     caplog.clear()
     with pytest.raises(TimeframeArgDupeError) as ex:
-        move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+        move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
                 'test-move-tasks-time-parse-fail')
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
@@ -120,7 +120,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-both-time-until-and-no-due')
     assert rule is None
     assert caplog.record_tuples == [
@@ -131,7 +131,7 @@ def test_load_specific_from_config(caplog):
     ]
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-time-neither-time-until-nor-no-due')
     assert rule is None
     assert caplog.record_tuples == [
@@ -143,12 +143,12 @@ def test_load_specific_from_config(caplog):
 
 
 
-def test_load_specific_from_config_impossible(monkeypatch, caplog):
+def test_load_specific_from_conf_impossible(monkeypatch, caplog):
     """
-    Tests "impossible" cases in the `load_specific_from_config()` method in
+    Tests "impossible" cases in the `load_specific_from_conf()` method in
     `MoveTasksRule`.  These require mocking, as normally these are not possible
     due to logic in submethods called.  This ensures that even if that logic
-    were to change in the future, this `load_specific_from_config()` would still
+    were to change in the future, this `load_specific_from_conf()` would still
     handle the situation.
     """
     this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -167,7 +167,7 @@ def test_load_specific_from_config_impossible(monkeypatch, caplog):
             mock_parse_timedelta_arg_pass)
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-time-neither-time-until-nor-no-due')
     assert rule is None
     assert caplog.record_tuples == [
@@ -187,7 +187,7 @@ def test_load_specific_from_config_impossible(monkeypatch, caplog):
             mock_parse_timedelta_arg_fail)
 
     caplog.clear()
-    rule = move_tasks_rule.MoveTasksRule.load_specific_from_config(rules_cp,
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-time-parse-fake-fail')
     assert rule is None
     assert caplog.record_tuples == [
