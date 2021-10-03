@@ -169,6 +169,10 @@ class MoveTasksRule(rule_meta.Rule):
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' time args.  Exception: {str(ex)}')
             return None
+        except ValueError as ex:
+            logger.error('Failed to parse Move Tasks Rule from config.  Check'
+                    + f' strong typed values.  Exception: {str(ex)}')
+            return None
 
         try:
             rule = cls(rule_params, **kwargs, **super_params, rule_id=rule_id)

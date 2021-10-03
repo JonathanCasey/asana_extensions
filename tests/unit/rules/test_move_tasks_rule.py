@@ -66,6 +66,16 @@ def test_load_specific_from_conf(caplog):
 
     caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
+            'test-invalid-boolean')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to parse Move Tasks Rule from config.  Check strong"
+                + " typed values.  Exception: Not a boolean: 42")
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-move-tasks-full-is-utl-and-gid')
     assert rule is None
     assert caplog.record_tuples == [

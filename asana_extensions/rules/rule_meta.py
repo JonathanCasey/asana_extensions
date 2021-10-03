@@ -108,6 +108,10 @@ class Rule(ABC):
             logger.error('Failed to parse Rule from config.  Check keys.'
                     + f'  Exception: {str(ex)}')
             raise
+        except ValueError as ex:
+            logger.error('Failed to parse Rule from config.  Check strong typed'
+                    + f' values.  Exception: {str(ex)}')
+            raise
 
 
 

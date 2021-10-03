@@ -127,6 +127,16 @@ def test_load_specific_from_conf(caplog):
     ]
 
     caplog.clear()
+    with pytest.raises(ValueError):
+        BlankRule.load_specific_from_conf(rules_cp,
+                'test-invalid-boolean', {})
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.rule_meta', logging.ERROR,
+                "Failed to parse Rule from config.  Check strong typed values."
+                    + "  Exception: Not a boolean: 42")
+    ]
+
+    caplog.clear()
     rule = BlankRule.load_specific_from_conf(rules_cp,
             'test-blank-success', {})
     assert rule is not None
