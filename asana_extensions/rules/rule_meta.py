@@ -90,13 +90,15 @@ class Rule(ABC):
           Note: kwargs contains other args to pass thru to constructor.
 
         Returns:
-          rule (Rule<>): The Rule<> object created and loaded from config, where
-            Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+          rule (Rule<> or None): The Rule<> object created and loaded from
+            config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+            Will return None if failed to load and create.  Abstract parent
+            classes such as Rule will return None.
 
         Raises:
           (AssertionError): Invalid data.
         """
-        assert rule_params is not None
+        assert rule_params is not None, "Subclass must provide `rule_params`."
         try:
             rule_params['rule_type'] = rules_cp[rule_id]['rule type']
             rule_params['test_report_only'] = rules_cp.getboolean(rule_id,

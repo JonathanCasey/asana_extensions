@@ -15,10 +15,12 @@ Module Attributes:
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
 import logging
+import os.path
 
 from dateutil.relativedelta import relativedelta
 import pytest
 
+from asana_extensions.general import config
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import rule_meta
 
@@ -34,7 +36,8 @@ def test_init(caplog):
         Simple blank rule to subclass Rule.
         """
         @classmethod
-        def load_specific_from_config(cls, rules_cp, rule_id, **kwargs):
+        def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+                **kwargs):
             """
             Not needed / will not be used.
             """
@@ -68,7 +71,68 @@ def test_init(caplog):
 
 
 
-# TODO: Add test for load specific from config, test assertion and success
+def test_load_specific_from_config(caplog):
+    """
+    Tests the `load_specific_from_config()` method in `Rule`.
+    """
+    class BlankRule(rule_meta.Rule):
+        """
+        Simple blank rule to subclass Rule.
+        """
+        def __init__(self, rule_params, **kwargs):
+            """
+            Only needs to call super and save `rule_params`.
+            """
+            super().__init__(**kwargs)
+            self._rule_params = rule_params
+
+        @classmethod
+        def load_specific_from_config(cls, rules_cp, rule_id, rule_params=None,
+                **kwargs):
+            """
+            Only used to call super-under-test's method-under-test.
+            """
+            super().load_specific_from_config(rules_cp, rule_id, rule_params,
+                    **kwargs)
+            # Want to re-use rule_params to expand keywords for init,
+            #  but also allow explicit tests that rule_params loaded properly
+            return cls(rule_params, **kwargs, **rule_params, rule_id=rule_id)
+
+        @classmethod
+        def get_rule_type_names(cls):
+            """
+            Not needed / will not be used.
+            """
+            return []
+
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
+    rules_cp = config.read_conf_file('mock_rules.conf', conf_dir)
+
+    caplog.set_level(logging.WARNING)
+
+    with pytest.raises(AssertionError) as ex:
+        BlankRule.load_specific_from_config(rules_cp,
+                'test-essential-missing-key')
+    assert  "Subclass must provide `rule_params`." in str(ex.value)
+
+    caplog.clear()
+    with pytest.raises(KeyError):
+        BlankRule.load_specific_from_config(rules_cp,
+                'test-essential-missing-key', {})
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.rule_meta', logging.ERROR,
+                "Failed to parse Rule from config.  Check keys.  Exception:"
+                + " 'rule type'")
+    ]
+
+    caplog.clear()
+    rule = BlankRule.load_specific_from_config(rules_cp,
+            'test-blank-success', {})
+    assert rule is not None
+    assert rule._rule_params['rule_type'] == 'blank rule'
+    assert caplog.record_tuples == []
+
 
 
 def test_parse_timedelta_arg():

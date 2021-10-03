@@ -105,6 +105,8 @@ class MoveTasksRule(rule_meta.Rule):
         Returns:
           rule (Rule<> or None): The Rule<> object created and loaded from
             config, where Rule<> is a subclass of Rule (e.g. MoveTasksRule).
+            Will return None if failed to load and create.  Abstract parent
+            classes such as Rule will return None.
 
         Raises:
           (AssertionError): Invalid data.
