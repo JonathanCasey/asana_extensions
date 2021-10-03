@@ -42,21 +42,20 @@ def load_all_from_config(conf_rel_file='rules.conf'):
         rule_id = rule_id.strip()
         rule_type = rules_cp.get(rule_id, 'rule type', fallback='').strip()
 
-        new_rule_cls = None
+        is_rule_type_valid = False
         for rule_cls in _RULES:
             if rule_type in rule_cls.get_rule_type_names():
-                new_rule_cls = rule_cls
+                is_rule_type_valid = True
+                new_rule = rule_cls.load_specific_from_conf(rules_cp, rule_id)
                 break
 
-        if new_rule_cls is None:
+        if not is_rule_type_valid:
             logger.warning('Failed to match any rule type for rules.conf'
                     + f' section "{rule_id}"')
+        elif new_rule is None:
+            logger.warning('Matched rule type but failed to parse for'
+                    + f' rules.conf section "{rule_id}"')
         else:
-            new_rule = new_rule_cls.load_specific_from_conf(rules_cp, rule_id)
-            if new_rule is not None:
-                loaded_rules.append(new_rule)
-            else:
-                logger.warning('Matched rule type but failed to parse'
-                        + f' for rules.conf section "{rule_id}"')
+            loaded_rules.append(new_rule)
 
     return loaded_rules
