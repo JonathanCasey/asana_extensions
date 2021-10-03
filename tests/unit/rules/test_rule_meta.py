@@ -106,7 +106,7 @@ def test_load_specific_from_config(caplog):
             return []
 
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    conf_dir = os.path.join(this_dir, 'test_move_tasks_rule')
+    conf_dir = os.path.join(this_dir, 'test_rule_meta')
     rules_cp = config.read_conf_file('mock_rule_meta.conf', conf_dir)
 
     caplog.set_level(logging.WARNING)
