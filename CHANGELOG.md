@@ -121,6 +121,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: CONTRIBUTING
 - [Added] `CONTRIBUTING.md` added to project root; relevant parts from
       `setup.md` and `usage.md` migrated ([#5][]).
+- [Changed] `pytest` workflow command updated to use coverage output ([#13][]).
 
 
 ### Docs: README
@@ -139,7 +140,6 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: Usage
 - [Added] `usage.md` added with workflow tips ([#5][]).
 - [Added] Added note to run through setup prior to first use ([#1][]).
-- [Changed] `pytest` workflow command updated to use coverage output ([#13][]).
 
 
 ### Ref Links
