@@ -9,7 +9,7 @@ init-hook='from pylint.config import find_pylintrc;
         sys.path.append(os.path.join(
                         os.path.join(os.path.dirname(find_pylintrc()),
                                 'asana_extensions'), 'general'));'
-
+# load-plugins=ci_support.trailing_commas
 max-args=10
 
 
