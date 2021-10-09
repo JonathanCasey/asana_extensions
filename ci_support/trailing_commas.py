@@ -1,6 +1,12 @@
-# type: ignore
-
+#!/usr/bin/env python3
 """
+Credit to groboclown for original work.  Original source gist is
+[here](https://gist.github.com/groboclown/a548643d649cb06c04ed7e4b4121f339).
+
+Modifications to fit this project added following commit e276e02.
+
+---
+
 An extension to PyLint.  It enforces a coding style similar to Golang in
 regards to multi-line list expressions.
 
@@ -202,7 +208,7 @@ class TokenListWrapper:
         return repr(self.__token_list[idx])
 
 
-class BracketContext:  # pylint: disable=R0902
+class BracketContext:  # pylint: disable=too-many-instance-attributes
     """Context within a bracket"""
     def __init__(self, starting_token: Token, config) -> None:
         self._starting_token_line_no = starting_token.start_line_no
@@ -477,7 +483,7 @@ class TrailingCommaChecker(BaseTokenChecker):
     )
 
     def __init__(self, linter: pylint.lint.PyLinter):
-        super(TrailingCommaChecker, self).__init__(linter)
+        super().__init__(linter)
         self._open_brace_lines: List[BracketContext] = []
 
     def process_module(self, module):
