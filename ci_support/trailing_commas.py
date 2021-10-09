@@ -218,11 +218,14 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
         self._current_line_items: List[Sequence[Token]] = []
         self._previous_was_comma = False
         self._item_count = 0
+        self._is_empty = True
         self._config = config
         self._messages: List[Message] = []
+        self._starting_token_text = None
 
         # figure out if this is a tuple, if, or a function call.
         self._expression_type = None
+        self._starting_token_text = starting_token.token_text
         prev = starting_token.prev
         if (
                 prev and
@@ -246,12 +249,14 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
         # This should be treated like any other token, but it can spread across
         # multiple lines.  In this case, the start of the sub-bracket is just
         # the first part of a long token.
+        self._is_empty = False
         self._current_token.append(token)
         return []
 
     def ended_sub_bracket(self, token: Token) -> List[Message]:
         """End of a sub-bracket within the this bracket."""
         # act like whatever was in the bracket is part of the same line.
+        self._is_empty = False
         self._current_token.append(token)
         if self._starting_token_line_no == self._current_line_no:
             # the start of the bracket was on the starting line, so consider this the
@@ -263,10 +268,14 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
 
     def encountered_separator(self, token: Token) -> List[Message]:
         """a list separator in the bracket."""
+        self._is_empty = False
 
         # if the separator is on a different line than the last token, then that's
         # a problem.
-        if token.start_line_no != self._current_line_no:
+        if (
+                token.start_line_no != self._current_line_no and
+                self._is_expression_enabled()
+        ):
             assert len(self._current_token) <= 0
             self._messages.append(("leading-comma", [], token.start_line_no,))
 
@@ -281,6 +290,8 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
 
     def encountered_token(self, token: Token) -> List[Message]:
         """An item token in the bracket"""
+        self._is_empty = False
+
         if token.token_text == 'for' and self._expression_type is None:
             # this is most likely a [x for x in y] style list...
             self._expression_type = 'for'
@@ -300,14 +311,19 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
             # do not increment the number of discovered items until a separator
             # or end-of-bracket is found.
 
-        if self._config.one_item_per_line and len(self._current_line_items) > 1:
+        if (
+                self._config.one_item_per_line and
+                len(self._current_line_items) > 1 and
+                self._is_expression_enabled()
+        ):
             # if we are on an if or for statement, then we shouldn't have more than 1
             # item in the bracket expression.  So we don't need to check for that
             # case here.
             self._messages.append(("multiple-items-per-line", [], token.start_line_no))
         elif (
                 token.start_line_no == self._starting_token_line_no and
-                len(self._current_line_items) >= 1
+                len(self._current_line_items) >= 1 and
+                self._is_expression_enabled()
         ):
             # items on the same line as the open bracket, but no closing bracket on
             # that line.
@@ -352,7 +368,10 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
         # If the token is multi-line (like a concatenated string), then
         # it will be considered for this logic, too.
         if token.end_line_no != self._starting_token_line_no:
-            if len(self._current_line_items) > 0:
+            if (
+                    len(self._current_line_items) > 0 and
+                    self._is_expression_enabled()
+            ):
                 self._messages.append(("multi-line-list-eol-close", [], token.start_line_no))
             prev = token.prev
             if not prev:
@@ -364,11 +383,40 @@ class BracketContext:  # pylint: disable=too-many-instance-attributes
                 # enforce the need for a closing comma.
                 if self._item_count <= 1 and token.token_text == ')':
                     pass
-                else:
+                # Exception situation check.
+                # If empty (whitespace only), then no commas expected
+                elif self._is_empty:
+                    pass
+                elif self._is_expression_enabled():
                     self._messages.append(("closing-comma", [], prev.start_line_no))
                     # print(f"-- {self._item_count} items before ending {token}")
 
         return self._messages
+
+    def _is_expression_enabled(self):
+        """Checks whether the expression type is supported and enabled."""
+        # if (
+        #         self._expression_type == 'for' and
+        #         self._config.ignore_multi_line_for
+        # ):
+        #     return False
+        if (
+                self._expression_type == 'if' and
+                self._config.ignore_multi_line_if
+        ):
+            return False
+        if (
+                self._expression_type == 'tuple' and
+                self._config.ignore_multi_line_tuple
+        ):
+            return False
+        if (
+                self._starting_token_text == '(' and
+                self._expression_type is None and
+                self._config.ignore_function_def
+        ):
+            return False
+        return True
 
 
 class TrailingCommaChecker(BaseTokenChecker):
@@ -478,6 +526,51 @@ class TrailingCommaChecker(BaseTokenChecker):
                 "metavar": "<y_or_n>",
                 'help':
                     "Require that at most 1 item in the list can be on each line.",
+            },
+        ),
+        # (
+        #     'ignore-multi-line-for',
+        #     {
+        #         'default': False,
+        #         "type": "yn",
+        #         "metavar": "<y_or_n>",
+        #         'help':
+        #             "Whether multi-line `for` statements should enforce"
+        #             "trailing comma and start/end line requirements.",
+        #     },
+        # ),
+        (
+            'ignore-multi-line-if',
+            {
+                'default': False,
+                "type": "yn",
+                "metavar": "<y_or_n>",
+                'help':
+                    "Whether multi-line `if` statements should enforce"
+                    "trailing comma and start/end line requirements.",
+            },
+        ),
+        (
+            'ignore-multi-line-tuple',
+            {
+                'default': False,
+                "type": "yn",
+                "metavar": "<y_or_n>",
+                'help':
+                    "Whether multi-line tuple statements should enforce"
+                    "trailing comma and start/end line requirements.",
+            },
+        ),
+        (
+            'ignore-function-def',
+            {
+                'default': False,
+                "type": "yn",
+                "metavar": "<y_or_n>",
+                'help':
+                    "Whether to the definition of a function and its "
+                    "parameters should enforce trailing comma and start/end "
+                    "line requirements.",
             },
         ),
     )
