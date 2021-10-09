@@ -193,5 +193,7 @@ class MoveTasksRule(rule_meta.Rule):
           ([str]): A list of names that are valid to use as the type for this
             rule.
         """
+        # pylint: disable=multi-line-list-first-line-item
+        # pylint: disable=multi-line-list-eol-close, closing-comma
         return ['move tasks', 'auto-promote tasks', 'auto-promote',
                 'auto promote tasks', 'auto promote', 'promote tasks']

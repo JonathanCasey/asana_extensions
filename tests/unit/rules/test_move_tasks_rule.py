@@ -71,7 +71,7 @@ def test_load_specific_from_conf(caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to parse Move Tasks Rule from config.  Check strong"
-                + " typed values.  Exception: Not a boolean: 42")
+                + " typed values.  Exception: Not a boolean: 42"),
     ]
 
     caplog.clear()
@@ -82,7 +82,7 @@ def test_load_specific_from_conf(caplog):
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:" \
                     " Cannot specify 'is my tasks list' and" \
-                    + " 'user task list gid' together.")
+                    + " 'user task list gid' together."),
     ]
 
     caplog.clear()
@@ -93,7 +93,7 @@ def test_load_specific_from_conf(caplog):
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
                 + " Must specify to use a project or user task list, but not"
-                + " both.")
+                + " both."),
     ]
 
     caplog.clear()
@@ -104,7 +104,7 @@ def test_load_specific_from_conf(caplog):
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
                 + " Must specify to use a project or user task list, but not"
-                + " both.")
+                + " both."),
     ]
 
     caplog.clear()
@@ -114,7 +114,7 @@ def test_load_specific_from_conf(caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
-                + " Must specify workspace.")
+                + " Must specify workspace."),
     ]
 
     caplog.clear()
@@ -136,7 +136,7 @@ def test_load_specific_from_conf(caplog):
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
                 + " Must specify either min/max time until due or match no" \
-                + " due date (but not both).")
+                + " due date (but not both)."),
     ]
 
     caplog.clear()
@@ -147,7 +147,7 @@ def test_load_specific_from_conf(caplog):
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
                 + " Must specify either min/max time until due or match no" \
-                + " due date (but not both).")
+                + " due date (but not both)."),
     ]
 
 
@@ -182,7 +182,7 @@ def test_load_specific_from_conf_impossible(monkeypatch, caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
-                + " Failed to parse min/max time until due -- check format.")
+                + " Failed to parse min/max time until due -- check format."),
     ]
 
 
@@ -202,7 +202,7 @@ def test_load_specific_from_conf_impossible(monkeypatch, caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:"
-                + " Failed to parse min/max time until due -- check format.")
+                + " Failed to parse min/max time until due -- check format."),
     ]
 
 
