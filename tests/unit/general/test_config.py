@@ -16,10 +16,32 @@ import os.path
 import pytest
 
 from asana_extensions.general import config
+from asana_extensions.general import dirs
 
 
 
-def test_read_conf_file_fake_header():
+@pytest.fixture(name='mock_get_conf_path')
+def fixture_mock_get_conf_path():
+    """
+    A mock function to monkeypatch in to use the test config path.
+
+    Returns:
+      (method): Returns a method that will mock getting the conf path.  Intended
+        to be monkeypatched in for the equivalent method in dirs.
+    """
+    def mock_dirs_get_conf_path():
+        """
+        Get the test dir's conf path.
+        """
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        conf_dir = os.path.join(this_dir, 'test_config')
+        return conf_dir
+
+    return mock_dirs_get_conf_path
+
+
+
+def test_read_conf_file_fake_header(mock_get_conf_path, monkeypatch):
     """
     Tests that the `read_conf_file_fake_header()` will correctly read a file
     with no header, regardless of whether a fake header name was provided or the
@@ -39,9 +61,15 @@ def test_read_conf_file_fake_header():
     assert parser['test-section']['test key str'] \
             == 'test-val-str'
 
+    monkeypatch.setattr(dirs, 'get_conf_path', mock_get_conf_path)
+    parser = config.read_conf_file_fake_header('mock_config_no_header.conf')
+    assert parser['fake']['test key no header'] == 'test-val-no-header'
+    assert parser['test-section']['test key str'] \
+            == 'test-val-str'
 
 
-def test_read_conf_file():
+
+def test_read_conf_file(mock_get_conf_path, monkeypatch):
     """
     Tests that the `read_conf_file()` will correctly read a file, checking a
     couple values.
@@ -49,6 +77,11 @@ def test_read_conf_file():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_config')
     parser = config.read_conf_file('mock_config.conf', conf_dir)
+    assert parser['test-section']['test key str'] == 'test-val-str'
+    assert parser.getint('test-section', 'test key int') == 123
+
+    monkeypatch.setattr(dirs, 'get_conf_path', mock_get_conf_path)
+    parser = config.read_conf_file('mock_config.conf')
     assert parser['test-section']['test key str'] == 'test-val-str'
     assert parser.getint('test-section', 'test key int') == 123
 
