@@ -46,6 +46,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `dir_init_checker.py` added to new `ci_support` dir to run code for
       checking `__init__.py` files are up to date ([#5][]).
 - [Fixed] References to previous project removed ([#7][]).
+- [Added] `trailing_commas.py` added for pylint checker plugin for multi-line
+      lists and trailing commas ([#13][]).
+  - From groboclown; with modifications to add ignore for empty list as well as
+        options for ignoring `if`, tuples, and functions.
+  - Source code updated with fixes, but no functional changes.
 
 
 ### Project & Toolchain: CodeCov
@@ -69,6 +74,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `.pylintrc` added to configure pylint, with source code paths added
       ([#5][]).
 - [Fixed] References to previous project removed ([#7][]).
+- [Added] `trailing_commas` plugin added, with options to ignore `if`, tuples,
+      and functions ([#13][]).
 
 
 ### Config: rules.conf
@@ -114,6 +121,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: CONTRIBUTING
 - [Added] `CONTRIBUTING.md` added to project root; relevant parts from
       `setup.md` and `usage.md` migrated ([#5][]).
+- [Changed] `pytest` workflow command updated to use coverage output ([#13][]).
 
 
 ### Docs: README
@@ -145,11 +153,13 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#5][]
 - [#7][]
 - [#12][]
+- [#13][]
 
 #### PRs
 - [#6][] for [#5][]
 - [#8][] for [#7][]
 - [#11][] for [#1][], [#12][]
+- [#14][] for [#13][]
 
 
 ---
@@ -161,7 +171,9 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#7]: https://github.com/JonathanCasey/asana_extensions/issues/7 'Issue #7'
 [#1]: https://github.com/JonathanCasey/asana_extensions/issues/1 'Issue #1'
 [#12]: https://github.com/JonathanCasey/asana_extensions/issues/12 'Issue #12'
+[#13]: https://github.com/JonathanCasey/asana_extensions/issues/13 'Issue #13'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
 [#11]: https://github.com/JonathanCasey/asana_extensions/pull/11 'PR #11'
+[#14]: https://github.com/JonathanCasey/asana_extensions/pull/14 'PR #14'

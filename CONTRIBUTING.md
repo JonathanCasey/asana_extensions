@@ -87,5 +87,5 @@ run.  In short, this is largely running from the repo root:
 ```
 python -m pylint asana_extensions
 python -m pylint tests
-pytest
+pytest --cov=asana_extensions
 ```

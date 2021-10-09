@@ -10,6 +10,7 @@ Automation extensions for Asana that I use.  Configurable automations include:
   - Adds support for time ranges and no due date at all.
 
 
+## Docs
 - [Setup](docs/setup.md)
 - [Usage](docs/usage.md)
 - [Contributing](CONTRIBUTING.md)

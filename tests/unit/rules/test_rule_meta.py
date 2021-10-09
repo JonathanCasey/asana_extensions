@@ -66,7 +66,7 @@ def test_init(caplog):
     assert blank_extra_rule._test_report_only is True
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.WARNING,
-                'Discarded excess kwargs provided to BlankRule: extras')
+                'Discarded excess kwargs provided to BlankRule: extras'),
     ]
 
 
@@ -123,7 +123,7 @@ def test_load_specific_from_conf(caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.ERROR,
                 "Failed to parse Rule from config.  Check keys.  Exception:"
-                + " 'rule type'")
+                + " 'rule type'"),
     ]
 
     caplog.clear()
@@ -133,7 +133,7 @@ def test_load_specific_from_conf(caplog):
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.ERROR,
                 "Failed to parse Rule from config.  Check strong typed values."
-                    + "  Exception: Not a boolean: 42")
+                    + "  Exception: Not a boolean: 42"),
     ]
 
     caplog.clear()
