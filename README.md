@@ -5,9 +5,9 @@
 # Asana Extensions
 
 Automation extensions for Asana that I use.  Configurable automations include:
-- Auto-promotion rules for user tasks lists, projects.
+- Move tasks / Auto-promotion rules for user tasks lists, projects.
   - Adds option to include/exclude source sections.
-  - Adds support for time ranges.
+  - Adds support for time ranges and no due date at all.
 
 
 - [Setup](docs/setup.md)
