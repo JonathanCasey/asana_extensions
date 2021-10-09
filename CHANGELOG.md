@@ -71,6 +71,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] References to previous project removed ([#7][]).
 
 
+### Config: rules.conf
+- [Added] `rules.conf` file created (with `.default` stub), with move tasks rule
+      stub added ([#1][]).
+
+
 ### General: Config
 - [Added] `config.py` added with basic `ConfigParser` file loading, including
       without a section header; and list parsing ([#7][]).
@@ -121,10 +126,12 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: Setup
 - [Added] `setup.md` added (placeholder) ([#5][]).
 - [Added] Noted that python 3.7 was used for dev ([#1][]).
+- [Added] Added setup instructions on creating config from stubs ([#1][]).
 
 
 ### Docs: Usage
 - [Added] `usage.md` added with workflow tips ([#5][]).
+- [Added] Added note to run through setup prior to first use ([#1][]).
 
 
 ### Ref Links
