@@ -34,6 +34,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: `.git*`, `.editorconfig`
 - [Added] `.editorconfig` and `.gitattributes` added ([#5][]).
 - [Added] VS Code related items added to `.gitignore` ([#5][]).
+- [Added] `.conf` extensions in `config` dir added to `.gitignore` ([#1][]).
 
 
 ### Project & Toolchain: CircleCI
@@ -50,6 +51,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: CodeCov
 - [Added] CodeCov support added to project (`.codecov.yml`) and CircleCI
       ([#5][]).
+- [Changed] CodeCov targets set to 100% for project and patch ([#12][]).
 
 
 ### Project & Toolchain: Conventions
@@ -60,6 +62,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: Package, Requirements
 - [Added] `requirements.txt` added, with `pylint`,  `pytest`, `pytest-cov` as
       only entries ([#5][]).
+- [Added] `python-dateutil` added to `requirements.txt` ([#1][]).
 
 
 ### Project & Toolchain: Pylint
@@ -68,13 +71,39 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] References to previous project removed ([#7][]).
 
 
+### Config: rules.conf
+- [Added] `rules.conf` file created (with `.default` stub), with move tasks rule
+      stub added ([#1][]).
+
+
 ### General: Config
 - [Added] `config.py` added with basic `ConfigParser` file loading, including
       without a section header; and list parsing ([#7][]).
+- [Changed] `conf_base_dir` parameter in `read_conf_file_fake_header()`,
+      `read_conf_file()` changed to `None`, with the real default set within the
+      method body to better support testing ([#1][]).
 
 
 ### General: Dirs
 - [Added] `dirs.py` added with basic dir resolution ([#7][]).
+
+
+### General: Exceptions
+- [Added] `exceptions.py` added with `TimeframeArgDupeError` ([#1][]).
+
+
+### Rules / Meta
+- [Added] `rule_meta.py` added with abstract `Rule` defining interface and some
+      consolidated logic ([#1][]).
+- [Added] Time-delta arg and timeframe parsing added to `Rule` ([#1][]).
+- [Added] `rules.py` added with `load_all_from_config()` started to load all
+      rules from the `rules.conf` file ([#1][]).
+- [Added] `MoveTasksRule` added to `_RULES` list in `rules.py` ([#1][]).
+
+
+### Rules: Move Tasks Rule
+- [Added] `move_tasks_rule.py` added with `MoveTasksRule` having initial logic
+      to load from config and do non-API validation ([#1][]).
 
 
 ### Docs: CHANGELOG
@@ -91,14 +120,18 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] Updated with project intro (mostly placeholder) ([#5][]).
 - [Added] Link to `setup.md`, `usage.md`, `CONTRIBUTING.md` added ([#5][]).
 - [Added] Code cov badge added ([#7][]).
+- [Added] Added the move tasks rule to list of supported feature ([#1][]).
 
 
 ### Docs: Setup
 - [Added] `setup.md` added (placeholder) ([#5][]).
+- [Added] Noted that python 3.7 was used for dev ([#1][]).
+- [Added] Added setup instructions on creating config from stubs ([#1][]).
 
 
 ### Docs: Usage
 - [Added] `usage.md` added with workflow tips ([#5][]).
+- [Added] Added note to run through setup prior to first use ([#1][]).
 
 
 ### Ref Links
@@ -108,12 +141,15 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Project: v1.0.0](https://github.com/JonathanCasey/asana_extensions/projects/1)
 
 #### Issues
+- [#1][]
 - [#5][]
 - [#7][]
+- [#12][]
 
 #### PRs
 - [#6][] for [#5][]
 - [#8][] for [#7][]
+- [#11][] for [#1][], [#12][]
 
 
 ---
@@ -123,6 +159,9 @@ Reference-style links here (see below, only in source) in develop-merge order.
 
 [#5]: https://github.com/JonathanCasey/asana_extensions/issues/5 'Issue #5'
 [#7]: https://github.com/JonathanCasey/asana_extensions/issues/7 'Issue #7'
+[#1]: https://github.com/JonathanCasey/asana_extensions/issues/1 'Issue #1'
+[#12]: https://github.com/JonathanCasey/asana_extensions/issues/12 'Issue #12'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
+[#11]: https://github.com/JonathanCasey/asana_extensions/pull/11 'PR #11'
