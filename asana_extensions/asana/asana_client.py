@@ -16,18 +16,19 @@ from asana_extensions.general import config
 
 
 
-_client = None
+logger = logging.getLogger(__name__)
 
 
 
-def _ensure_client_ready():
+def _get_client():
     """
     Ensures the client is initialized and ready for use.
 
-    Sets the module's client attribute.
+    Returns:
+      (Client): Asana client, either the previously cached one or a new one.
     """
-    global _client
-    if _client is None:
+    if not hasattr(_get_client, 'client') or _get_client.client is None:
         parser = config.read_conf_file('.secrets.conf')
         pat = parser['asana']['personal access token']
-        _client = asana.Client.access_token(pat)
+        _get_client.client = asana.Client.access_token(pat)
+    return _get_client.client
