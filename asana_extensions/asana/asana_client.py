@@ -51,7 +51,7 @@ def _get_client():
 
 def _get_me():
     """
-    Gets the data for 'me' (self).
+    Gets the data for 'me' (self) user.
 
     At this time, only here for testing API connection, as it is the most basic
     way to test API access is working.
@@ -61,7 +61,8 @@ def _get_me():
         full schema here: https://developers.asana.com/docs/user
 
     Raises:
-      (asana.error.NoAuthorizationError):
+      (asana.error.NoAuthorizationError): Personal access token was missing or
+        invalid.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()

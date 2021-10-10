@@ -19,6 +19,7 @@ workflows:
       - unit-tests:
           context:
             - docker-hub-creds
+            - asana-creds
   changelog-updated:
     jobs:
       - diff-changelog-last-commit:
@@ -51,7 +52,7 @@ aliases:
         environment:
           # By default there is no PYTHONPATH defined at all, so nothing to lose
           PYTHONPATH: /home/circleci/project
-  
+
   - &default_git_image
     docker:
       - image: docker:stable-git
@@ -137,6 +138,11 @@ jobs:
       - *default_restore_cache
       - *default_install_deps
       - *default_save_cache
+      - run:
+          name: Setup mock files
+          command: |
+            echo -e '\n[asana]\n' >> config/.secrets.conf
+            echo -e 'personal access token : $ASANA_PERSONAL_ACCESS_TOKEN\n'  >> config/.secrets.conf
       - run:
           name: Run pytest unit tests
           command: |
