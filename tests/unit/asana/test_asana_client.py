@@ -24,30 +24,6 @@ from asana_extensions.general import config
 
 
 
-@pytest.fixture(name='mock_read_conf_file_bad_pat')
-def fixture_mock_read_conf_file_bad_pat():
-    """
-    A mock function to monkeypatch in to read a conf file with a bad personal
-    access token.
-
-    Returns:
-      (method): Returns a method that will mock reading the conf file.  Intended
-        to be monkeypatched in for the equivalent method in config.
-    """
-    def mock_read_conf_file(conf_rel_file,     # pylint: disable=unused-argument
-            conf_base_dir=None):               # pylint: disable=unused-argument
-        """
-        """
-        return {
-            'asana': {
-                'personal access token': 'bad pat',
-            },
-        }
-
-    return mock_read_conf_file
-
-
-
 def test__get_client(monkeypatch):
     """
     Tests the `_get_client()` method.
@@ -78,7 +54,7 @@ def test__get_client(monkeypatch):
 
 
 
-def test__get_me(monkeypatch, caplog, mock_read_conf_file_bad_pat):
+def test__get_me(monkeypatch, caplog):
     """
     Tests the `_get_me()` method.
 
@@ -92,9 +68,20 @@ def test__get_me(monkeypatch, caplog, mock_read_conf_file_bad_pat):
     me_data = asana_client._get_me()
     assert me_data['gid']
 
-    monkeypatch.delattr(asana_client._get_client, 'client')
-    monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file_bad_pat)
+    def mock_read_conf_file(conf_rel_file,     # pylint: disable=unused-argument
+            conf_base_dir=None):               # pylint: disable=unused-argument
+        """
+        Return a bad personal access token to pass client creation but fail API.
+        """
+        return {
+            'asana': {
+                'personal access token': 'bad pat',
+            },
+        }
+
     caplog.clear()
+    monkeypatch.delattr(asana_client._get_client, 'client')
+    monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
     with pytest.raises(asana.error.NoAuthorizationError):
         asana_client._get_me()
     assert caplog.record_tuples == [
