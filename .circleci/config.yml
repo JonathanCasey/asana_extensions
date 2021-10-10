@@ -142,7 +142,7 @@ jobs:
           name: Setup mock files
           command: |
             echo -e '\n[asana]\n' >> config/.secrets.conf
-            echo -e 'personal access token : $ASANA_PERSONAL_ACCESS_TOKEN\n'  >> config/.secrets.conf
+            echo -e 'personal access token : '$ASANA_PERSONAL_ACCESS_TOKEN'\n'  >> config/.secrets.conf
       - run:
           name: Run pytest unit tests
           command: |
