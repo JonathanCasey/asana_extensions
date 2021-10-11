@@ -171,3 +171,53 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
         raise
 
     return _find_gid_from_name(workspaces, 'workspace', ws_name, ws_gid)
+
+
+
+def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
+    """
+    Gets the "project ID" for the user task list, either by "me" or a specific
+    user ID.
+
+    Args:
+      workspace_gid (int): The gid of the workspace for which to get the user's
+        task list.
+      is_me (bool): Set to true if getting the user task list for "me".  Cannot
+        provide user_gid if using this.
+      user_gid (int or None): Set to the integer of the user gid for the user
+        task list to get.  Cannot provide is_me if using this.
+
+    Returns:
+      (int): The gid of the user task list for the provided user.
+
+    Raises:
+      (AssertionError): Invalid data.
+      (asana.error.NoAuthorizationError): Personal access token was missing or
+        invalid.
+      (asana.error.NotFoundError): Invalid/inaccessible user gid provided.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    assert is_me ^ (user_gid is not None), 'Must provide `is_me` or' \
+            + ' `user_gid`, but not both.'
+
+    if is_me:
+        # From API docs, access is equivalent subbing 'me' in for gid
+        user_gid = 'me'
+    params = {
+        'workspace': workspace_gid,
+    }
+
+    client = _get_client()
+    try:
+        utl_data = client.user_task_lists.get_user_task_list_for_user(
+                str(user_gid), params)
+    except asana.error.NoAuthorizationError as ex:
+        logger.error('Failed to access API in get_user_task_list_gid() -'
+                + f' Not Authorized: {ex}')
+        raise
+    except asana.error.NotFoundError as ex:
+        logger.error('Could not find requested data'
+                + f' in get_user_task_list_gid(): {ex}')
+        raise
+
+    return int(utl_data['gid'])

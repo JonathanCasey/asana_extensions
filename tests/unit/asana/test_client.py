@@ -32,11 +32,27 @@ def fixture_raise_no_authorization_error():
     Returns a function that can be mocked over a call that simply forces it to
     raise the asana.error.NoAuthorizationError.
     """
-    def mock_raise(**kwargs):
+    def mock_raise(*args, **kwargs):
         """
         Simply raise the desired error.
         """
         raise asana.error.NoAuthorizationError()
+
+    return mock_raise
+
+
+
+@pytest.fixture(name='raise_not_found_error')
+def fixture_raise_not_found_error():
+    """
+    Returns a function that can be mocked over a call that simply forces it to
+    raise the asana.error.NotFoundError.
+    """
+    def mock_raise(*args, **kwargs):
+        """
+        Simply raise the desired error.
+        """
+        raise asana.error.NotFoundError()
 
     return mock_raise
 
@@ -200,6 +216,7 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
     assert 'name' in workspace
     assert 'resource_type' in workspace
 
+    # Need to monkeypatch cached client since class dynamically creates attrs
     monkeypatch.setattr(client.workspaces, 'get_workspaces',
             raise_no_authorization_error)
 
@@ -210,4 +227,71 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
             ('asana_extensions.asana.client', logging.ERROR,
                 "Failed to access API in get_workspace_gid_from_name() - Not"
                 + " Authorized: No Authorization"),
+    ]
+
+
+
+def test_get_user_task_list_gid(monkeypatch, caplog,
+        raise_no_authorization_error, raise_not_found_error):
+    """
+    Tests the `get_user_task_list_gid()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 4 API calls. **
+    (varies depending on data size, but only 4 calls intended)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.ERROR)
+
+    try:
+        ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    me_gid = aclient._get_me()['gid']
+    me_utl_gid = aclient.get_user_task_list_gid(ws_gid, True)
+    uid_utl_gid = aclient.get_user_task_list_gid(ws_gid, user_gid=me_gid)
+    assert me_utl_gid == uid_utl_gid
+    assert me_utl_gid > 0
+
+    with pytest.raises(AssertionError) as ex:
+        aclient.get_user_task_list_gid(0)
+    assert 'Must provide `is_me` or `user_gid`, but not both.' in str(ex.value)
+
+    with pytest.raises(AssertionError) as ex:
+        aclient.get_user_task_list_gid(0, True, 0)
+    assert 'Must provide `is_me` or `user_gid`, but not both.' in str(ex.value)
+
+    client = aclient._get_client()
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    monkeypatch.setattr(client.user_task_lists, 'get_user_task_list_for_user',
+            raise_no_authorization_error)
+    caplog.clear()
+    with pytest.raises(asana.error.NoAuthorizationError):
+        aclient.get_user_task_list_gid(0, True)
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Failed to access API in get_user_task_list_gid() - Not"
+                + " Authorized: No Authorization"),
+    ]
+
+    monkeypatch.setattr(client.user_task_lists, 'get_user_task_list_for_user',
+            raise_not_found_error)
+    caplog.clear()
+    with pytest.raises(asana.error.NotFoundError):
+        aclient.get_user_task_list_gid(0, True)
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Could not find requested data in get_user_task_list_gid():"
+                + " Not Found"),
     ]
