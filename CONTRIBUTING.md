@@ -61,8 +61,6 @@ are required in their respective config files in order to run the relevant
 unit tests:
 - (TBD)
 
-The `env` for each of those must be `test`.
-
 Note that some test WILL make API calls, so it will count against any rate
 limiting or quotas.
 

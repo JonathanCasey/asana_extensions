@@ -40,6 +40,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: CircleCI
 - [Added] CircleCI implemented, with `.circleci/config.yml` file that ensures
       project builds successfully ([#5][]).
+- [Added] `asana-creds` added as context for unit tests, with setup of mock
+      files to load access token into secrets conf ([#9][]).
 
 
 ### Project & Toolchain: CI Support
@@ -68,6 +70,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `requirements.txt` added, with `pylint`,  `pytest`, `pytest-cov` as
       only entries ([#5][]).
 - [Added] `python-dateutil` added to `requirements.txt` ([#1][]).
+- [Added] `asana` added to `requirements.txt` ([#9][]).
 
 
 ### Project & Toolchain: Pylint
@@ -76,6 +79,16 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] References to previous project removed ([#7][]).
 - [Added] `trailing_commas` plugin added, with options to ignore `if`, tuples,
       and functions ([#13][]).
+
+
+### Asana: Asana Client
+- [Added] `asana_client.py` added, with initial `_get_client()` management
+      method and `_get_me()` helper method imlpemented ([#9][]).
+
+
+### Config: .secrets.conf
+- [Added] `.secrets.conf` file created (with `.default` stub), with `asana`
+      section for personal access token key added ([#9][]).
 
 
 ### Config: rules.conf
@@ -122,6 +135,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `CONTRIBUTING.md` added to project root; relevant parts from
       `setup.md` and `usage.md` migrated ([#5][]).
 - [Changed] `pytest` workflow command updated to use coverage output ([#13][]).
+- [Removed] The `test` `env` is not applicable to this project and references
+      have been removed ([#9][]).
 
 
 ### Docs: README
@@ -152,6 +167,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#1][]
 - [#5][]
 - [#7][]
+- [#9][]
 - [#12][]
 - [#13][]
 
@@ -160,6 +176,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#8][] for [#7][]
 - [#11][] for [#1][], [#12][]
 - [#14][] for [#13][]
+- [#15][] for [#9][]
 
 
 ---
@@ -172,8 +189,10 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#1]: https://github.com/JonathanCasey/asana_extensions/issues/1 'Issue #1'
 [#12]: https://github.com/JonathanCasey/asana_extensions/issues/12 'Issue #12'
 [#13]: https://github.com/JonathanCasey/asana_extensions/issues/13 'Issue #13'
+[#9]: https://github.com/JonathanCasey/asana_extensions/issues/9 'Issue #9'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
 [#11]: https://github.com/JonathanCasey/asana_extensions/pull/11 'PR #11'
 [#14]: https://github.com/JonathanCasey/asana_extensions/pull/14 'PR #14'
+[#15]: https://github.com/JonathanCasey/asana_extensions/pull/15 'PR #15'
