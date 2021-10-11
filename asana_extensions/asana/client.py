@@ -91,6 +91,57 @@ def _get_me():
 
 
 
+def _find_gid_from_name(data, resource_type, name, expected_gid=None):
+    """
+    This finds the gid from the provided data based on the provided name.  It
+    will confirm the name is unique.  If a gid is provided, it will confirm it
+    also matches.  This only checks the resource type provided.
+
+    This works for data structures that fit the gid/name/resource_type key
+    combo.
+
+    Args:
+      data (generator of {str: str/int/etc}): The data from the API.  Iterating
+        it should result in items with gid/name/resource_type keys.
+      resource_type (str): The resource type to match in the data.
+      name (str): The name of the item to retrieve.
+      expected_gid (int or None): Over-defines search.  The GID that should
+        match the name.  Can be omitted if only using name.  Useful to confirm
+        gid and name match.
+
+    Returns:
+      found_gid (int): The only gid that matches this name for this resource
+        type in the provided data.
+
+    Raises:
+      (DataNotFoundError): Name not found at all.
+      (DuplicateNameError): Name found more than once with different gids.
+      (MismatchedDataError): Name found, but gid found did not match the
+        non-None gid provided.
+    """
+    found_gid = None
+    for entry in data:
+        if entry['resource_type'] != resource_type:
+            continue
+        if entry['name'] == name:
+            if found_gid is None:
+                found_gid = entry['gid']
+            else:
+                raise DuplicateNameError(f'The {resource_type} "{name}"'
+                        + f' matched at least 2 gids: {found_gid} and'
+                        + f' {entry["gid"]}')
+
+    if found_gid is None:
+        raise DataNotFoundError(f'The {resource_type} "{name}" was not found')
+    if expected_gid is not None and found_gid != expected_gid:
+        raise MismatchedDataError(f'The {resource_type} "{name}" found gid'
+                + f' {found_gid}, but expected gid {expected_gid}')
+    if expected_gid is None:
+        logger.info(f'GID of {resource_type} "{name}" is {found_gid}')
+    return found_gid
+
+
+
 def get_workspace_gid_from_name(ws_name, ws_gid=None):
     """
     This will get the workspace gid from the name.  It will confirm the name is
@@ -104,16 +155,11 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
         gid and name match.
 
     Returns:
-      found_gid (int): The only gid that matches this workspace name.
+      (int): The only gid that matches this workspace name.
 
     Raises:
       (asana.error.NoAuthorizationError): Personal access token was missing or
         invalid.
-      (DataNotFoundError): Workspace name not found at all.
-      (DuplicateNameError): Workspace name found more than once with different
-        gids.
-      (MismatchedDataError): Workspace name found, but gid found did not match
-        the non-None gid provided.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
@@ -124,22 +170,4 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
                 + f' Not Authorized: {ex}')
         raise
 
-    found_gid = None
-    for workspace in workspaces:
-        if workspace['resource_type'] != 'workspace':
-            continue
-        if workspace['name'] == ws_name:
-            if found_gid is None:
-                found_gid = workspace['gid']
-            else:
-                raise DuplicateNameError(f'The workspace "{ws_name}" matched at'
-                        + f' least 2 gids: {found_gid} and {workspace["gid"]}')
-
-    if found_gid is None:
-        raise DataNotFoundError(f'The workspace "{ws_name}" was not found')
-    if ws_gid is not None and found_gid != ws_gid:
-        raise MismatchedDataError(f'The workspace "{ws_name}" found gid'
-                + f' {found_gid}, but expected gid {ws_gid}')
-    if ws_gid is None:
-        logger.info(f'GID of workspace "{ws_name}" is {found_gid}')
-    return found_gid
+    return _find_gid_from_name(workspaces, 'workspace', ws_name, ws_gid)

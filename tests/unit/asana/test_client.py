@@ -110,6 +110,61 @@ def test__get_me(monkeypatch, caplog):
 
 
 
+def test__find_gid_from_name(caplog):
+    """
+    Tests the `_find_gid_from_name()` method.
+
+    No API calls.  Methods that use this `_find_gid_from_name()` method will
+    verify API compatibility then.  This stays focused on testing logic.
+    """
+    caplog.set_level(logging.INFO)
+
+    data = [
+        {
+            'gid': 1,
+            'name': 'one and only',
+            'resource_type': 'workspace',
+        },
+        {
+            'gid': 2,
+            'name': 'two with dupe',
+            'resource_type': 'workspace',
+        },
+        {
+            'gid': 3,
+            'name': 'two with dupe',
+            'resource_type': 'workspace',
+        },
+        {
+            'gid': 4,
+            'name': 'not workspace',
+            'resource_type': 'organization',
+        },
+    ]
+    resource_type = 'workspace'
+
+    gid = aclient._find_gid_from_name(data, resource_type, 'one and only', 1)
+    assert gid == 1
+
+    caplog.clear()
+    gid = aclient._find_gid_from_name(data, resource_type, 'one and only')
+    assert gid == 1
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.INFO,
+                'GID of workspace "one and only" is 1'),
+    ]
+
+    with pytest.raises(aclient.MismatchedDataError) as ex:
+        aclient._find_gid_from_name(data, resource_type, 'one and only', -1)
+
+    with pytest.raises(aclient.DuplicateNameError) as ex:
+        aclient._find_gid_from_name(data, resource_type, 'two with dupe')
+
+    with pytest.raises(aclient.DataNotFoundError) as ex:
+        aclient._find_gid_from_name(data, resource_type, 'invalid name')
+
+
+
 def test_get_workspace_gid_from_name(monkeypatch, caplog,
         raise_no_authorization_error):
     """
@@ -118,7 +173,8 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
     This does require the asana account be configured to support unit testing.
     See CONTRIBUTING.md.
 
-    ** Consumes at least 1 API call. ** (varies depending on data size)
+    ** Consumes at least 2 API calls. **
+    (varies depending on data size, but only 2 calls intended)
 
     Raises:
       (TesterNotInitializedError): If test workspace does not exist on asana
@@ -126,7 +182,7 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
         manually per docs.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.ERROR)
 
     try:
         aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
@@ -136,57 +192,13 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    def mock_get_workspaces():
-        """
-        Will override data return so various tests can be checked.
-        """
-        return [
-            {
-                'gid': 1,
-                'name': 'one and only',
-                'resource_type': 'workspace',
-            },
-            {
-                'gid': 2,
-                'name': 'two with dupe',
-                'resource_type': 'workspace',
-            },
-            {
-                'gid': 3,
-                'name': 'two with dupe',
-                'resource_type': 'workspace',
-            },
-            {
-                'gid': 4,
-                'name': 'not workspace',
-                'resource_type': 'organization',
-            },
-        ]
-
-    # Since attrs are dynamic, need to patch cached client
+    # To ensure compatible with _extract_gid_from_name(), validate data format
     client = aclient._get_client()
-    monkeypatch.setattr(client.workspaces, 'get_workspaces',
-            mock_get_workspaces)
-
-    gid = aclient.get_workspace_gid_from_name('one and only', 1)
-    assert gid == 1
-
-    caplog.clear()
-    gid = aclient.get_workspace_gid_from_name('one and only')
-    assert gid == 1
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.INFO,
-                'GID of workspace "one and only" is 1'),
-    ]
-
-    with pytest.raises(aclient.MismatchedDataError) as ex:
-        aclient.get_workspace_gid_from_name('one and only', -1)
-
-    with pytest.raises(aclient.DuplicateNameError) as ex:
-        aclient.get_workspace_gid_from_name('two with dupe')
-
-    with pytest.raises(aclient.DataNotFoundError) as ex:
-        aclient.get_workspace_gid_from_name('invalid name')
+    workspaces = client.workspaces.get_workspaces()
+    workspace = next(workspaces)
+    assert 'gid' in workspace
+    assert 'name' in workspace
+    assert 'resource_type' in workspace
 
     monkeypatch.setattr(client.workspaces, 'get_workspaces',
             raise_no_authorization_error)
