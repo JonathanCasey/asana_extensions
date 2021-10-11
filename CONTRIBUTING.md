@@ -65,6 +65,21 @@ Note that some test WILL make API calls, so it will count against any rate
 limiting or quotas.
 
 
+### Asana account
+This does access Asana to ensure full compatibility.  The API calls are limited
+where reasonable, but it always does some API calls to ensure this will work
+when deployed.
+
+Some setup items are required.  For the account associated with the personal
+access token used in `.secrets.conf` / CircleCI, the following must be done
+once before the first tests are run:
+- Create a workspace named `TEST Asana Extensions`
+
+If these docs are out of date, the data in `/tests/unit/asana/tester_data.py`
+holds all of these constants.  The exceptions raised when running relevant tests
+will also provided guidance on what is required.
+
+
 
 # Usage
 

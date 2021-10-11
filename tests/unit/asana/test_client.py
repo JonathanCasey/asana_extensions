@@ -21,6 +21,8 @@ import pytest
 
 from asana_extensions.asana import client as aclient
 from asana_extensions.general import config
+from tests.exceptions import *                 # pylint: disable=wildcard-import
+from tests.unit.asana import tester_data
 
 
 
@@ -89,3 +91,24 @@ def test__get_me(monkeypatch, caplog):
                 "Failed to access API in _get_me() - Not Authorized:"
                 + " No Authorization: Not Authorized"),
     ]
+
+
+
+def test_get_workspace_gid_from_name():
+    """
+    Tests the `get_workspace_gid_from_name()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 1 API call. ** (varies depending on data size)
+
+    Raises:
+      (TesterNotInitializedError)
+    """
+    try:
+        aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+    except aclient.DataNotFoundError as ex:
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
