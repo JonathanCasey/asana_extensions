@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests the asana_extensions.asana.asana_client functionality.
+Tests the asana_extensions.asana.client functionality.
 
 Per [pytest](https://docs.pytest.org/en/reorganize-docs/new-docs/user/naming_conventions.html),
 all tiles, classes, and methods will be prefaced with `test_/Test` to comply
@@ -19,7 +19,7 @@ import logging
 import asana
 import pytest
 
-from asana_extensions.asana import asana_client
+from asana_extensions.asana import client as aclient
 from asana_extensions.general import config
 
 
@@ -31,7 +31,7 @@ def test__get_client(monkeypatch):
     This relies on /config/.secrets.conf being setup with a real personal access
     token.
     """
-    client = asana_client._get_client()
+    client = aclient._get_client()
     assert client is not None
 
     def mock_read_conf_file(conf_rel_file,     # pylint: disable=unused-argument
@@ -43,12 +43,12 @@ def test__get_client(monkeypatch):
 
     # read_conf_file() returning bad config allows to confirm client cache works
     monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
-    client = asana_client._get_client()
+    client = aclient._get_client()
     assert client is not None
 
-    monkeypatch.delattr(asana_client._get_client, 'client')
-    with pytest.raises(asana_client.ClientCreationError) as ex:
-        asana_client._get_client()
+    monkeypatch.delattr(aclient._get_client, 'client')
+    with pytest.raises(aclient.ClientCreationError) as ex:
+        aclient._get_client()
     assert "Could not create client - Could not find necessary section/key in" \
             + " .secrets.conf: 'asana'" in str(ex.value)
 
@@ -65,7 +65,7 @@ def test__get_me(monkeypatch, caplog):
     """
     caplog.set_level(logging.WARNING)
 
-    me_data = asana_client._get_me()
+    me_data = aclient._get_me()
     assert me_data['gid']
 
     def mock_read_conf_file(conf_rel_file,     # pylint: disable=unused-argument
@@ -80,12 +80,12 @@ def test__get_me(monkeypatch, caplog):
         }
 
     caplog.clear()
-    monkeypatch.delattr(asana_client._get_client, 'client')
+    monkeypatch.delattr(aclient._get_client, 'client')
     monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
     with pytest.raises(asana.error.NoAuthorizationError):
-        asana_client._get_me()
+        aclient._get_me()
     assert caplog.record_tuples == [
-            ('asana_extensions.asana.asana_client', logging.ERROR,
+            ('asana_extensions.asana.client', logging.ERROR,
                 "Failed to access API in _get_me() - Not Authorized:"
                 + " No Authorization: Not Authorized"),
     ]

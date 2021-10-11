@@ -81,9 +81,12 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       and functions ([#13][]).
 
 
-### Asana: Asana Client
+### Asana: Client
 - [Added] `asana_client.py` added, with initial `_get_client()` management
       method and `_get_me()` helper method imlpemented ([#9][]).
+- [Changed] `asana_client.py` and `test_asana_client.py` renamed to `client.py`
+      and `test_client.py`, with `aclient` being the recommended import as
+      ([#16][]).
 
 
 ### Config: .secrets.conf
@@ -170,6 +173,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#9][]
 - [#12][]
 - [#13][]
+- [#16][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -177,6 +181,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#11][] for [#1][], [#12][]
 - [#14][] for [#13][]
 - [#15][] for [#9][]
+- [#17][] for [#16][]
 
 
 ---
@@ -190,9 +195,11 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#12]: https://github.com/JonathanCasey/asana_extensions/issues/12 'Issue #12'
 [#13]: https://github.com/JonathanCasey/asana_extensions/issues/13 'Issue #13'
 [#9]: https://github.com/JonathanCasey/asana_extensions/issues/9 'Issue #9'
+[#16]: https://github.com/JonathanCasey/asana_extensions/issues/16 'Issue #16'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
 [#11]: https://github.com/JonathanCasey/asana_extensions/pull/11 'PR #11'
 [#14]: https://github.com/JonathanCasey/asana_extensions/pull/14 'PR #14'
 [#15]: https://github.com/JonathanCasey/asana_extensions/pull/15 'PR #15'
+[#17]: https://github.com/JonathanCasey/asana_extensions/pull/17 'PR #17'
