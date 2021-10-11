@@ -15,11 +15,9 @@ rule type : move tasks
 
 # Test Report Only being set to True will only simulate actions
 test report only : # <yes/NO> or delete
-; project name : test project name
-; project gid : -1
 
-# If targetting user task list, must set `for my tasks list`,
-#  `user task list id`, or both.  If both, must match what API reports.
+# If targetting user task list, must set `for my tasks list` or
+#  `user task list id`, but not both.
 # `project name/gid` can NOT be provided.
 for my tasks list : # <yes/NO>
 user task list id : # <id>
