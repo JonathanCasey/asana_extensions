@@ -138,7 +138,7 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
     if found_gid is None:
         raise DataNotFoundError(f'The workspace "{ws_name}" was not found')
     if ws_gid is not None and found_gid != ws_gid:
-        raise MismatchedDataError(f'The worksspace "{ws_name}" found gid'
+        raise MismatchedDataError(f'The workspace "{ws_name}" found gid'
                 + f' {found_gid}, but expected gid {ws_gid}')
     if ws_gid is None:
         logger.info(f'GID of workspace "{ws_name}" is {found_gid}')

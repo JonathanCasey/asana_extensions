@@ -26,6 +26,22 @@ from tests.unit.asana import tester_data
 
 
 
+@pytest.fixture(name='raise_no_authorization_error')
+def fixture_raise_no_authorization_error():
+    """
+    Returns a function that can be mocked over a call that simply forces it to
+    raise the asana.error.NoAuthorizationError.
+    """
+    def mock_raise(**kwargs):
+        """
+        Simply raise the desired error.
+        """
+        raise asana.error.NoAuthorizationError()
+
+    return mock_raise
+
+
+
 def test__get_client(monkeypatch):
     """
     Tests the `_get_client()` method.
@@ -94,7 +110,8 @@ def test__get_me(monkeypatch, caplog):
 
 
 
-def test_get_workspace_gid_from_name():
+def test_get_workspace_gid_from_name(monkeypatch, caplog,
+        raise_no_authorization_error):
     """
     Tests the `get_workspace_gid_from_name()` method.
 
@@ -104,11 +121,81 @@ def test_get_workspace_gid_from_name():
     ** Consumes at least 1 API call. ** (varies depending on data size)
 
     Raises:
-      (TesterNotInitializedError)
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
     """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.INFO)
+
     try:
         aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
     except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
         raise TesterNotInitializedError('Cannot run unit tests: Must create a'
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
+
+    def mock_get_workspaces():
+        """
+        Will override data return so various tests can be checked.
+        """
+        return [
+            {
+                'gid': 1,
+                'name': 'one and only',
+                'resource_type': 'workspace',
+            },
+            {
+                'gid': 2,
+                'name': 'two with dupe',
+                'resource_type': 'workspace',
+            },
+            {
+                'gid': 3,
+                'name': 'two with dupe',
+                'resource_type': 'workspace',
+            },
+            {
+                'gid': 4,
+                'name': 'not workspace',
+                'resource_type': 'organization',
+            },
+        ]
+
+    # Since attrs are dynamic, need to patch cached client
+    client = aclient._get_client()
+    monkeypatch.setattr(client.workspaces, 'get_workspaces',
+            mock_get_workspaces)
+
+    gid = aclient.get_workspace_gid_from_name('one and only', 1)
+    assert gid == 1
+
+    caplog.clear()
+    gid = aclient.get_workspace_gid_from_name('one and only')
+    assert gid == 1
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.INFO,
+                'GID of workspace "one and only" is 1'),
+    ]
+
+    with pytest.raises(aclient.MismatchedDataError) as ex:
+        aclient.get_workspace_gid_from_name('one and only', -1)
+
+    with pytest.raises(aclient.DuplicateNameError) as ex:
+        aclient.get_workspace_gid_from_name('two with dupe')
+
+    with pytest.raises(aclient.DataNotFoundError) as ex:
+        aclient.get_workspace_gid_from_name('invalid name')
+
+    monkeypatch.setattr(client.workspaces, 'get_workspaces',
+            raise_no_authorization_error)
+
+    caplog.clear()
+    with pytest.raises(asana.error.NoAuthorizationError):
+        aclient.get_workspace_gid_from_name('one and only')
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Failed to access API in get_workspace_gid_from_name() - Not"
+                + " Authorized: No Authorization"),
+    ]
