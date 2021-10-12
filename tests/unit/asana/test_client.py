@@ -170,13 +170,13 @@ def test__find_gid_from_name(caplog):
                 'GID of workspace "one and only" is 1'),
     ]
 
-    with pytest.raises(aclient.MismatchedDataError) as ex:
+    with pytest.raises(aclient.MismatchedDataError):
         aclient._find_gid_from_name(data, resource_type, 'one and only', -1)
 
-    with pytest.raises(aclient.DuplicateNameError) as ex:
+    with pytest.raises(aclient.DuplicateNameError):
         aclient._find_gid_from_name(data, resource_type, 'two with dupe')
 
-    with pytest.raises(aclient.DataNotFoundError) as ex:
+    with pytest.raises(aclient.DataNotFoundError):
         aclient._find_gid_from_name(data, resource_type, 'invalid name')
 
 
