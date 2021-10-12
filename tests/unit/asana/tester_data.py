@@ -10,9 +10,24 @@ Module Attributes:
     personal access token being used for testing (in `.secrets.conf`) prior to
     running tests.
 
+  _PROJECT_TEMPLATE (Template): The name format to be used for test projects
+    created in the test workspace for unit testing.  IDs will be substituted as
+    needed for testing.  This will be created and deleted as needed during unit
+    testing.
+
+  _SECTION_TEMPLATE (Template): The name format to be used for test sections
+    created in the test workspace for unit testing.  IDs will be substituted as
+    needed for testing.  This will be created and deleted as needed during unit
+    testing.
+
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+from string import Template
 
 
 
 _WORKSPACE = 'TEST Asana Extensions'
+
+_PROJECT_TEMPLATE = Template('TEST Project $pid')
+
+_SECTION_TEMPLATE = Template('TEST Section $sid')

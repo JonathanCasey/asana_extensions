@@ -174,6 +174,80 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
 
 
 
+def get_project_gid_from_name(ws_gid, proj_name, proj_gid=None, archived=False):
+    """
+    This will get the project gid from the name.  It will confirm the name is
+    unique.  If a gid is provided, it will confirm it also matches.
+
+    Args:
+      ws_gid (int): The gid of the workspace for which to get this project.
+      proj_name (str): The name of the project to retrieve.
+      proj_gid (int): Over-defines search.  The GID that should match the
+        project name.  Can be omitted if only using name.  Useful to confirm
+        gid and name match.
+      archived (bool or None): Whether or not to include archived projects.  If
+        None, will include both.
+
+    Returns:
+      (int): The only gid that matches this project name.
+
+    Raises:
+      (asana.error.NoAuthorizationError): Personal access token was missing or
+        invalid.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    params = {
+        'workspace': ws_gid,
+    }
+    if archived is not None:
+        params['archived'] = archived
+
+    client = _get_client()
+    try:
+        projects = client.projects.get_projects(params)
+    except asana.error.NoAuthorizationError as ex:
+        logger.error('Failed to access API in get_project_gid_from_name() -'
+                + f' Not Authorized: {ex}')
+        raise
+
+    return _find_gid_from_name(projects, 'project', proj_name, proj_gid)
+
+
+
+def get_section_gid_from_name(proj_or_utl_gid, sect_name, sect_gid=None):
+    """
+    This will get the section gid from the name.  It will confirm the name is
+    unique.  If a gid is provided, it will confirm it also matches.
+
+    Args:
+      proj_or_utl_gid (int): The gid of the project for which to get sections.
+        Through empirical testing and noted as a 'trick' on dev forums, the
+        user task list gid (not 'me') can be used to get the sections of that.
+      sect_name (str): The name of the section to retrieve.
+      sect_gid (int): Over-defines search.  The GID that should match the
+        section name.  Can be omitted if only using name.  Useful to confirm
+        gid and name match.
+
+    Returns:
+      (int): The only gid that matches this section name.
+
+    Raises:
+      (asana.error.NoAuthorizationError): Personal access token was missing or
+        invalid.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    client = _get_client()
+    try:
+        sections = client.sections.get_sections_for_project(proj_or_utl_gid)
+    except asana.error.NoAuthorizationError as ex:
+        logger.error('Failed to access API in get_section_gid_from_name() -'
+                + f' Not Authorized: {ex}')
+        raise
+
+    return _find_gid_from_name(sections, 'section', sect_name, sect_gid)
+
+
+
 def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
     """
     Gets the "project ID" for the user task list, either by "me" or a specific
@@ -221,3 +295,34 @@ def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
         raise
 
     return int(utl_data['gid'])
+
+
+
+def get_section_gids_in_project_or_utl(proj_or_utl_gid):
+    """
+    This gets the list of section gids in a project or user task list.
+
+    Args:
+      proj_or_utl_gid (int): The gid of the project for which to get sections.
+        Through empirical testing and noted as a 'trick' on dev forums, the
+        user task list gid (not 'me') can be used to get the sections of that.
+
+    Returns:
+      ([int]): The list of gids of sections in the given project or user task
+        list.
+
+    Raises:
+      (asana.error.NoAuthorizationError): Personal access token was missing or
+        invalid.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    client = _get_client()
+    try:
+        sections = client.sections.get_sections_for_project(proj_or_utl_gid)
+    except asana.error.NoAuthorizationError as ex:
+        logger.error('Failed to access API in'
+                + ' get_section_gids_in_project_or_utl() -'
+                + f' Not Authorized: {ex}')
+        raise
+
+    return [int(s['gid']) for s in sections]
