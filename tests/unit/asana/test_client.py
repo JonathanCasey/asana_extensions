@@ -86,6 +86,33 @@ def fixture_project_test():
 
 
 
+@pytest.fixture(name='section_test', scope='session')
+def fixture_section_test(project_test):
+    """
+    Creates a test section and returns the dict of data that should match the
+    'data' element returned by the API.
+
+    Will delete the section once done with all tests.
+
+    ** Consumes 3 API calls. **
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    sect_name = tester_data._SECTION_TEMPLATE.substitute({'sid': uuid.uuid4()})
+    client = aclient._get_client()
+    me_data = aclient._get_me()
+    params = {
+        'name': sect_name,
+        'owner': me_data['gid'],
+    }
+    sect_data = client.sections.create_section_for_project(project_test['gid'],
+            params)
+
+    yield sect_data
+
+    client.sections.delete_section(sect_data['gid'])
+
+
+
 def test__get_client(monkeypatch):
     """
     Tests the `_get_client()` method.
@@ -309,6 +336,61 @@ def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
     assert caplog.record_tuples == [
             ('asana_extensions.asana.client', logging.ERROR,
                 "Failed to access API in get_project_gid_from_name() - Not"
+                + " Authorized: No Authorization"),
+    ]
+
+
+
+def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
+        section_test, raise_no_authorization_error):
+    """
+    Tests the `get_section_gid_from_name()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 2 API calls. **
+    (varies depending on data size, but only 2 calls intended)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.ERROR)
+
+    # Sanity check that this works with an actual project
+    try:
+        sect_gid = aclient.get_section_gid_from_name(project_test['gid'],
+                section_test['name'], section_test['gid'])
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    assert sect_gid == section_test['gid']
+
+    # To ensure compatible with _extract_gid_from_name(), validate data format
+    client = aclient._get_client()
+    sections = client.sections.get_sections_for_project(project_test['gid'])
+    section = next(sections)
+    assert 'gid' in section
+    assert 'name' in section
+    assert 'resource_type' in section
+
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    monkeypatch.setattr(client.sections, 'get_sections_for_project',
+            raise_no_authorization_error)
+
+    caplog.clear()
+    with pytest.raises(asana.error.NoAuthorizationError):
+        aclient.get_section_gid_from_name(project_test['gid'],
+                section_test['name'])
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Failed to access API in get_section_gid_from_name() - Not"
                 + " Authorized: No Authorization"),
     ]
 
