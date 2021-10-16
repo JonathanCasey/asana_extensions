@@ -370,7 +370,7 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     caplog.set_level(logging.ERROR)
 
-    # Sanity check that this works with an actual project
+    # Sanity check that this works with an actual section
     try:
         sect_gid = aclient.get_section_gid_from_name(project_test['gid'],
                 section_in_project_test['name'], section_in_project_test['gid'])
@@ -469,4 +469,50 @@ def test_get_user_task_list_gid(monkeypatch, caplog,
             ('asana_extensions.asana.client', logging.ERROR,
                 "Could not find requested data in get_user_task_list_gid():"
                 + " Not Found"),
+    ]
+
+
+
+def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
+        section_in_project_test, raise_no_authorization_error):
+    """
+    Tests the `get_section_gids_in_project_or_utl()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 1 API call. **
+    (varies depending on data size, but only 1 call intended)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.ERROR)
+
+    try:
+        sect_gids = aclient.get_section_gids_in_project_or_utl(
+                project_test['gid'])
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    assert int(section_in_project_test['gid']) in sect_gids
+
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    client = aclient._get_client()
+    monkeypatch.setattr(client.sections, 'get_sections_for_project',
+            raise_no_authorization_error)
+
+    caplog.clear()
+    with pytest.raises(asana.error.NoAuthorizationError):
+        aclient.get_section_gids_in_project_or_utl(project_test['gid'])
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Failed to access API in get_section_gids_in_project_or_utl() -"
+                + " Not Authorized: No Authorization"),
     ]
