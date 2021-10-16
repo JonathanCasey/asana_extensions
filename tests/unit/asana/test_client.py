@@ -15,6 +15,7 @@ Module Attributes:
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
 import logging
+import uuid
 
 import asana
 import pytest
@@ -55,6 +56,33 @@ def fixture_raise_not_found_error():
         raise asana.error.NotFoundError()
 
     return mock_raise
+
+
+
+@pytest.fixture(name='project_test', scope='session')
+def fixture_project_test():
+    """
+    Creates a test project and returns the dict of data that should match the
+    'data' element returned by the API.
+
+    Will delete the project once done with all tests.
+
+    ** Consumes 3 API calls. **
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    proj_name = tester_data._PROJECT_TEMPLATE.substitute({'pid': uuid.uuid4()})
+    client = aclient._get_client()
+    ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+    me_data = aclient._get_me()
+    params = {
+        'name': proj_name,
+        'owner': me_data['gid'],
+    }
+    proj_data = client.projects.create_project_for_workspace(ws_gid, params)
+
+    yield proj_data
+
+    client.projects.delete_project(proj_data['gid'])
 
 
 
@@ -226,6 +254,61 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
     assert caplog.record_tuples == [
             ('asana_extensions.asana.client', logging.ERROR,
                 "Failed to access API in get_workspace_gid_from_name() - Not"
+                + " Authorized: No Authorization"),
+    ]
+
+
+
+def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
+        raise_no_authorization_error):
+    """
+    Tests the `get_project_gid_from_name()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 3 API calls. **
+    (varies depending on data size, but only 3 calls intended)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.ERROR)
+
+    try:
+        ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    # Sanity check that this works with an actual project
+    proj_gid = aclient.get_project_gid_from_name(ws_gid, project_test['name'],
+            project_test['gid'])
+    assert proj_gid == project_test['gid']
+
+    # To ensure compatible with _extract_gid_from_name(), validate data format
+    client = aclient._get_client()
+    projects = client.projects.get_projects({'workspace': ws_gid})
+    project = next(projects)
+    assert 'gid' in project
+    assert 'name' in project
+    assert 'resource_type' in project
+
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    monkeypatch.setattr(client.projects, 'get_projects',
+            raise_no_authorization_error)
+
+    caplog.clear()
+    with pytest.raises(asana.error.NoAuthorizationError):
+        aclient.get_project_gid_from_name(ws_gid, project_test['name'])
+    assert caplog.record_tuples == [
+            ('asana_extensions.asana.client', logging.ERROR,
+                "Failed to access API in get_project_gid_from_name() - Not"
                 + " Authorized: No Authorization"),
     ]
 
