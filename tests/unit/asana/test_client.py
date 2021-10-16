@@ -67,6 +67,11 @@ def fixture_project_test():
 
     Will delete the project once done with all tests.
 
+    This is not being used with the autouse keyword so that, if running tests
+    that do not require this project fixture, they can run more optimally
+    without the need to needlessly create and delete this project.  (Also,
+    could not figure out how to get rid of all syntax and pylint errors).
+
     ** Consumes 3 API calls. **
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
@@ -93,6 +98,11 @@ def fixture_section_test(project_test):
     'data' element returned by the API.
 
     Will delete the section once done with all tests.
+
+    This is not being used with the autouse keyword so that, if running tests
+    that do not require this section fixture, they can run more optimally
+    without the need to needlessly create and delete this section.  (Also,
+    could not figure out how to get rid of all syntax and pylint errors).
 
     ** Consumes 3 API calls. **
     """
