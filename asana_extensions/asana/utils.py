@@ -72,13 +72,15 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
         and exclude args are None.
 
     Returns:
-      (set(int)): The resulting set of section gids to include from the project.
+      ({int}): The resulting set of section gids to include from the project.
 
     Raises:
       (DataConflictError): Raised if any gid (or gid derived from name) is
         explicitly both included and excluded.
       (DataMissingError): Raised if any gid (or gid derived from name) is
         explicitly included but is missing from the project.
+
+      This will pass up unhandled client exceptions.
     """
     include_sect_names = include_sect_names or []
     include_sect_gids = include_sect_gids or []
@@ -101,9 +103,9 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
     }
 
     if include_gids - project_section_gids:
-        missing_gids = include_gids - project_section_gids
-        missing_names = [gids_to_names[g] for g in missing_gids
-                if g in gids_to_names]
+        missing_gids = [str(g) for g in include_gids - project_section_gids]
+        missing_names = [gids_to_names[int(g)] for g in missing_gids
+                if int(g) in gids_to_names]
         err_msg = 'Section names/gids explicitly included are missing from' \
                 + ' project/user task list.'
         err_msg += ' Check gids (some may not be explicitly in list if' \
@@ -113,11 +115,11 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
         raise DataMissingError(err_msg)
 
     if exclude_gids - project_section_gids:
-        missing_gids = exclude_gids - project_section_gids
-        missing_names = [gids_to_names[g] for g in missing_gids
-                if g in gids_to_names]
+        missing_gids = [str(g) for g in exclude_gids - project_section_gids]
+        missing_names = [gids_to_names[int(g)] for g in missing_gids
+                if int(g) in gids_to_names]
         warn_msg = 'Section names/gids explicitly excluded are missing from' \
-                + ' project/user task list.  This may be unintentional.'
+                + ' project/user task list. This may be unintentional.'
         warn_msg += ' Check gids (some may not be explicitly in list if' \
                 + f' provided by name): {", ".join(missing_gids)}.'
         if missing_names:
@@ -125,9 +127,9 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
         logger.warning(warn_msg)
 
     if include_gids & exclude_gids:
-        conflicting_gids = include_gids & exclude_gids
-        conflicting_names = [gids_to_names[g] for g in conflicting_gids
-                if g in gids_to_names]
+        conflicting_gids = [str(g) for g in include_gids & exclude_gids]
+        conflicting_names = [gids_to_names[int(g)] for g in conflicting_gids
+                if int(g) in gids_to_names]
         err_msg = 'Explicit section names/gids cannot be simultaneously' \
                 + ' included and excluded.'
         err_msg += ' Check gids (some may not be explicitly in list if' \
