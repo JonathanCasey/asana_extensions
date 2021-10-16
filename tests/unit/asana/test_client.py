@@ -91,8 +91,8 @@ def fixture_project_test():
 
 
 
-@pytest.fixture(name='section_test', scope='session')
-def fixture_section_test(project_test):
+@pytest.fixture(name='section_in_project_test', scope='session')
+def fixture_section_in_project_test(project_test):
     """
     Creates a test section and returns the dict of data that should match the
     'data' element returned by the API.
@@ -352,7 +352,7 @@ def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
 
 
 def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
-        section_test, raise_no_authorization_error):
+        section_in_project_test, raise_no_authorization_error):
     """
     Tests the `get_section_gid_from_name()` method.
 
@@ -373,14 +373,14 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     # Sanity check that this works with an actual project
     try:
         sect_gid = aclient.get_section_gid_from_name(project_test['gid'],
-                section_test['name'], section_test['gid'])
+                section_in_project_test['name'], section_in_project_test['gid'])
     except aclient.DataNotFoundError as ex:
         # This is an error with the tester, not the module under test
         raise TesterNotInitializedError('Cannot run unit tests: Must create a'
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    assert sect_gid == section_test['gid']
+    assert sect_gid == section_in_project_test['gid']
 
     # To ensure compatible with _extract_gid_from_name(), validate data format
     client = aclient._get_client()
@@ -397,7 +397,7 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     caplog.clear()
     with pytest.raises(asana.error.NoAuthorizationError):
         aclient.get_section_gid_from_name(project_test['gid'],
-                section_test['name'])
+                section_in_project_test['name'])
     assert caplog.record_tuples == [
             ('asana_extensions.asana.client', logging.ERROR,
                 "Failed to access API in get_section_gid_from_name() - Not"
