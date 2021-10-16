@@ -9,7 +9,13 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+import logging
+
 from asana_extensions.asana import client as aclient
+
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -21,7 +27,17 @@ class DataConflictError(Exception):
 
 
 
-def get_net_include_section_gids(proj_or_utl_gid,
+class DataMissingError(Exception):
+    """
+    Raised when there is data that is explicitly specified and expected to
+    exist but it ultimately does not exist; and this data being missing is
+    likely a critical error.
+    """
+
+
+
+def get_net_include_section_gids(              # pylint: disable=too-many-locals
+        proj_or_utl_gid,
         include_sect_names=None, include_sect_gids=None,
         exclude_sect_names=None, exclude_sect_gids=None,
         default_to_include=True):
@@ -61,6 +77,8 @@ def get_net_include_section_gids(proj_or_utl_gid,
     Raises:
       (DataConflictError): Raised if any gid (or gid derived from name) is
         explicitly both included and excluded.
+      (DataMissingError): Raised if any gid (or gid derived from name) is
+        explicitly included but is missing from the project.
     """
     include_sect_names = include_sect_names or []
     include_sect_gids = include_sect_gids or []
@@ -77,18 +95,41 @@ def get_net_include_section_gids(proj_or_utl_gid,
 
     include_gids = set(include_sect_gids_from_names) | set(include_sect_gids)
     exclude_gids = set(exclude_sect_gids_from_names) | set(exclude_sect_gids)
+    gids_to_names = {
+        **include_sect_gids_from_names,
+        **exclude_sect_gids_from_names,
+    }
+
+    if include_gids - project_section_gids:
+        missing_gids = include_gids - project_section_gids
+        missing_names = [gids_to_names[g] for g in missing_gids
+                if g in gids_to_names]
+        err_msg = 'Section names/gids explicitly included are missing from' \
+                + ' project/user task list.'
+        err_msg += ' Check gids (some may not be explicitly in list if' \
+                + f' provided by name): {", ".join(missing_gids)}.'
+        if missing_names:
+            err_msg += f' Also check names: `{"`, `".join(missing_names)}`.'
+        raise DataMissingError(err_msg)
+
+    if exclude_gids - project_section_gids:
+        missing_gids = exclude_gids - project_section_gids
+        missing_names = [gids_to_names[g] for g in missing_gids
+                if g in gids_to_names]
+        warn_msg = 'Section names/gids explicitly excluded are missing from' \
+                + ' project/user task list.  This may be unintentional.'
+        warn_msg += ' Check gids (some may not be explicitly in list if' \
+                + f' provided by name): {", ".join(missing_gids)}.'
+        if missing_names:
+            warn_msg += f' Also check names: `{"`, `".join(missing_names)}`.'
+        logger.warning(warn_msg)
 
     if include_gids & exclude_gids:
         conflicting_gids = include_gids & exclude_gids
-        conflicting_names = []
-        for gid in conflicting_gids:
-            if gid in include_sect_gids_from_names:
-                conflicting_names.append(include_sect_gids_from_names)
-                continue
-            if gid in exclude_sect_gids_from_names:
-                conflicting_names.append(exclude_sect_gids_from_names)
-        err_msg = 'Explicit names/gids cannot be simultaneously included and' \
-                + ' excluded.'
+        conflicting_names = [gids_to_names[g] for g in conflicting_gids
+                if g in gids_to_names]
+        err_msg = 'Explicit section names/gids cannot be simultaneously' \
+                + ' included and excluded.'
         err_msg += ' Check gids (some may not be explicitly in list if' \
                 + f' provided by name): {", ".join(conflicting_gids)}.'
         if conflicting_names:
