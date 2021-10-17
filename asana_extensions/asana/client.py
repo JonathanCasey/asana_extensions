@@ -8,6 +8,7 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+from functools import wraps
 import logging
 
 import asana
@@ -44,6 +45,34 @@ class MismatchedDataError(Exception):
 
 
 
+def asana_error_handler(f):
+    """
+    Decorator that handles all `AsanaError`s that can occur.  Intended to be
+    used to wrap all methods here that are wrappers themselves for API calls.
+    This assumes those methods are not handling the errors; but they always
+    have the option to add a try/except to catch any specific errors and handle
+    them differently.
+
+    Use this with @asana_error_handler prior to function def.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        """
+        Wrapping code to execute when function f is called, passing thru any/all
+        args.
+        """
+        try:
+            return f(*args, **kwargs)
+        except asana.error.AsanaError as ex:
+            logger.error(f'API query failed in {f.__module__}.{f.__name__}():'
+                    + f' [{ex.status}] {ex.message}')
+            raise
+
+    wrapper._is_wrapped_by_asana_error_handler = True #pylint: disable=protected-access
+    return wrapper
+
+
+
 def _get_client():
     """
     Ensures the client is initialized and ready for use.
@@ -66,6 +95,7 @@ def _get_client():
 
 
 
+@asana_error_handler
 def _get_me():
     """
     Gets the data for 'me' (self) user.
@@ -78,17 +108,12 @@ def _get_me():
         full schema here: https://developers.asana.com/docs/user
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        return client.users.me()
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in _get_me() - Not Authorized:'
-                + f' {ex}')
-        raise
+    return client.users.me()
 
 
 
@@ -143,6 +168,7 @@ def _find_gid_from_name(data, resource_type, name, expected_gid=None):
 
 
 
+@asana_error_handler
 def get_workspace_gid_from_name(ws_name, ws_gid=None):
     """
     This will get the workspace gid from the name.  It will confirm the name is
@@ -159,22 +185,17 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
       (int): The only gid that matches this workspace name.
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        workspaces = client.workspaces.get_workspaces()
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in get_workspace_gid_from_name() -'
-                + f' Not Authorized: {ex}')
-        raise
-
+    workspaces = client.workspaces.get_workspaces()
     return _find_gid_from_name(workspaces, 'workspace', ws_name, ws_gid)
 
 
 
+@asana_error_handler
 def get_project_gid_from_name(ws_gid, proj_name, proj_gid=None, archived=False):
     """
     This will get the project gid from the name.  It will confirm the name is
@@ -193,8 +214,8 @@ def get_project_gid_from_name(ws_gid, proj_name, proj_gid=None, archived=False):
       (int): The only gid that matches this project name.
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     params = {
@@ -204,17 +225,12 @@ def get_project_gid_from_name(ws_gid, proj_name, proj_gid=None, archived=False):
         params['archived'] = archived
 
     client = _get_client()
-    try:
-        projects = client.projects.get_projects(params)
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in get_project_gid_from_name() -'
-                + f' Not Authorized: {ex}')
-        raise
-
+    projects = client.projects.get_projects(params)
     return _find_gid_from_name(projects, 'project', proj_name, proj_gid)
 
 
 
+@asana_error_handler
 def get_section_gid_from_name(proj_or_utl_gid, sect_name, sect_gid=None):
     """
     This will get the section gid from the name.  It will confirm the name is
@@ -233,22 +249,17 @@ def get_section_gid_from_name(proj_or_utl_gid, sect_name, sect_gid=None):
       (int): The only gid that matches this section name.
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        sections = client.sections.get_sections_for_project(proj_or_utl_gid)
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in get_section_gid_from_name() -'
-                + f' Not Authorized: {ex}')
-        raise
-
+    sections = client.sections.get_sections_for_project(proj_or_utl_gid)
     return _find_gid_from_name(sections, 'section', sect_name, sect_gid)
 
 
 
+@asana_error_handler
 def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
     """
     Gets the "project ID" for the user task list, either by "me" or a specific
@@ -266,10 +277,9 @@ def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
       (int): The gid of the user task list for the provided user.
 
     Raises:
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
       (AssertionError): Invalid data.
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
-      (asana.error.NotFoundError): Invalid/inaccessible user gid provided.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     assert is_me ^ (user_gid is not None), 'Must provide `is_me` or' \
@@ -283,22 +293,13 @@ def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
     }
 
     client = _get_client()
-    try:
-        utl_data = client.user_task_lists.get_user_task_list_for_user(
-                str(user_gid), params)
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in get_user_task_list_gid() -'
-                + f' Not Authorized: {ex}')
-        raise
-    except asana.error.NotFoundError as ex:
-        logger.error('Could not find requested data'
-                + f' in get_user_task_list_gid(): {ex}')
-        raise
-
+    utl_data = client.user_task_lists.get_user_task_list_for_user(
+            str(user_gid), params)
     return int(utl_data['gid'])
 
 
 
+@asana_error_handler
 def get_section_gids_in_project_or_utl(proj_or_utl_gid):
     """
     This gets the list of section gids in a project or user task list.
@@ -313,17 +314,10 @@ def get_section_gids_in_project_or_utl(proj_or_utl_gid):
         list.
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        sections = client.sections.get_sections_for_project(proj_or_utl_gid)
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in'
-                + ' get_section_gids_in_project_or_utl() -'
-                + f' Not Authorized: {ex}')
-        raise
-
+    sections = client.sections.get_sections_for_project(proj_or_utl_gid)
     return [int(s['gid']) for s in sections]

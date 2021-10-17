@@ -119,6 +119,33 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       "me" ([#10][]).
 - [Added] Added method to get the list of sections (as gids) in a project or
       user task list ([#10][]).
+- [Added] `@asana_error_handler` decorator added to wrap exception handling
+      for asana API requests (just logs and raises) ([#25][]).
+  - Adds a `_is_wrapped_by_asana_error_handler` to function for test purposes.
+- [Changed] All functions that make API requests directly now decorated with
+      `@asana_error_handler` and all existing relevant exception handling
+      removed from those functions ([#25][]).
+
+##### Unit Tests
+- [Changed] `fixture_raise_no_authorization_error` and
+      `fixture_raise_not_found_error` removed in favor of a general
+      `fixture_raise_asana_error` ([#25][]).
+  - Uses an `asana_error_data` pytest marker to allow customization of
+        exception by test using it.
+- [Changed] `fixture_section_in_project_test` is now
+      `fixture_sections_in_project_test`, supports 2 sections ([#25][]).
+  - This also means it now returns a list of dicts.  Relevant tests updated.
+- [Added] `subtest_asana_error_handler_func()` added, intended to be called in
+      test of every function decorated with `@asana_error_handler` ([#25][]).
+  - Test cases for these functions updated to call this new method in
+        combination with `asana_error_data` pytest marker.
+- [Added] `test_asana_error_handler()` added for direct test of decorator
+      ([#25][]).
+- [Added] `test_dec_usage_asana_error_handler()` added for simple parametrized
+      testing of all functions decorated with `@asana_error_handler` to ensure
+      they are decorated as expected ([#25][]).
+- [Added] `test_pagination` added to ensure pagination does not cause any issues
+      with this project (really an integration test) ([#25][]).
 
 
 ### Asana: Utils
@@ -223,6 +250,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#12][]
 - [#13][]
 - [#16][]
+- [#25][]
 - [#27][]
 
 #### PRs
@@ -234,6 +262,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#17][] for [#16][]
 - [#26][] for [#10][]
 - [#29][] for [#27][]
+- [#30][] for [#25][]
 
 
 ---
@@ -250,6 +279,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#16]: https://github.com/JonathanCasey/asana_extensions/issues/16 'Issue #16'
 [#10]: https://github.com/JonathanCasey/asana_extensions/issues/10 'Issue #10'
 [#27]: https://github.com/JonathanCasey/asana_extensions/issues/27 'Issue #27'
+[#25]: https://github.com/JonathanCasey/asana_extensions/issues/25 'Issue #25'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -259,3 +289,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#17]: https://github.com/JonathanCasey/asana_extensions/pull/17 'PR #17'
 [#26]: https://github.com/JonathanCasey/asana_extensions/pull/26 'PR #26'
 [#29]: https://github.com/JonathanCasey/asana_extensions/pull/29 'PR #29'
+[#30]: https://github.com/JonathanCasey/asana_extensions/pull/30 'PR #30'
