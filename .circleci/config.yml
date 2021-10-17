@@ -13,6 +13,9 @@ workflows:
       - pylint-ci_support:
           context:
             - docker-hub-creds
+      - pylint-conftest:
+          context:
+            - docker-hub-creds
       - init-py-checker:
           context:
             - docker-hub-creds
@@ -117,6 +120,18 @@ jobs:
           command: |
             . venv/bin/activate
             python -m pylint ci_support
+  pylint-conftest:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run pylint
+          command: |
+            . venv/bin/activate
+            python -m pylint conftest
   init-py-checker:
     <<: *default_python_image
     steps:
@@ -148,6 +163,7 @@ jobs:
           command: |
             . venv/bin/activate
             pytest --cov-report=xml --cov=asana_extensions
+            pytest --cov-report=xml --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
       - run:
           name: Upload coverage results
           command: |

@@ -65,6 +65,26 @@ Note that some test WILL make API calls, so it will count against any rate
 limiting or quotas.
 
 
+### Asana account
+This does access Asana to ensure full compatibility.  The API calls are limited
+where reasonable, but it always does some API calls to ensure this will work
+when deployed.
+
+Some setup items are required.  For the account associated with the personal
+access token used in `.secrets.conf` / CircleCI, the following must be done
+once before the first tests are run:
+- Create a workspace named `TEST Asana Extensions`
+
+Running tests will create and delete projects, sections, and tasks starting
+with `TEST` and ending in a UUID.  If there is a critical tester error, some of
+these may remain.  If confident that no tests are running, any remaining items
+can be deleted to keep workspace empty.
+
+If these docs are out of date, the data in `/tests/unit/asana/tester_data.py`
+holds all of these constants.  The exceptions raised when running relevant tests
+will also provided guidance on what is required.
+
+
 
 # Usage
 
@@ -85,5 +105,12 @@ run.  In short, this is largely running from the repo root:
 ```
 python -m pylint asana_extensions
 python -m pylint tests
+python -m pylint ci_support
+python -m pylint conftest
 pytest --cov=asana_extensions
+pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
 ```
+
+When running `pytest` without the `-p no:warnings` option, the warnings provided
+may be from `pytest`, but may also be from other packages, such as deprecation
+warnings from `asana`.
