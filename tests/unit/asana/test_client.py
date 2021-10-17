@@ -83,35 +83,43 @@ def fixture_project_test():
 
 
 
-@pytest.fixture(name='section_in_project_test', scope='session')
-def fixture_section_in_project_test(project_test):
+@pytest.fixture(name='sections_in_project_test', scope='session')
+def fixture_sections_in_project_test(project_test):
     """
-    Creates a test section and returns the dict of data that should match the
-    'data' element returned by the API.
+    Creates some test sections and returns a list of them, each of which is the
+    dict of data that should match the 'data' element returned by the API.
 
-    Will delete the section once done with all tests.
+    Will delete the sections once done with all tests.
 
     This is not being used with the autouse keyword so that, if running tests
     that do not require this section fixture, they can run more optimally
     without the need to needlessly create and delete this section.  (Also,
     could not figure out how to get rid of all syntax and pylint errors).
 
-    ** Consumes 3 API calls. **
+    ** Consumes 5 API calls. **
+    (API call count is 2*num_sects + 1)
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    sect_name = tester_data._SECTION_TEMPLATE.substitute({'sid': uuid.uuid4()})
+    num_sects = 2
     client = aclient._get_client()
     me_data = aclient._get_me()
-    params = {
-        'name': sect_name,
-        'owner': me_data['gid'],
-    }
-    sect_data = client.sections.create_section_for_project(project_test['gid'],
-            params)
 
-    yield sect_data
+    sect_data_list = []
+    for _ in range(num_sects):
+        sect_name = tester_data._SECTION_TEMPLATE.substitute(
+                {'sid': uuid.uuid4()})
+        params = {
+            'name': sect_name,
+            'owner': me_data['gid'],
+        }
+        sect_data = client.sections.create_section_for_project(
+                project_test['gid'], params)
+        sect_data_list.append(sect_data)
 
-    client.sections.delete_section(sect_data['gid'])
+    yield sect_data_list
+
+    for i in range(num_sects):
+        client.sections.delete_section(sect_data_list[i]['gid'])
 
 
 
@@ -425,7 +433,7 @@ def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
 
 @pytest.mark.asana_error_data.with_args(asana.error.InvalidTokenError)
 def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
-        section_in_project_test, raise_asana_error):
+        sections_in_project_test, raise_asana_error):
     """
     Tests the `get_section_gid_from_name()` method.
 
@@ -442,6 +450,9 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     caplog.set_level(logging.ERROR)
+
+    # Only need 1 section
+    section_in_project_test = sections_in_project_test[0]
 
     # Sanity check that this works with an actual section
     try:
@@ -526,7 +537,7 @@ def test_get_user_task_list_gid(monkeypatch, caplog, raise_asana_error):
 
 @pytest.mark.asana_error_data.with_args(asana.error.InvalidRequestError)
 def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
-        section_in_project_test, raise_asana_error):
+        sections_in_project_test, raise_asana_error):
     """
     Tests the `get_section_gids_in_project_or_utl()` method.
 
@@ -543,6 +554,9 @@ def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     caplog.set_level(logging.ERROR)
+
+    # Only need 1 section
+    section_in_project_test = sections_in_project_test[0]
 
     try:
         sect_gids = aclient.get_section_gids_in_project_or_utl(
@@ -562,3 +576,23 @@ def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
             raise_asana_error)
     subtest_asana_error_handler_func(caplog, asana.error.InvalidRequestError, 0,
             aclient.get_section_gids_in_project_or_utl, project_test['gid'])
+
+
+
+def test_pagination(project_test, sections_in_project_test):
+    """
+    Tests compatibility with `asana` package to ensure that any pagination is
+    handled in a way that is compatible with how this project expects it.
+
+    ** Consumes at least 2 API calls. **
+    (varies depending on data size, but only 2 calls intended)
+    """
+    client = aclient._get_client()
+    client.options['page_size'] = 1
+
+    sect_gids = aclient.get_section_gids_in_project_or_utl(project_test['gid'])
+
+    # Should match exactly, but other tests may have added more sects to server
+    assert len(sect_gids) >= len(sections_in_project_test)
+    for sect in sections_in_project_test:
+        assert int(sect['gid']) in sect_gids
