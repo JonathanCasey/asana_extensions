@@ -47,6 +47,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       using `--run-no-warnings-only`, appending cov report ([#10][]).
 - [Changed] `lint-and-test` workflow split into separate `lint` and `test`
       workflows to more easily see results separately on GitHub ([#27][]).
+- [Changed] Codecov uploader migrated from deprecated bash uploader to new
+      uploader ([#28][]).
 
 
 ### Project & Toolchain: CI Support
@@ -252,6 +254,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#16][]
 - [#25][]
 - [#27][]
+- [#28][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -263,6 +266,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#26][] for [#10][]
 - [#29][] for [#27][]
 - [#30][] for [#25][]
+- [#31][] for [#28][]
 
 
 ---
@@ -280,6 +284,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#10]: https://github.com/JonathanCasey/asana_extensions/issues/10 'Issue #10'
 [#27]: https://github.com/JonathanCasey/asana_extensions/issues/27 'Issue #27'
 [#25]: https://github.com/JonathanCasey/asana_extensions/issues/25 'Issue #25'
+[#28]: https://github.com/JonathanCasey/asana_extensions/issues/28 'Issue #28'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -290,3 +295,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#26]: https://github.com/JonathanCasey/asana_extensions/pull/26 'PR #26'
 [#29]: https://github.com/JonathanCasey/asana_extensions/pull/29 'PR #29'
 [#30]: https://github.com/JonathanCasey/asana_extensions/pull/30 'PR #30'
+[#31]: https://github.com/JonathanCasey/asana_extensions/pull/31 'PR #31'
