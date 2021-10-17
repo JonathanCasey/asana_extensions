@@ -103,7 +103,7 @@ python -m pylint tests
 python -m pylint ci_support
 python -m pylint conftest
 pytest --cov=asana_extensions
-pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warning
+pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
 ```
 
 When running `pytest` without the `-p no:warnings` option, the warnings provided

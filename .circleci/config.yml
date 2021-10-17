@@ -163,7 +163,7 @@ jobs:
           command: |
             . venv/bin/activate
             pytest --cov-report=xml --cov=asana_extensions
-            pytest --cov-report=xml --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warning
+            pytest --cov-report=xml --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
       - run:
           name: Upload coverage results
           command: |
