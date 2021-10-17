@@ -68,11 +68,7 @@ def asana_error_handler(f):
                     + f' [{ex.status}] {ex.message}')
             raise
 
-    setattr(wrapper, f'_is_wrapped_by_{wrapper.__qualname__}', True)
-    wrapper._is_wrapped_by_asana_error_handler = True
-    if not hasattr(wrapper, '_wrapped_by'):
-        wrapper._wrapped_by = []
-    wrapper._wrapped_by.append('asana_error_handler')
+    wrapper._is_wrapped_by_asana_error_handler = True #pylint: disable=protected-access
     return wrapper
 
 

@@ -124,6 +124,38 @@ def fixture_section_in_project_test(project_test):
 
 
 
+def subtest_asana_error_handler_func(caplog, exception_type, log_index, func,
+        *args, **kwargs):
+    """
+    Executes a subtest to confirm `@asana_error_handler` is properly decorating
+    the given function.  This allows test for the given functions to setup
+    anything function-specific required prior to running these same tests steps.
+
+    Expected to be called by every function that uses the `@asana_error_handler`
+    decorator.
+
+    Args:
+      caplog (Caplog): The caplog fixture from the pytest test.
+      exception_type (AsanaError): The exact exception type that is expected to
+        be caught.  Can be as generic as `AsanaError`, but testing for something
+        more specific is better to improve coverage.
+      log_index (int): The index to check in caplog for the desired exception
+        log message.
+      func (function): The reference to the function to call to test.
+      *args ([any]): The positional arguments to pass to the function to test
+        `func`.
+      **kwargs ({str:any}): The keyword arguments to pass to teh function to
+        test `func`.
+    """
+    caplog.clear()
+    with pytest.raises(exception_type):
+        func(*args, **kwargs)
+    assert caplog.record_tuples[log_index][0] == 'asana_extensions.asana.client'
+    assert caplog.record_tuples[log_index][1] == logging.ERROR
+    assert 'API query failed' in caplog.messages[log_index]
+
+
+
 @pytest.mark.no_warnings_only
 def test_logging_capture_warnings(caplog):
     """
@@ -211,15 +243,10 @@ def test__get_me(monkeypatch, caplog):
         }
 
     # Function-specific practical test of @asana_error_handler
-    caplog.clear()
     monkeypatch.delattr(aclient._get_client, 'client')
     monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient._get_me()
-    assert caplog.record_tuples[0][0] == 'asana_extensions.asana.client'
-    assert caplog.record_tuples[0][1] == logging.ERROR
-    assert 'API query failed' in caplog.messages[0]
-    assert '[401]' in caplog.messages[0]
+    subtest_asana_error_handler_func(caplog, asana.error.NoAuthorizationError,
+            0, aclient._get_me)
 
 
 
