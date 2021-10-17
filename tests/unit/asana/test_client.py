@@ -198,6 +198,10 @@ def test_asana_error_handler(caplog):
 @pytest.mark.parametrize('func_name', [
     '_get_me',
     'get_workspace_gid_from_name',
+    'get_project_gid_from_name',
+    'get_section_gid_from_name',
+    'get_user_task_list_gid',
+    'get_section_gids_in_project_or_utl',
 ])
 def test_dec_usage_asana_error_handler(func_name):
     """
@@ -328,8 +332,7 @@ def test__find_gid_from_name(caplog):
 
 
 @pytest.mark.asana_error_data.with_args(asana.error.ForbiddenError)
-def test_get_workspace_gid_from_name(monkeypatch, caplog,
-        raise_asana_error):
+def test_get_workspace_gid_from_name(monkeypatch, caplog, raise_asana_error):
     """
     Tests the `get_workspace_gid_from_name()` method.
 
@@ -363,16 +366,17 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
     assert 'name' in workspace
     assert 'resource_type' in workspace
 
+    # Function-specific practical test of @asana_error_handler
     # Need to monkeypatch cached client since class dynamically creates attrs
     monkeypatch.setattr(client.workspaces, 'get_workspaces', raise_asana_error)
-
     subtest_asana_error_handler_func(caplog, asana.error.ForbiddenError, 0,
             aclient.get_workspace_gid_from_name, 'one and only')
 
 
 
+@pytest.mark.asana_error_data.with_args(asana.error.NotFoundError)
 def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
-        raise_no_authorization_error):
+        raise_asana_error):
     """
     Tests the `get_project_gid_from_name()` method.
 
@@ -411,23 +415,17 @@ def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
     assert 'name' in project
     assert 'resource_type' in project
 
+    # Function-specific practical test of @asana_error_handler
     # Need to monkeypatch cached client since class dynamically creates attrs
-    monkeypatch.setattr(client.projects, 'get_projects',
-            raise_no_authorization_error)
-
-    caplog.clear()
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient.get_project_gid_from_name(ws_gid, project_test['name'])
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in get_project_gid_from_name() - Not"
-                + " Authorized: No Authorization"),
-    ]
+    monkeypatch.setattr(client.projects, 'get_projects', raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.NotFoundError, 0,
+            aclient.get_project_gid_from_name, ws_gid, project_test['name'])
 
 
 
+@pytest.mark.asana_error_data.with_args(asana.error.InvalidTokenError)
 def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
-        section_in_project_test, raise_no_authorization_error):
+        section_in_project_test, raise_asana_error):
     """
     Tests the `get_section_gid_from_name()` method.
 
@@ -465,24 +463,18 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     assert 'name' in section
     assert 'resource_type' in section
 
+    # Function-specific practical test of @asana_error_handler
     # Need to monkeypatch cached client since class dynamically creates attrs
     monkeypatch.setattr(client.sections, 'get_sections_for_project',
-            raise_no_authorization_error)
-
-    caplog.clear()
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient.get_section_gid_from_name(project_test['gid'],
-                section_in_project_test['name'])
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in get_section_gid_from_name() - Not"
-                + " Authorized: No Authorization"),
-    ]
+            raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.InvalidTokenError, 0,
+            aclient.get_section_gid_from_name, project_test['gid'],
+            section_in_project_test['name'])
 
 
 
-def test_get_user_task_list_gid(monkeypatch, caplog,
-        raise_no_authorization_error, raise_not_found_error):
+@pytest.mark.asana_error_data.with_args(asana.error.ServerError)
+def test_get_user_task_list_gid(monkeypatch, caplog, raise_asana_error):
     """
     Tests the `get_user_task_list_gid()` method.
 
@@ -522,34 +514,19 @@ def test_get_user_task_list_gid(monkeypatch, caplog,
         aclient.get_user_task_list_gid(0, True, 0)
     assert 'Must provide `is_me` or `user_gid`, but not both.' in str(ex.value)
 
+    # Function-specific practical test of @asana_error_handler
     client = aclient._get_client()
     # Need to monkeypatch cached client since class dynamically creates attrs
     monkeypatch.setattr(client.user_task_lists, 'get_user_task_list_for_user',
-            raise_no_authorization_error)
-    caplog.clear()
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient.get_user_task_list_gid(0, True)
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in get_user_task_list_gid() - Not"
-                + " Authorized: No Authorization"),
-    ]
-
-    monkeypatch.setattr(client.user_task_lists, 'get_user_task_list_for_user',
-            raise_not_found_error)
-    caplog.clear()
-    with pytest.raises(asana.error.NotFoundError):
-        aclient.get_user_task_list_gid(0, True)
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Could not find requested data in get_user_task_list_gid():"
-                + " Not Found"),
-    ]
+            raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.ServerError, 0,
+            aclient.get_user_task_list_gid, 0, True)
 
 
 
+@pytest.mark.asana_error_data.with_args(asana.error.InvalidRequestError)
 def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
-        section_in_project_test, raise_no_authorization_error):
+        section_in_project_test, raise_asana_error):
     """
     Tests the `get_section_gids_in_project_or_utl()` method.
 
@@ -578,16 +555,10 @@ def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
 
     assert int(section_in_project_test['gid']) in sect_gids
 
-    # Need to monkeypatch cached client since class dynamically creates attrs
+    # Function-specific practical test of @asana_error_handler
     client = aclient._get_client()
+    # Need to monkeypatch cached client since class dynamically creates attrs
     monkeypatch.setattr(client.sections, 'get_sections_for_project',
-            raise_no_authorization_error)
-
-    caplog.clear()
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient.get_section_gids_in_project_or_utl(project_test['gid'])
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in get_section_gids_in_project_or_utl() -"
-                + " Not Authorized: No Authorization"),
-    ]
+            raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.InvalidRequestError, 0,
+            aclient.get_section_gids_in_project_or_utl, project_test['gid'])
