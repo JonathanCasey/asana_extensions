@@ -17,6 +17,7 @@ from asana_extensions.general import config
 
 
 logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
 
 
 
