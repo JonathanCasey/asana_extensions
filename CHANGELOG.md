@@ -42,6 +42,9 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       project builds successfully ([#5][]).
 - [Added] `asana-creds` added as context for unit tests, with setup of mock
       files to load access token into secrets conf ([#9][]).
+- [Added] Job to pylint `conftest.py` added ([#10][]).
+- [Added] Appended to pytest command to run a second invocation of `pytest`
+      using `--run-no-warnings-only`, appending cov report ([#10][]).
 
 
 ### Project & Toolchain: CI Support
@@ -81,12 +84,47 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       and functions ([#13][]).
 
 
+### Project & Toolchain: Pytest, /conftest
+- [Added] `--run-no-warnings-only` CLI arg added to only run tests marked with
+      `no_warnings_only` (and otherwise skip those tests) ([#10][]).
+
+
+### Project & Toolchain: Tests: Exceptions
+- [Added] `/tests/exceptions.py` added, with `TesterNotInitializedError` to be
+      used if required external Asana configuration not done ([#10][]).
+
+
+### Asana / Meta
+
+##### Unit Tests: Tester Data
+- [Added] `tester_data.py` added to hold test data constants, initially
+      including the `_WORKSPACE`, `_PROJECT_TEMPLATE`, and `_SESSIONS_TEMPLATE`
+      constants ([#10][]).
+
+
 ### Asana: Client
 - [Added] `asana_client.py` added, with initial `_get_client()` management
       method and `_get_me()` helper method imlpemented ([#9][]).
 - [Changed] `asana_client.py` and `test_asana_client.py` renamed to `client.py`
       and `test_client.py`, with `aclient` being the recommended import as
       ([#16][]).
+- [Added] Logger will now capture warnings from `warnings` module ([#10][]).
+- [Added] Exceptions `DataNotFoundError`, `DuplicateNameError`, and
+      `MismatchedDataError` added ([#10][]).
+- [Added] Methods to get the gid from the name added for workspace, project,
+      and section resource types, leveraging `_find_gid_from_name()` ([#10][]).
+- [Added] Added method to get the user task list gid either by user gid or for
+      "me" ([#10][]).
+- [Added] Added method to get the list of sections (as gids) in a project or
+      user task list ([#10][]).
+
+
+### Asana: Utils
+- [Added] `utils.py` added to cover aggregate logic building on top of straight
+      API results ([#10][]).
+- [Added] `DataConflictError` and `DataMissingError` exceptions added ([#10][]).
+- [Added] Method to get the net included section gids based on project contents
+      and explicit includes/excludes added ([#10][]).
 
 
 ### Config: .secrets.conf
@@ -97,6 +135,9 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Config: rules.conf
 - [Added] `rules.conf` file created (with `.default` stub), with move tasks rule
       stub added ([#1][]).
+- [Fixed] Correct description that `for my tasks list` and `user task list id`
+      cannot be provided together, now matching code ([#10][]).
+- [Fixed] Cleaned up comments not meant to be committed.
 
 
 ### General: Config
@@ -140,6 +181,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] `pytest` workflow command updated to use coverage output ([#13][]).
 - [Removed] The `test` `env` is not applicable to this project and references
       have been removed ([#9][]).
+- [Added] Details regarding the usage of the Asana account for test added
+      ([#10][]).
+- [Added] Additional workflow steps and details added for additional
+      modules/packages to pylint, as well as 2nd pytest invocation with
+      `--run-no-warnings-only` ([#10][]).
 
 
 ### Docs: README
@@ -171,6 +217,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#5][]
 - [#7][]
 - [#9][]
+- [#10][]
 - [#12][]
 - [#13][]
 - [#16][]
@@ -182,6 +229,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#14][] for [#13][]
 - [#15][] for [#9][]
 - [#17][] for [#16][]
+- [#26][] for [#10][]
 
 
 ---
@@ -196,6 +244,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#13]: https://github.com/JonathanCasey/asana_extensions/issues/13 'Issue #13'
 [#9]: https://github.com/JonathanCasey/asana_extensions/issues/9 'Issue #9'
 [#16]: https://github.com/JonathanCasey/asana_extensions/issues/16 'Issue #16'
+[#10]: https://github.com/JonathanCasey/asana_extensions/issues/10 'Issue #10'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -203,3 +252,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#14]: https://github.com/JonathanCasey/asana_extensions/pull/14 'PR #14'
 [#15]: https://github.com/JonathanCasey/asana_extensions/pull/15 'PR #15'
 [#17]: https://github.com/JonathanCasey/asana_extensions/pull/17 'PR #17'
+[#26]: https://github.com/JonathanCasey/asana_extensions/pull/26 'PR #26'

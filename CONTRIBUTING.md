@@ -75,6 +75,11 @@ access token used in `.secrets.conf` / CircleCI, the following must be done
 once before the first tests are run:
 - Create a workspace named `TEST Asana Extensions`
 
+Running tests will create and delete projects, sections, and tasks starting
+with `TEST` and ending in a UUID.  If there is a critical tester error, some of
+these may remain.  If confident that no tests are running, any remaining items
+can be deleted to keep workspace empty.
+
 If these docs are out of date, the data in `/tests/unit/asana/tester_data.py`
 holds all of these constants.  The exceptions raised when running relevant tests
 will also provided guidance on what is required.
