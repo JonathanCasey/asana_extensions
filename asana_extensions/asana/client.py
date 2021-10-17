@@ -167,6 +167,7 @@ def _find_gid_from_name(data, resource_type, name, expected_gid=None):
 
 
 
+@asana_error_handler
 def get_workspace_gid_from_name(ws_name, ws_gid=None):
     """
     This will get the workspace gid from the name.  It will confirm the name is
@@ -183,18 +184,12 @@ def get_workspace_gid_from_name(ws_name, ws_gid=None):
       (int): The only gid that matches this workspace name.
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        workspaces = client.workspaces.get_workspaces()
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in get_workspace_gid_from_name() -'
-                + f' Not Authorized: {ex}')
-        raise
-
+    workspaces = client.workspaces.get_workspaces()
     return _find_gid_from_name(workspaces, 'workspace', ws_name, ws_gid)
 
 

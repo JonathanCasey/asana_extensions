@@ -28,33 +28,24 @@ from tests.unit.asana import tester_data
 
 
 
-@pytest.fixture(name='raise_no_authorization_error')
-def fixture_raise_no_authorization_error():
+@pytest.fixture(name='raise_asana_error')
+def fixture_raise_asana_error(request):
     """
-    Returns a function that can be mocked over a call that simply forces it to
-    raise the asana.error.NoAuthorizationError.
+    Returns a function that can be used to mock a call, simply forcing it to
+    raise a marked `AsanaError` sub-error.  If no marker, will use a default
+    exception type.
     """
+    marker = request.node.get_closest_marker('asana_error_data')
+    if marker is None:
+        exception_type = asana.error.InvalidRequestError # Arbitrary
+    else:
+        exception_type = marker.args[0]
+
     def mock_raise(*args, **kwargs):
         """
         Simply raise the desired error.
         """
-        raise asana.error.NoAuthorizationError()
-
-    return mock_raise
-
-
-
-@pytest.fixture(name='raise_not_found_error')
-def fixture_raise_not_found_error():
-    """
-    Returns a function that can be mocked over a call that simply forces it to
-    raise the asana.error.NotFoundError.
-    """
-    def mock_raise(*args, **kwargs):
-        """
-        Simply raise the desired error.
-        """
-        raise asana.error.NotFoundError()
+        raise exception_type
 
     return mock_raise
 
@@ -206,6 +197,7 @@ def test_asana_error_handler(caplog):
 
 @pytest.mark.parametrize('func_name', [
     '_get_me',
+    'get_workspace_gid_from_name',
 ])
 def test_dec_usage_asana_error_handler(func_name):
     """
@@ -335,8 +327,9 @@ def test__find_gid_from_name(caplog):
 
 
 
+@pytest.mark.asana_error_data(asana.error.ForbiddenError)
 def test_get_workspace_gid_from_name(monkeypatch, caplog,
-        raise_no_authorization_error):
+        raise_asana_error):
     """
     Tests the `get_workspace_gid_from_name()` method.
 
@@ -371,17 +364,10 @@ def test_get_workspace_gid_from_name(monkeypatch, caplog,
     assert 'resource_type' in workspace
 
     # Need to monkeypatch cached client since class dynamically creates attrs
-    monkeypatch.setattr(client.workspaces, 'get_workspaces',
-            raise_no_authorization_error)
+    monkeypatch.setattr(client.workspaces, 'get_workspaces', raise_asana_error)
 
-    caplog.clear()
-    with pytest.raises(asana.error.NoAuthorizationError):
-        aclient.get_workspace_gid_from_name('one and only')
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in get_workspace_gid_from_name() - Not"
-                + " Authorized: No Authorization"),
-    ]
+    subtest_asana_error_handler_func(caplog, asana.error.ForbiddenError, 0,
+            aclient.get_workspace_gid_from_name, 'one and only')
 
 
 
