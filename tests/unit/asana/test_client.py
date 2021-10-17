@@ -174,6 +174,36 @@ def test_logging_capture_warnings(caplog):
 
 
 
+def test_asana_error_handler(caplog):
+    """
+    Tests the `@asana_error_handler` decorator.
+    """
+    caplog.set_level(logging.ERROR)
+
+    def gen_text(text1, text2, text3):
+        return f'{text1} | {text2} | {text3}'
+
+    dec_gen_text = aclient.asana_error_handler(gen_text)
+    assert dec_gen_text('one', text3='three', text2='two') \
+            == 'one | two | three'
+    assert dec_gen_text._is_wrapped_by_asana_error_handler is True
+
+    def raise_error(exception_type):
+        raise exception_type
+
+    dec_raise_error = aclient.asana_error_handler(raise_error)
+    exception_types = [
+        asana.error.PremiumOnlyError,
+        asana.error.RateLimitEnforcedError,
+    ]
+    for exception_type in exception_types:
+        subtest_asana_error_handler_func(caplog, exception_type, 0,
+                dec_raise_error, exception_type)
+
+    assert dec_raise_error._is_wrapped_by_asana_error_handler is True
+
+
+
 @pytest.mark.parametrize('func_name', [
     '_get_me',
 ])
