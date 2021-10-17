@@ -45,6 +45,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] Job to pylint `conftest.py` added ([#10][]).
 - [Added] Appended to pytest command to run a second invocation of `pytest`
       using `--run-no-warnings-only`, appending cov report ([#10][]).
+- [Changed] `lint-and-test` workflow split into separate `lint` and `test`
+      workflows to more easily see results separately on GitHub ([#27][]).
 
 
 ### Project & Toolchain: CI Support
@@ -221,6 +223,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#12][]
 - [#13][]
 - [#16][]
+- [#27][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -230,6 +233,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#15][] for [#9][]
 - [#17][] for [#16][]
 - [#26][] for [#10][]
+- [#29][] for [#27][]
 
 
 ---
@@ -245,6 +249,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#9]: https://github.com/JonathanCasey/asana_extensions/issues/9 'Issue #9'
 [#16]: https://github.com/JonathanCasey/asana_extensions/issues/16 'Issue #16'
 [#10]: https://github.com/JonathanCasey/asana_extensions/issues/10 'Issue #10'
+[#27]: https://github.com/JonathanCasey/asana_extensions/issues/27 'Issue #27'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -253,3 +258,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#15]: https://github.com/JonathanCasey/asana_extensions/pull/15 'PR #15'
 [#17]: https://github.com/JonathanCasey/asana_extensions/pull/17 'PR #17'
 [#26]: https://github.com/JonathanCasey/asana_extensions/pull/26 'PR #26'
+[#29]: https://github.com/JonathanCasey/asana_extensions/pull/29 'PR #29'
