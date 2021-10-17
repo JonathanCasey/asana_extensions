@@ -142,6 +142,19 @@ def test_logging_capture_warnings(caplog):
 
 
 
+@pytest.mark.parametrize('func_name', [
+    '_get_me',
+])
+def test_dec_usage_asana_error_handler(func_name):
+    """
+    Tests that functions that are expected to use the `@asana_error_handler`
+    decorator do in fact have it.
+    """
+    func = getattr(aclient, func_name)
+    assert func._is_wrapped_by_asana_error_handler is True
+
+
+
 def test__get_client(monkeypatch):
     """
     Tests the `_get_client()` method.
@@ -197,16 +210,16 @@ def test__get_me(monkeypatch, caplog):
             },
         }
 
+    # Function-specific practical test of @asana_error_handler
     caplog.clear()
     monkeypatch.delattr(aclient._get_client, 'client')
     monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
     with pytest.raises(asana.error.NoAuthorizationError):
         aclient._get_me()
-    assert caplog.record_tuples == [
-            ('asana_extensions.asana.client', logging.ERROR,
-                "Failed to access API in _get_me() - Not Authorized:"
-                + " No Authorization: Not Authorized"),
-    ]
+    assert caplog.record_tuples[0][0] == 'asana_extensions.asana.client'
+    assert caplog.record_tuples[0][1] == logging.ERROR
+    assert 'API query failed' in caplog.messages[0]
+    assert '[401]' in caplog.messages[0]
 
 
 

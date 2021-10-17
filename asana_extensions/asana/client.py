@@ -8,6 +8,7 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+from functools import wraps
 import logging
 
 import asana
@@ -44,6 +45,38 @@ class MismatchedDataError(Exception):
 
 
 
+def asana_error_handler(f):
+    """
+    Decorator that handles all `AsanaError`s that can occur.  Intended to be
+    used to wrap all methods here that are wrappers themselves for API calls.
+    This assumes those methods are not handling the errors; but they always
+    have the option to add a try/except to catch any specific errors and handle
+    them differently.
+
+    Use this with @asana_error_handler prior to function def.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        """
+        Wrapping code to execute when function f is called, passing thru any/all
+        args.
+        """
+        try:
+            return f(*args, **kwargs)
+        except asana.error.AsanaError as ex:
+            logger.error(f'API query failed in {f.__module__}.{f.__name__}():'
+                    + f' [{ex.status}] {ex.message}')
+            raise
+
+    setattr(wrapper, f'_is_wrapped_by_{wrapper.__qualname__}', True)
+    wrapper._is_wrapped_by_asana_error_handler = True
+    if not hasattr(wrapper, '_wrapped_by'):
+        wrapper._wrapped_by = []
+    wrapper._wrapped_by.append('asana_error_handler')
+    return wrapper
+
+
+
 def _get_client():
     """
     Ensures the client is initialized and ready for use.
@@ -66,6 +99,7 @@ def _get_client():
 
 
 
+@asana_error_handler
 def _get_me():
     """
     Gets the data for 'me' (self) user.
@@ -78,17 +112,11 @@ def _get_me():
         full schema here: https://developers.asana.com/docs/user
 
     Raises:
-      (asana.error.NoAuthorizationError): Personal access token was missing or
-        invalid.
+      (asana.error.AsanaError): Any errors from the API.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    try:
-        return client.users.me()
-    except asana.error.NoAuthorizationError as ex:
-        logger.error('Failed to access API in _get_me() - Not Authorized:'
-                + f' {ex}')
-        raise
+    return client.users.me()
 
 
 
