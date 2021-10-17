@@ -100,5 +100,12 @@ run.  In short, this is largely running from the repo root:
 ```
 python -m pylint asana_extensions
 python -m pylint tests
+python -m pylint ci_support
+python -m pylint conftest
 pytest --cov=asana_extensions
+pytest --cov=asana_extensions --append-cov --run-no-warnings-only -p no:warning
 ```
+
+When running `pytest` without the `-p no:warnings` option, the warnings provided
+may be from `pytest`, but may also be from other packages, such as deprecation
+warnings from `asana`.

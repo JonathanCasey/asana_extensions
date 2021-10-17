@@ -16,6 +16,7 @@ Module Attributes:
 
 import logging
 import uuid
+import warnings
 
 import asana
 import pytest
@@ -120,6 +121,24 @@ def fixture_section_in_project_test(project_test):
     yield sect_data
 
     client.sections.delete_section(sect_data['gid'])
+
+
+
+@pytest.mark.no_warnings_only
+def test_logging_capture_warnings(caplog):
+    """
+    This tests that the `logging.captureWarnings(True)` line has been executed
+    in the `aclient` module.
+
+    This must be run with the `-p no:warnings` option provided to `pytest`.  As
+    a result, it is skipped by default.  See `/conftest.py` for options.
+    """
+    caplog.set_level(logging.WARNING)
+    caplog.clear()
+    warnings.warn('Test warning')
+    assert caplog.record_tuples[0][0] == 'py.warnings'
+    assert caplog.record_tuples[0][1] == logging.WARNING
+    assert 'Test warning' in caplog.record_tuples[0][2]
 
 
 
