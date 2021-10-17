@@ -327,7 +327,7 @@ def test__find_gid_from_name(caplog):
 
 
 
-@pytest.mark.asana_error_data(asana.error.ForbiddenError)
+@pytest.mark.asana_error_data.with_args(asana.error.ForbiddenError)
 def test_get_workspace_gid_from_name(monkeypatch, caplog,
         raise_asana_error):
     """
