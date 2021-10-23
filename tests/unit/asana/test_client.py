@@ -678,15 +678,15 @@ def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
 
 @pytest.mark.asana_error_data.with_args(asana.error.NoAuthorizationError)
 def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
-        sections_in_utl_test, tasks_in_project_and_utl_test):
+        sections_in_utl_test, tasks_in_project_and_utl_test, raise_asana_error):
     """
     Tests the `get_tasks()` method.
 
     This does require the asana account be configured to support unit testing.
     See CONTRIBUTING.md.
 
-    ** Consumes at least 3 API call. **
-    (varies depending on data size, but only 3 calls intended)
+    ** Consumes at least 4 API call. **
+    (varies depending on data size, but only 4 calls intended)
 
     Raises:
       (TesterNotInitializedError): If test workspace does not exist on asana
@@ -704,7 +704,6 @@ def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    client = aclient._get_client()
     ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
 
     params = {
@@ -720,6 +719,7 @@ def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
     tasks_found = aclient.get_tasks(params, fields)
     # Filter/match list since other tests may have added more tasks to server
     tasks_to_check = {}
+    # Nested fors must be in this order - tasks_found is a single-iter generator
     for task_found in tasks_found:
         for i_task_expected, task_expected in enumerate(
                 tasks_in_project_and_utl_test):
@@ -734,6 +734,38 @@ def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
         assert task_found['due_at'] is None
         assert task_found['name'] == task_expected['name']
         assert task_found['projects'][0]['gid'] == project_test['gid']
+
+    params = {
+        'project': project_test['gid'],
+    }
+    fields = [
+        'due_on',
+        'name',
+        'projects',
+    ]
+    tasks_found = aclient.get_tasks(params, fields)
+    # Filter/match list since other tests may have added more tasks to server
+    tasks_to_check = {}
+    # Nested fors must be in this order - tasks_found is a single-iter generator
+    for task_found in tasks_found:
+        for i_task_expected, task_expected in enumerate(
+                tasks_in_project_and_utl_test):
+            if task_found['gid'] == task_expected['gid']:
+                tasks_to_check[i_task_expected] = task_found
+                break
+    assert len(tasks_to_check) == len(tasks_in_project_and_utl_test)
+    for i_task_expected, task_found in tasks_to_check.items():
+        task_expected = tasks_in_project_and_utl_test[i_task_expected]
+        assert task_found['due_on'] is None
+        assert task_found['name'] == task_expected['name']
+        assert task_found['projects'][0]['gid'] == project_test['gid']
+
+    # Function-specific practical test of @asana_error_handler
+    client = aclient._get_client()
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    monkeypatch.setattr(client.tasks, 'get_tasks', raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.NoAuthorizationError,
+            0, aclient.get_tasks, {})
 
 
 
