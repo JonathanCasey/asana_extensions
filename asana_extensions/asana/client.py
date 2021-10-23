@@ -321,3 +321,43 @@ def get_section_gids_in_project_or_utl(proj_or_utl_gid):
     client = _get_client()
     sections = client.sections.get_sections_for_project(proj_or_utl_gid)
     return [int(s['gid']) for s in sections]
+
+
+
+@asana_error_handler
+def get_tasks(params, fields=None):
+    """
+    Get tasks, including the fields specified, that match the parameters
+    provided.
+
+    See https://developers.asana.com/docs/get-multiple-tasks for list of
+    `params` keys and which combinations are required at a minimum.
+
+    As far as possible fields, this is unclear in the API, but the data to
+    create a task: https://developers.asana.com/docs/create-a-task is likely the
+    best hint.
+
+    Args:
+      params ({str:str}): The dict of parameters to pass to the asana API for
+        the query.  See API docs referenced above.  Note that values must all be
+        strings (i.e. ints must be cast to str before passing in here).
+      fields ([str]): The list of fields to get from the API for each task.  If
+        omitted, the `gid`, `resource_type`, and `name` will be returned.  The
+        `gid` is always returned and does not need to be specified here.
+        (Unsure where to find list of options for this, but best guess is
+        linked above).
+
+    Returns:
+      ([{str:str/list/dict}]): List of tasks, with each element being a dict of
+        values.
+
+    Raises:
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    client = _get_client()
+    options = {}
+    if fields is not None:
+        options['opt_fields'] = fields
+    return client.tasks.get_tasks(params, **options)
