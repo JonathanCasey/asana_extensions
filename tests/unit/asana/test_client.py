@@ -677,8 +677,9 @@ def test_get_section_gids_in_project_or_utl(monkeypatch, caplog, project_test,
 
 
 @pytest.mark.asana_error_data.with_args(asana.error.NoAuthorizationError)
-def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
-        sections_in_utl_test, tasks_in_project_and_utl_test, raise_asana_error):
+def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
+        project_test, sections_in_project_test, sections_in_utl_test,
+        tasks_in_project_and_utl_test, raise_asana_error):
     """
     Tests the `get_tasks()` method.
 
@@ -740,6 +741,7 @@ def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
     }
     fields = [
         'due_on',
+        'memberships.section',
         'name',
         'projects',
     ]
@@ -759,6 +761,9 @@ def test_get_tasks(monkeypatch, caplog, project_test, sections_in_project_test,
         assert task_found['due_on'] is None
         assert task_found['name'] == task_expected['name']
         assert task_found['projects'][0]['gid'] == project_test['gid']
+        assert sections_in_project_test[0]['gid'] in \
+                [m['section']['gid'] for m in task_found['memberships'] \
+                    if 'section' in m]
 
     # Function-specific practical test of @asana_error_handler
     client = aclient._get_client()
