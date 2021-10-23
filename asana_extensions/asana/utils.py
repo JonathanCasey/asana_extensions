@@ -9,9 +9,12 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+import datetime as dt
 import logging
+import operator
 
 from asana_extensions.asana import client as aclient
+from asana_extensions.general import utils
 
 
 
@@ -142,3 +145,126 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
         return include_gids
 
     return project_section_gids - exclude_gids
+
+
+
+def get_filtered_tasks(section_gid, match_no_due_date=False,
+        min_time_until_due=None, max_time_until_due=None):
+    """
+    Gets tasks in a given section that meet the due filter criteria provided.
+
+    Args:
+      section_gid (str/int): The section from which to fitler tasks based on due
+        date/time.
+      match_no_due_date (bool): Whether to select tasks that do not have a due
+        date.  Cannot be used with `min_time_until_due` nor
+        `max_time_until_due`.
+      min_time_until_due (relativedelta or None): The lower bound of due
+        date/time to select from the section tasks, relative to now.  I.e. this
+        will select tasks that are due after and including this threshold
+        relative to now.  If None (and `match_no_due_date` is False), selects
+        all tasks since the beginning of time (up until `max_time_until_due`).
+        Cannot be used with `match_no_due_date`.
+      max_time_until_due (relativedelta or None): The upper bound of due
+        date/time to select from the section tasks, relative to now.  I.e. this
+        will select tasks that are due before and including this threshold
+        relative to now.  If None (and `match_no_due_date` is False), selects
+        all tasks until the end of time (but after `min_time_until_due`).
+        Cannot be used with `match_no_due_date`.
+
+    Returns:
+      filt_tasks ([{str:str}]): The tasks that meet the filter criteria, with
+        each task being a dict of values based on the API key/values.
+    """
+    assert match_no_due_date \
+            ^ (min_time_until_due is not None or max_time_until_due is not None)
+
+    params = {
+        'section': section_gid,
+    }
+    fields = [
+        'due_at',
+        'due_on',
+        'name',
+        'resource_type',
+    ]
+    sect_tasks = aclient.get_tasks(params, fields)
+
+    if match_no_due_date:
+        return [t for t in sect_tasks if t['due_at'] is None]
+
+    now = dt.datetime.now()
+    filt_tasks = _filter_tasks_by_datetime(sect_tasks, now,
+            min_time_until_due, operator.ge)
+    filt_tasks = _filter_tasks_by_datetime(filt_tasks, now,
+            max_time_until_due, operator.le)
+    return filt_tasks
+
+
+
+def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
+        task_is_rel_comparison_success_op):
+    """
+    Filters tasks by a date or datetime, returning the tasks that meet the
+    provided filter criteria.
+
+    Args:
+      tasks ([{str:str}]): List of tasks from asana API.  At the very least,
+        must have the `due_on` key.
+      dt_base (datetime): The datetime to use as the base for the relative
+        threshold to check.  Normally this should be datetime.datetime.now(),
+        but other datetime values can be used.  Date alone is NOT accepted.  If
+        applying successive filters to the same data (i.e. min until due and
+        the max until due), it is recommended to use same exact `dt_base` for
+        each to ensure no weird gaps or call order issues.
+      rel_dt_until_due (relativedelta): The relative date or datetime until the
+        task is due.  This is relative to the `dt_base` provided.  This will be
+        compared against the tasks due date/datetime based on the provided
+        operator as explained by the `task_is_comparison_success_op` parameter.
+        If this is only a date, all comparisons will be done as date-only.  If
+        a time is included, all comparisons will be done as datetime.  In this
+        latter case, any tasks without a due time but do have a due date will be
+        treated as though the time is midnight of the timezone (of this script?
+        of user?  of workspace?  It's unclear...).  In general, date-only values
+        will be in the current timezone (again, unclear if this is of script, of
+        user, etc).  If None, will return all tasks.
+      task_is_rel_comparison_success_op (operator): A less/greater than [or
+        equal to] comparison operator to use in the filter evaluaion.  Tasks
+        that satisfy the criteria of the task due date/datetime being
+        [lt/gt/le/ge] the threshold date/datetime (determined from the base +
+        relative until due) will successfully meet this filter criteria and be
+        returned.
+
+    Returns:
+      filt_tasks ([{str:str}]): The tasks that meet the filter criteria.  This
+        will be all tasks if `rel_dt_until_due` is None; or will be tasks that
+        satisfy `task_due [op] dt_base + rel_until_due`.
+    """
+    if rel_dt_until_due is None:
+        return tasks
+
+    if utils.is_date_only(rel_dt_until_due):
+        ignore_time = True
+        due_threshold = dt_base.date() + rel_dt_until_due
+    else:
+        ignore_time = False
+        due_threshold = dt_base + rel_dt_until_due
+
+    filt_tasks = []
+    for task in tasks:
+        if task['due_on'] is None:
+            continue
+        if ignore_time:
+            due_task = dt.date.fromisoformat(task['due_on'])
+        else:
+            if 'due_at' in task and task['due_at'] is not None:
+                due_task = dt.datetime.fromisoformat(task['due_at'])
+            else:
+                # Use due date, but assume the "time" is midnight in timezone
+                due_task = dt.datetime.fromisoformat(task['due_on'])
+
+        # Since this is rel compare, format is `task [op] threshold`
+        if task_is_rel_comparison_success_op(due_task, due_threshold):
+            filt_tasks.append(task)
+
+    return filt_tasks
