@@ -13,6 +13,8 @@ import datetime as dt
 import logging
 import operator
 
+from dateutil.relativedelta import relativedelta
+
 from asana_extensions.asana import client as aclient
 from asana_extensions.general import utils
 
@@ -225,9 +227,11 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
         a time is included, all comparisons will be done as datetime.  In this
         latter case, any tasks without a due time but do have a due date will be
         treated as though the time is midnight of the timezone (of this script?
-        of user?  of workspace?  It's unclear...).  In general, date-only values
-        will be in the current timezone (again, unclear if this is of script, of
-        user, etc).  If None, will return all tasks.
+        of user?  of workspace?  It's unclear...) unless it is an upper bound
+        check (lt, le) -- in this case, it will be the last minute of the day
+        (i.e. 23:59).   In general, date-only values will be in the current
+        timezone (again, unclear if this is of script, of user, etc).  If None,
+        will return all tasks.
       task_is_rel_comparison_success_op (operator): A less/greater than [or
         equal to] comparison operator to use in the filter evaluaion.  Tasks
         that satisfy the criteria of the task due date/datetime being
@@ -262,6 +266,11 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
             else:
                 # Use due date, but assume the "time" is midnight in timezone
                 due_task = dt.datetime.fromisoformat(task['due_on'])
+
+                # ...but if upper bound check, use last minute of day
+                if task_is_rel_comparison_success_op \
+                        in [operator.lt, operator.le]:
+                    due_task += relativedelta(days=1, minutes=-1)
 
         # Since this is rel compare, format is `task [op] threshold`
         if task_is_rel_comparison_success_op(due_task, due_threshold):
