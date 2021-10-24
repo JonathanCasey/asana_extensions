@@ -13,7 +13,7 @@ import datetime as dt
 import logging
 import operator
 
-from dateutil.relativedelta import relativedelta
+import dateutil.parser as dp
 
 from asana_extensions.asana import client as aclient
 from asana_extensions.general import utils
@@ -151,7 +151,9 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
 
 
 def get_filtered_tasks(section_gid, match_no_due_date=False,
-        min_time_until_due=None, max_time_until_due=None):
+        min_time_until_due=None, max_time_until_due=None,
+        min_time_due_assumed=None, max_time_due_assumed=None,
+        use_tzinfo=None):
     """
     Gets tasks in a given section that meet the due filter criteria provided.
 
@@ -172,7 +174,24 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
         will select tasks that are due before and including this threshold
         relative to now.  If None (and `match_no_due_date` is False), selects
         all tasks until the end of time (but after `min_time_until_due`).
-        Cannot be used with `match_no_due_date`.
+        Cannot be used with `match_no_due_date`
+      min_time_due_assumed (time or None): A time to use for dates without times
+        when evaluating the `min_time_until_due`.  Should NOT contain a
+        timezone.  If None and `min_time_until_due` contains time durations,
+        will ignore date-only tasks.  If `min_time_until_due` does not contain
+        time durations, will be ignored.
+      max_time_due_assumed (time or None): A time to use for dates without times
+        when evaluating the `max_time_until_due`.  Should NOT contain a
+        timezone.  If None and `max_time_until_due` contains time durations,
+        will ignore date-only tasks.  If `max_time_until_due` does not contain
+        time durations, will be ignored.
+      use_tzinfo (timezone or None): The timezone to use for evaluating this
+        "now".  Used to compensate between the timezone where asana is targetted
+        to be used (which is what should be supplied) compared to what the local
+        machine running this script has for a timezone (since asana API returns
+        relative to this for date-only tasks).  As a result, really only
+        relevant with date-only comparisons since it can change which day things
+        fall.
 
     Returns:
       filt_tasks ([{str:str}]): The tasks that meet the filter criteria, with
@@ -195,20 +214,23 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
     if match_no_due_date:
         return [t for t in sect_tasks if t['due_at'] is None]
 
-    now = dt.datetime.now()
-    filt_tasks = _filter_tasks_by_datetime(sect_tasks, now,
-            min_time_until_due, operator.ge)
-    filt_tasks = _filter_tasks_by_datetime(filt_tasks, now,
-            max_time_until_due, operator.le)
+    now_with_tz = dt.datetime.now().astimezone(use_tzinfo)
+    filt_tasks = _filter_tasks_by_datetime(sect_tasks, now_with_tz,
+            min_time_until_due, operator.ge, min_time_due_assumed)
+    filt_tasks = _filter_tasks_by_datetime(filt_tasks, now_with_tz,
+            max_time_until_due, operator.le, max_time_due_assumed)
     return filt_tasks
 
 
 
 def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
-        task_is_rel_comparison_success_op):
+        task_is_rel_comparison_success_op, time_due_assumed=None):
     """
     Filters tasks by a date or datetime, returning the tasks that meet the
     provided filter criteria.
+
+    Note that this will use the timezone of `dt_base`, which will default to the
+    local timezone that runs this script if none is explicitly set!
 
     Args:
       tasks ([{str:str}]): List of tasks from asana API.  At the very least,
@@ -218,26 +240,34 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
         but other datetime values can be used.  Date alone is NOT accepted.  If
         applying successive filters to the same data (i.e. min until due and
         the max until due), it is recommended to use same exact `dt_base` for
-        each to ensure no weird gaps or call order issues.
+        each to ensure no weird gaps or call order issues.  This should include
+        the TARGET timezone -- the timezone in which asana will primarily be
+        used to be most accurate (in case different from where machine running
+        script is).
       rel_dt_until_due (relativedelta): The relative date or datetime until the
         task is due.  This is relative to the `dt_base` provided.  This will be
         compared against the tasks due date/datetime based on the provided
         operator as explained by the `task_is_comparison_success_op` parameter.
         If this is only a date, all comparisons will be done as date-only.  If
         a time is included, all comparisons will be done as datetime.  In this
-        latter case, any tasks without a due time but do have a due date will be
-        treated as though the time is midnight of the timezone (of this script?
-        of user?  of workspace?  It's unclear...) unless it is an upper bound
-        check (lt, le) -- in this case, it will be the last minute of the day
-        (i.e. 23:59).   In general, date-only values will be in the current
-        timezone (again, unclear if this is of script, of user, etc).  If None,
-        will return all tasks.
+        latter case, any tasks without a due time but do have a due date will
+        either be skipped if `time_due_assumed` is None, or will have that time
+        set in the TARGET timezone provided by `dt_base`.  Note that while
+        datetime API results have timezone info, the date-only API results are
+        the date based on the machine running the script -- this needs to be
+        considered when setting the time at which this script runs and the
+        timezone of the machine running it, as there could be a day-off error if
+        operated at an edge case.  If None, will return all tasks.
       task_is_rel_comparison_success_op (operator): A less/greater than [or
         equal to] comparison operator to use in the filter evaluaion.  Tasks
         that satisfy the criteria of the task due date/datetime being
         [lt/gt/le/ge] the threshold date/datetime (determined from the base +
         relative until due) will successfully meet this filter criteria and be
         returned.
+      time_due_assumed (time or None): A time to use for dates without times.
+        Should NOT contain a timezone.  If None and `rel_dt_until_due` contains
+        time durations, will ignore date-only tasks.  If `rel_dt_until_due` does
+        not contain time durations, will be ignored.
 
     Returns:
       filt_tasks ([{str:str}]): The tasks that meet the filter criteria.  This
@@ -249,7 +279,9 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
 
     if utils.is_date_only(rel_dt_until_due):
         ignore_time = True
-        due_threshold = dt_base.date() + rel_dt_until_due
+        # tz_diff will be the target timezone minus local timezone of machine
+        tz_diff = dt_base.utcoffset() - dt_base.astimezone(None).utcoffset()
+        due_threshold = (dt_base + tz_diff).date() + rel_dt_until_due
     else:
         ignore_time = False
         due_threshold = dt_base + rel_dt_until_due
@@ -262,15 +294,16 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
             due_task = dt.date.fromisoformat(task['due_on'])
         else:
             if 'due_at' in task and task['due_at'] is not None:
-                due_task = dt.datetime.fromisoformat(task['due_at'])
+                # Need dateutil since datetime does not handle ending in Z
+                due_task = dp.isoparse(task['due_at'])
+            elif time_due_assumed is not None:
+                # Use due date, but assume the "time" and tz as provided
+                due_task = dt.datetime.combine(
+                        dt.date.fromisoformat(task['due_on']),
+                        time_due_assumed, dt_base.tzinfo)
             else:
-                # Use due date, but assume the "time" is midnight in timezone
-                due_task = dt.datetime.fromisoformat(task['due_on'])
-
-                # ...but if upper bound check, use last minute of day
-                if task_is_rel_comparison_success_op \
-                        in [operator.lt, operator.le]:
-                    due_task += relativedelta(days=1, minutes=-1)
+                # Based on provided config, date-only should be skipped here
+                continue
 
         # Since this is rel compare, format is `task [op] threshold`
         if task_is_rel_comparison_success_op(due_task, due_threshold):

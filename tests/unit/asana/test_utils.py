@@ -12,8 +12,13 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
-import logging
+#pylint: disable=protected-access  # Allow for purpose of testing those elements
 
+import datetime as dt
+import logging
+import operator
+
+from dateutil.relativedelta import relativedelta
 import pytest
 
 from asana_extensions.asana import client as aclient
@@ -121,3 +126,56 @@ def test_get_net_include_section_gids(monkeypatch, caplog):
             in str(ex.value)
     assert 'provided by name): 4, 5' in str(ex.value)
     assert 'Also check names:' not in str(ex.value)
+
+
+
+def test__filter_tasks_by_datetime():
+    """
+    Tests the `_filter_tasks_by_datetime()` method.
+    """
+    # 'due_on' corresponds to 'due_at' as though pulled from UTC-0500 timezone
+    task_1 = {'due_on': '2021-01-01'}
+    task_2 = {'due_on': '2020-12-31'}
+    task_3 = {'due_on': '2021-01-02'}
+    task_4 = {'due_at': '2021-01-01T22:00-0500', 'due_on': '2021-01-01'}
+    task_5 = {'due_at': '2021-01-02T22:00-0500', 'due_on': '2021-01-02'}
+    task_6 = {'due_at': '2021-01-02T03:00Z', 'due_on': '2021-01-01'}
+    task_7 = {'due_at': '2021-01-01T22:00Z', 'due_on': '2021-01-01'}
+    task_8 = {'due_at': '2021-01-02 22:00', 'note': 'bad timezone'}
+    task_9 = {'no_due_key': 'this is bad'}
+    base_tasks = [task_1, task_2, task_3, task_4, task_5, task_6, task_7]
+
+    dt_base_1 = dt.datetime(2021, 1, 1, 22, 0, tzinfo=dt.timezone(
+            dt.timedelta(hours=-5)))
+
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1, None,
+            operator.lt)
+    assert filt_tasks == base_tasks
+
+    rd_date_today = relativedelta(days=0)
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+            rd_date_today, operator.ge)
+    assert filt_tasks == [task_1, task_3, task_4, task_5, task_6, task_7]
+
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+            rd_date_today, operator.le)
+    assert filt_tasks == [task_1, task_2, task_4, task_6, task_7]
+
+    rd_datetime_2h_later = relativedelta(hours=2)
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+            rd_datetime_2h_later, operator.ge)
+    assert filt_tasks == [task_5]
+
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+            rd_datetime_2h_later, operator.lt)
+    assert filt_tasks == [task_4, task_6, task_7]
+
+    dt_base_2 = dt.datetime(2021, 1, 1, 20, 0, tzinfo=dt.timezone(
+            dt.timedelta(hours=-5)))
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_2,
+            rd_datetime_2h_later, operator.ge)
+    assert filt_tasks == [task_4, task_5, task_6]
+
+    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_2,
+            rd_datetime_2h_later, operator.lt)
+    assert filt_tasks == [task_7]

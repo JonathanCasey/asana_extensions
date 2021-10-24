@@ -41,7 +41,8 @@ def is_date_only(dt_var):
         # Inspired by logic check for relativedelta._has_time in source:
         # https://dateutil.readthedocs.io/en/stable/_modules/dateutil/relativedelta.html
         return (not dt_var.hours and not dt_var.minutes and not dt_var.seconds
-                and not dt_var.microseconds)
+                and not dt_var.microseconds and dt_var.hour is None
+                and dt_var.minute is None and dt_var.microsecond is None)
 
     try:
         dt.date.fromisoformat(dt_var)
