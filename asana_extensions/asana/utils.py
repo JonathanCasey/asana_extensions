@@ -153,7 +153,7 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
 def get_filtered_tasks(section_gid, match_no_due_date=False,
         min_time_until_due=None, max_time_until_due=None,
         min_time_due_assumed=None, max_time_due_assumed=None,
-        use_tzinfo=None):
+        use_tzinfo=None, dt_base=None):
     """
     Gets tasks in a given section that meet the due filter criteria provided.
 
@@ -195,6 +195,10 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
         done based with timezone factored in.  See docstring in
         `_filter_tasks_by_datetime()` for more info and an example of how this
         is used.
+      dt_base (datetime or None): This is the time to use as the base time for
+        comparing relative time.  It should usually be the time now.  This is
+        largely here for unit test purposes, but it is possible to modify if
+        really desired...
 
     Returns:
       filt_tasks ([{str:str}]): The tasks that meet the filter criteria, with
@@ -219,10 +223,12 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
     if match_no_due_date:
         return [t for t in sect_tasks if t['due_on'] is None]
 
-    now_with_tz = dt.datetime.now().astimezone(use_tzinfo)
-    filt_tasks = _filter_tasks_by_datetime(sect_tasks, now_with_tz,
+    if dt_base is None:
+        dt_base = dt.datetime.now()
+    dt_base_with_tz = dt_base.astimezone(use_tzinfo)
+    filt_tasks = _filter_tasks_by_datetime(sect_tasks, dt_base_with_tz,
             min_time_until_due, operator.ge, min_time_due_assumed)
-    filt_tasks = _filter_tasks_by_datetime(filt_tasks, now_with_tz,
+    filt_tasks = _filter_tasks_by_datetime(filt_tasks, dt_base_with_tz,
             max_time_until_due, operator.le, max_time_due_assumed)
     return filt_tasks
 

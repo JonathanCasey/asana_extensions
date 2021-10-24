@@ -183,12 +183,20 @@ def test_get_net_include_section_gids(monkeypatch, caplog):
 
 
 
-def test_get_filtered_tasks(sections_in_utl_test, tasks_with_due_in_utl_test):
+def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-statements
+        sections_in_utl_test, tasks_with_due_in_utl_test):
     """
     Tests the `get_filtered_tasks()` method.
 
-    ** Consumes at least 1 API call. **
-    (varies depending on data size, but only 1 call intended)
+    This intentionally falls thru to test `_filter_tasks_by_datetime()` and the
+    asana API, as it is critical to detect any functional breakages here.
+
+    These test cases (or at least the data) are largely aligned with
+    `test__filter_tasks_by_datetime()`, with the last task here with no due date
+    being the primary difference.
+
+    ** Consumes at least 10 API calls. **
+    (varies depending on data size, but only 10 calls intended)
     """
     with pytest.raises(AssertionError) as ex:
         autils.get_filtered_tasks(0)
@@ -214,11 +222,86 @@ def test_get_filtered_tasks(sections_in_utl_test, tasks_with_due_in_utl_test):
     assert tasks_to_check[0]['name'] == tasks_with_due_in_utl_test[7]['name']
     assert tasks_to_check[0]['resource_type'] == 'task'
 
+    tzinfo_1 = dt.timezone(dt.timedelta(hours=-5))
+    tzinfo_2 = dt.timezone(dt.timedelta(hours=0))
+
+    dt_base_1 = dt.datetime(2021, 1, 1, 21, 0, tzinfo=tzinfo_1)
+
+    rd_date_today = relativedelta(days=0)
+    rd_date_tomorrow = relativedelta(days=1)
+    rd_date_yesterday = relativedelta(days=-1)
+    rd_datetime_2h_later = relativedelta(hours=2)
+    rd_datetime_1m_ago = relativedelta(minutes=-1)
+    rd_datetime_yesterday_and_1m_ago = relativedelta(days=-1, minutes=-1)
+
+    assumed_time_1 = dt.time(21, 0)
+    assumed_time_2 = dt.time(23, 30)
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
+            rd_date_today, assumed_time_1, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [0, 3, 5, 6]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
+            rd_date_today, use_tzinfo=tzinfo_2, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [2, 4]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
+            rd_date_tomorrow, None, assumed_time_1, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [0, 2, 3, 4, 5, 6]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, None,
+            rd_date_yesterday, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [1]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_tomorrow,
+            None, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [2, 4]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_datetime_1m_ago,
+            rd_datetime_2h_later, assumed_time_1, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [3, 5]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_datetime_1m_ago,
+            rd_datetime_2h_later, assumed_time_1, assumed_time_1,
+            dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [0, 3, 5]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False,
+            rd_datetime_yesterday_and_1m_ago, rd_datetime_2h_later,
+            assumed_time_1, assumed_time_2, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [1, 3, 5, 6]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    # Assumes all tasks in the past!
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, None,
+            rd_datetime_1m_ago)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [3, 4, 5, 6]} \
+            == {t['gid'] for t in tasks_to_check}
+
 
 
 def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
     """
     Tests the `_filter_tasks_by_datetime()` method.
+
+    These test cases (or at least the data) are largely aligned with
+    `test_get_filtered_tasks()`.
     """
     # 'due_on' corresponds to 'due_at' as though set in UTC-0500 timezone
     all_tasks = [
