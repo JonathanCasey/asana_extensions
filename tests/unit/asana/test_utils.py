@@ -203,11 +203,16 @@ def test_get_filtered_tasks(sections_in_utl_test, tasks_with_due_in_utl_test):
     # Use same section gid as used in `tasks_with_due_in_utl_test`
     sect_gid = sections_in_utl_test[1]['gid']
     # Will be comparing task names only
-    task_names = [t['name'] for t in tasks_with_due_in_utl_test]
+    created_task_gids = [t['gid'] for t in tasks_with_due_in_utl_test]
 
     filt_tasks = autils.get_filtered_tasks(sect_gid, True)
-    assert {task_names[i] for i in [7]}.issubset(
-            [t['name'] for t in filt_tasks])
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [7]} \
+            == {t['gid'] for t in tasks_to_check}
+    assert 'due_at' in tasks_to_check[0]
+    assert 'due_on' in tasks_to_check[0]
+    assert tasks_to_check[0]['name'] == tasks_with_due_in_utl_test[7]['name']
+    assert tasks_to_check[0]['resource_type'] == 'task'
 
 
 

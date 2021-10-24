@@ -217,7 +217,7 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
     sect_tasks = aclient.get_tasks(params, fields)
 
     if match_no_due_date:
-        return [t for t in sect_tasks if t['due_at'] is None]
+        return [t for t in sect_tasks if t['due_on'] is None]
 
     now_with_tz = dt.datetime.now().astimezone(use_tzinfo)
     filt_tasks = _filter_tasks_by_datetime(sect_tasks, now_with_tz,
