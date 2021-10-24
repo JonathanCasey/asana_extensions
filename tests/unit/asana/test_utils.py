@@ -129,21 +129,23 @@ def test_get_net_include_section_gids(monkeypatch, caplog):
 
 
 
-def test__filter_tasks_by_datetime():
+def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
     """
     Tests the `_filter_tasks_by_datetime()` method.
     """
     # 'due_on' corresponds to 'due_at' as though set in UTC-0500 timezone
-    task_1 = {'t': 1, 'due_on': '2021-01-01'}
-    task_2 = {'t': 2, 'due_on': '2020-12-31'}
-    task_3 = {'t': 3, 'due_on': '2021-01-02'}
-    task_4 = {'t': 4, 'due_at': '2021-01-01T21:00-0500', 'due_on': '2021-01-01'}
-    task_5 = {'t': 5, 'due_at': '2021-01-02T21:00-0500', 'due_on': '2021-01-02'}
-    task_6 = {'t': 6, 'due_at': '2021-01-02T02:00Z', 'due_on': '2021-01-01'}
-    task_7 = {'t': 7, 'due_at': '2021-01-01T21:00Z', 'due_on': '2021-01-01'}
-    task_8 = {'t': 8, 'due_at': '2021-01-02 21:00', 'due_on': 'bad timezone'}
-    task_9 = {'t': 9, 'no_due_key': 'this is bad'}
-    base_tasks = [task_1, task_2, task_3, task_4, task_5, task_6, task_7]
+    all_tasks = [
+        {'t': 0, 'due_on': '2021-01-01'},
+        {'t': 1, 'due_on': '2020-12-31'},
+        {'t': 2, 'due_on': '2021-01-02'},
+        {'t': 3, 'due_at': '2021-01-01T21:00-0500', 'due_on': '2021-01-01'},
+        {'t': 4, 'due_at': '2021-01-02T21:00-0500', 'due_on': '2021-01-02'},
+        {'t': 5, 'due_at': '2021-01-02T02:00Z', 'due_on': '2021-01-01'},
+        {'t': 6, 'due_at': '2021-01-01T21:00Z', 'due_on': '2021-01-01'},
+        {'t': 7, 'due_at': '2021-01-02 21:00', 'due_on': 'bad timezone'},
+        {'t': 8, 'no_due_key': 'this is bad'},
+    ]
+    good_tasks = all_tasks[:7]
 
     dt_base_1 = dt.datetime(2021, 1, 1, 21, 0, tzinfo=dt.timezone(
             dt.timedelta(hours=-5)))
@@ -162,97 +164,97 @@ def test__filter_tasks_by_datetime():
     assumed_time_3 = dt.time(1, 0)
 
     # Set 1: No filter
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1, None,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1, None,
             operator.lt)
-    assert filt_tasks == base_tasks
+    assert filt_tasks == good_tasks
 
     # Set 2: Date filter
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_date_today, operator.ge)
-    assert filt_tasks == [task_1, task_3, task_4, task_5, task_6, task_7]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    assert filt_tasks == [all_tasks[i] for i in [0, 2, 3, 4, 5, 6]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_date_today, operator.le)
-    assert filt_tasks == [task_1, task_2, task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [0, 1, 3, 5, 6]]
 
     # Set 3: Datetime filter
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.ge)
-    assert filt_tasks == [task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    assert filt_tasks == [all_tasks[i] for i in [4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.lt)
-    assert filt_tasks == [task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [3, 5, 6]]
 
     # Set 4: Datetime filter, different time but same tz as Set 3
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_2,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_2,
             rd_datetime_2h_later, operator.ge)
-    assert filt_tasks == [task_4, task_5, task_6]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_2,
+    assert filt_tasks == [all_tasks[i] for i in [3, 4, 5]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_2,
             rd_datetime_2h_later, operator.lt)
-    assert filt_tasks == [task_7]
+    assert filt_tasks == [all_tasks[i] for i in [6]]
 
     # Set 5: Date filter, different tz than Set 2
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.ge)
-    assert filt_tasks == [task_3, task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    assert filt_tasks == [all_tasks[i] for i in [2, 4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.le)
-    assert filt_tasks == base_tasks
+    assert filt_tasks == good_tasks
 
     # Set 6: Datetime filter, different tz than Set 4 (no effect)
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_datetime_2h_later, operator.ge)
-    assert filt_tasks == [task_4, task_5, task_6]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    assert filt_tasks == [all_tasks[i] for i in [3, 4, 5]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_datetime_2h_later, operator.lt)
-    assert filt_tasks == [task_7]
+    assert filt_tasks == [all_tasks[i] for i in [6]]
 
     # Set 7: Date filter, assumed time added to Set 5 (no effect)
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.ge, assumed_time_1)
-    assert filt_tasks == [task_3, task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_3,
+    assert filt_tasks == [all_tasks[i] for i in [2, 4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.le, assumed_time_1)
-    assert filt_tasks == base_tasks
+    assert filt_tasks == good_tasks
 
     # Set 8: Datetime filter, assumed time added to Set 3
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.ge, assumed_time_1)
-    assert filt_tasks == [task_3, task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    assert filt_tasks == [all_tasks[i] for i in [2, 4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.lt, assumed_time_1)
-    assert filt_tasks == [task_1, task_2, task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [0, 1, 3, 5, 6]]
 
     # Set 9: Datetime filter, different assumed time than Set 8
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.ge, assumed_time_2)
-    assert filt_tasks == [task_1, task_3, task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    assert filt_tasks == [all_tasks[i] for i in [0, 2, 4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.lt, assumed_time_2)
-    assert filt_tasks == [task_2, task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [1, 3, 5, 6]]
 
     # Set 10: Datetime filter, different assumed time than Set 8
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.ge, assumed_time_3)
-    assert filt_tasks == [task_3, task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_1,
+    assert filt_tasks == [all_tasks[i] for i in [2, 4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
             rd_datetime_2h_later, operator.lt, assumed_time_3)
-    assert filt_tasks == [task_1, task_2, task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [0, 1, 3, 5, 6]]
 
     # Set 11: Datetime filter, different timezone than Set 10
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_4,
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_4,
             rd_datetime_2h_later, operator.ge, assumed_time_3)
-    assert filt_tasks == [task_5]
-    filt_tasks = autils._filter_tasks_by_datetime(base_tasks, dt_base_4,
+    assert filt_tasks == [all_tasks[i] for i in [4]]
+    filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_4,
             rd_datetime_2h_later, operator.lt, assumed_time_3)
-    assert filt_tasks == [task_1, task_2, task_3, task_4, task_6, task_7]
+    assert filt_tasks == [all_tasks[i] for i in [0, 1, 2, 3, 5, 6]]
 
     # Set 12: Failure modes
     with pytest.raises(TypeError) as ex:
-        autils._filter_tasks_by_datetime(base_tasks + [task_8], dt_base_1,
+        autils._filter_tasks_by_datetime(all_tasks[7:], dt_base_1,
                 rd_datetime_2h_later, operator.ge)
     assert "can't compare offset-naive and offset-aware datetimes" \
             in str(ex.value)
     with pytest.raises(KeyError) as ex:
-        autils._filter_tasks_by_datetime(base_tasks + [task_9], dt_base_1,
+        autils._filter_tasks_by_datetime(all_tasks[8:], dt_base_1,
                 rd_date_today, operator.ge)
     assert 'due_on' in str(ex.value)
