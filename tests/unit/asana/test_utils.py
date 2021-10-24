@@ -242,6 +242,19 @@ def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-stateme
     filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
             rd_date_today, assumed_time_1, dt_base=dt_base_1)
     tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    print('test tasks:')
+    print('-----------')
+    for task in tasks_with_due_in_utl_test:
+        print()
+        print(task)
+    print()
+    print()
+    print('tasks to check:')
+    print('---------------')
+    for task in tasks_to_check:
+        print()
+        print(task)
+    print()
     assert {created_task_gids[i] for i in [0, 3, 5, 6]} \
             == {t['gid'] for t in tasks_to_check}
 
