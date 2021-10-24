@@ -201,7 +201,9 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
         each task being a dict of values based on the API key/values.
     """
     assert match_no_due_date \
-            ^ (min_time_until_due is not None or max_time_until_due is not None)
+            ^ (min_time_until_due is not None \
+                or max_time_until_due is not None), \
+            'Must provide min/max until due or specify no due date but not both'
 
     params = {
         'section': section_gid,

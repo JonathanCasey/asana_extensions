@@ -17,12 +17,66 @@ Module Attributes:
 import datetime as dt
 import logging
 import operator
+import uuid
 
 from dateutil.relativedelta import relativedelta
 import pytest
 
 from asana_extensions.asana import client as aclient
 from asana_extensions.asana import utils as autils
+from tests.unit.asana import tester_data
+
+
+
+@pytest.fixture(name='tasks_with_due_in_utl_test', scope='session')
+def fixture_tasks_with_due_in_utl_test(sections_in_utl_test):
+    """
+    Creates tasks with and without due dates/times in the user task list (in the
+    test workspace), and returns a list of them, each of which is the dict of
+    data that should match the `data` element returned by the API.
+
+    Will delete the tasks once done with all tests.
+
+    This is not being used with the autouse keyword so that, if running tests
+    that do not require this section fixture, they can run more optimally
+    without the need to needlessly create and delete this section.  (Also,
+    could not figure out how to get rid of all syntax and pylint errors).
+
+    ** Consumes 18 API calls. **
+    (API call count is 2*num_tasks + 2)
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    task_due_params = [
+        {'due_on': '2021-01-01'},   # 0
+        {'due_on': '2020-12-31'},   # 1
+        {'due_on': '2021-01-02'},   # 2
+        {'due_at': '2021-01-01T21:00:00-0500'}, # 3
+        {'due_at': '2021-01-02T21:00:00-0500'}, # 4
+        {'due_at': '2021-01-02T02:00:00Z'},     # 5
+        {'due_at': '2021-01-01T21:00:00Z'},     # 6
+        {},     # 7
+    ]
+    client = aclient._get_client()
+    me_data = aclient._get_me()
+    ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+
+    task_data_list = []
+    for task_due_param in task_due_params:
+        task_name = tester_data._TASK_TEMPLATE.substitute({'tid': uuid.uuid4()})
+        params = {
+            'assignee': me_data['gid'],
+            'assignee_section': sections_in_utl_test[1]['gid'],
+            'name': task_name,
+            'workspace': ws_gid,
+        }
+        params = {**params, **task_due_param}
+        task_data = client.tasks.create_task(params)
+        task_data_list.append(task_data)
+
+    yield task_data_list
+
+    for task_data in task_data_list:
+        client.tasks.delete_task(task_data['gid'])
 
 
 
@@ -126,6 +180,34 @@ def test_get_net_include_section_gids(monkeypatch, caplog):
             in str(ex.value)
     assert 'provided by name): 4, 5' in str(ex.value)
     assert 'Also check names:' not in str(ex.value)
+
+
+
+def test_get_filtered_tasks(sections_in_utl_test, tasks_with_due_in_utl_test):
+    """
+    Tests the `get_filtered_tasks()` method.
+
+    ** Consumes at least 1 API call. **
+    (varies depending on data size, but only 1 call intended)
+    """
+    with pytest.raises(AssertionError) as ex:
+        autils.get_filtered_tasks(0)
+    assert 'Must provide min/max until due or specify no due date but not' \
+            + ' both' in str(ex.value)
+
+    with pytest.raises(AssertionError) as ex:
+        autils.get_filtered_tasks(0, True, relativedelta())
+    assert 'Must provide min/max until due or specify no due date but not' \
+            + ' both' in str(ex.value)
+
+    # Use same section gid as used in `tasks_with_due_in_utl_test`
+    sect_gid = sections_in_utl_test[1]['gid']
+    # Will be comparing task names only
+    task_names = [t['name'] for t in tasks_with_due_in_utl_test]
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, True)
+    assert {task_names[i] for i in [7]}.issubset(
+            [t['name'] for t in filt_tasks])
 
 
 
