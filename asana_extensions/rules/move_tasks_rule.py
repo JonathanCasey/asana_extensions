@@ -57,7 +57,7 @@ class MoveTasksRule(rule_meta.Rule):
                 or rule_params['project_gid'] is not None
         assert rule_params['is_my_tasks_list'] is False \
                 or rule_params['user_task_list_gid'] is None, "Cannot" \
-                    + " specify 'is my tasks list' and 'user task list gid'" \
+                    + " specify 'for my tasks list' and 'user task list gid'" \
                     + " together."
         is_user_task_list_given = rule_params['is_my_tasks_list'] \
                 or rule_params['user_task_list_gid'] is not None
@@ -179,7 +179,7 @@ class MoveTasksRule(rule_meta.Rule):
             return None
         except TimeframeArgDupeError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
-                    + f' time args.  Exception: {str(ex)}')
+                    + f' timeframe args.  Exception: {str(ex)}')
             return None
         except ValueError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'

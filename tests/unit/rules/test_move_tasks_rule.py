@@ -25,7 +25,7 @@ from asana_extensions.rules import rule_meta
 
 
 
-def test_load_specific_from_conf(caplog):
+def test_load_specific_from_conf(caplog):  # pylint: disable=too-many-statements
     """
     Tests the `load_specific_from_conf()` method in `MoveTasksRule`.
 
@@ -66,6 +66,17 @@ def test_load_specific_from_conf(caplog):
 
     caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
+            'test-move-tasks-full')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to create Move Tasks Rule from config:" \
+                    " Cannot specify 'for my tasks list' and" \
+                    + " 'user task list gid' together."),
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
             'test-invalid-boolean')
     assert rule is None
     assert caplog.record_tuples == [
@@ -76,12 +87,12 @@ def test_load_specific_from_conf(caplog):
 
     caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
-            'test-move-tasks-full-is-utl-and-gid')
+            'test-move-tasks-is-utl-and-gid')
     assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to create Move Tasks Rule from config:" \
-                    " Cannot specify 'is my tasks list' and" \
+                    " Cannot specify 'for my tasks list' and" \
                     + " 'user task list gid' together."),
     ]
 
@@ -119,13 +130,25 @@ def test_load_specific_from_conf(caplog):
 
     caplog.clear()
     rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
+                'test-move-tasks-timeframe-parse-fail')
+    assert rule is None
+    assert caplog.record_tuples == [
+            ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+                "Failed to parse Move Tasks Rule from config.  Check timeframe"
+                + " args.  Exception: Could not parse time frame - Found 2"
+                + " entries for minutes?/m when only 0-1 allowed."),
+    ]
+
+    caplog.clear()
+    rule = move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
                 'test-move-tasks-time-parse-fail')
     assert rule is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
                 "Failed to parse Move Tasks Rule from config.  Check time args."
-                + "  Exception: Could not parse time frame - Found 2 entries"
-                + " for minutes?/m when only 0-1 allowed."),
+                + "  Exception: Timezone prohibited for time string, but one was"
+                + " provided.  String: '12:23:45+00:00', parsed:"
+                + " `12:23:45+00:00`"),
     ]
 
     caplog.clear()
