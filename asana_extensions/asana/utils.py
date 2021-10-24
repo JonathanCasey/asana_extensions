@@ -186,12 +186,15 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
         will ignore date-only tasks.  If `max_time_until_due` does not contain
         time durations, will be ignored.
       use_tzinfo (timezone or None): The timezone to use for evaluating this
-        "now".  Used to compensate between the timezone where asana is targetted
-        to be used (which is what should be supplied) compared to what the local
-        machine running this script has for a timezone (since asana API returns
-        relative to this for date-only tasks).  As a result, really only
+        "now".  Used to ensure this is run to match the timezone that is
+        targetted to be used (which is what should be supplied) in case it is
+        difference from what the local machine running this script has for a
+        timezone (since this could change the date).  As a result, really only
         relevant with date-only comparisons since it can change which day things
-        fall.
+        fall.  Datetime based comparisons are not affected since these are all
+        done based with timezone factored in.  See docstring in
+        `_filter_tasks_by_datetime()` for more info and an example of how this
+        is used.
 
     Returns:
       filt_tasks ([{str:str}]): The tasks that meet the filter criteria, with
@@ -229,8 +232,24 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
     Filters tasks by a date or datetime, returning the tasks that meet the
     provided filter criteria.
 
+    ...and now we have to talk about timezones...
+
     Note that this will use the timezone of `dt_base`, which will default to the
-    local timezone that runs this script if none is explicitly set!
+    local timezone that runs this script if none is explicitly set!  Callers of
+    this function have the option to change that timezone (e.g. `.astimezone()`
+    on a datetime).  See `dt_base` parameter docstring for recommendations.
+
+    As an example, let's say this is intended to run a script at 01:00 in NY
+    (EST, UTC-0500) where it is primarily used by the user, but is loaded on a
+    server in CA where it is 22:00 the previous day (PST, UTC-0800).  Let's say
+    it is Apr-1 in CA, making it Apr-2 02:00 in NY.  Let's also say this script
+    is running a "select tasks for today" script intended to run a little after
+    midnight (1 hour in this case since user is in NY/EST), and there is a task
+    due Apr-2 that is intended to be selected by this rule.  The asana API will
+    return this task is due Apr-2, but in CA it is still Apr-1, so the task will
+    not be selected.  Instead, though, if the `dt_base` is provided as EST, this
+    script will run as though the date is Apr-2, effectively as though it were
+    in EST.
 
     Args:
       tasks ([{str:str}]): List of tasks from asana API.  At the very least,
@@ -241,9 +260,9 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
         applying successive filters to the same data (i.e. min until due and
         the max until due), it is recommended to use same exact `dt_base` for
         each to ensure no weird gaps or call order issues.  This should include
-        the TARGET timezone -- the timezone in which asana will primarily be
+        the TARGET timezone -- the timezone in which asana is/will primarily be
         used to be most accurate (in case different from where machine running
-        script is).
+        script is).  Timezone is required.
       rel_dt_until_due (relativedelta): The relative date or datetime until the
         task is due.  This is relative to the `dt_base` provided.  This will be
         compared against the tasks due date/datetime based on the provided
@@ -253,11 +272,13 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
         latter case, any tasks without a due time but do have a due date will
         either be skipped if `time_due_assumed` is None, or will have that time
         set in the TARGET timezone provided by `dt_base`.  Note that while
-        datetime API results have timezone info, the date-only API results are
-        the date based on the machine running the script -- this needs to be
-        considered when setting the time at which this script runs and the
-        timezone of the machine running it, as there could be a day-off error if
-        operated at an edge case.  If None, will return all tasks.
+        datetime API results have timezone info, the date-only API results seem
+        to be the date based on the timezone in which the task was set (e.g. if
+        it were set as Apr-1 in UTC+1400, it will still be Apr-1 when viewed
+        in UTC-1200 at the same time).  This needs to be considered when setting
+        the time at which this script runs and the timezone provided (or of the
+        machine running it if none provided), as there could be a day-off error
+        if operated at an edge case.  If None, will return all tasks.
       task_is_rel_comparison_success_op (operator): A less/greater than [or
         equal to] comparison operator to use in the filter evaluaion.  Tasks
         that satisfy the criteria of the task due date/datetime being
@@ -279,9 +300,7 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
 
     if utils.is_date_only(rel_dt_until_due):
         ignore_time = True
-        # tz_diff will be the target timezone minus local timezone of machine
-        tz_diff = dt_base.utcoffset() - dt_base.astimezone(None).utcoffset()
-        due_threshold = (dt_base + tz_diff).date() + rel_dt_until_due
+        due_threshold = dt_base.date() + rel_dt_until_due
     else:
         ignore_time = False
         due_threshold = dt_base + rel_dt_until_due
