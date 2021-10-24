@@ -42,7 +42,7 @@ def fixture_tasks_with_due_in_utl_test(sections_in_utl_test):
     without the need to needlessly create and delete this section.  (Also,
     could not figure out how to get rid of all syntax and pylint errors).
 
-    ** Consumes 18 API calls. **
+    ** Consumes 20 API calls. **
     (API call count is 2*num_tasks + 2)
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
@@ -55,6 +55,7 @@ def fixture_tasks_with_due_in_utl_test(sections_in_utl_test):
         {'due_at': '2021-01-02T02:00:00Z'},     # 5
         {'due_at': '2021-01-01T21:00:00Z'},     # 6
         {},     # 7
+        {'due_on': '2021-01-01', 'completed': True},    # 8
     ]
     client = aclient._get_client()
     me_data = aclient._get_me()
@@ -195,7 +196,7 @@ def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-stateme
     `test__filter_tasks_by_datetime()`, with the last task here with no due date
     being the primary difference.
 
-    ** Consumes at least 10 API calls. **
+    ** Consumes at least 12 API calls. **
     (varies depending on data size, but only 10 calls intended)
     """
     with pytest.raises(AssertionError) as ex:
@@ -217,6 +218,7 @@ def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-stateme
     tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
     assert {created_task_gids[i] for i in [7]} \
             == {t['gid'] for t in tasks_to_check}
+    assert tasks_to_check[0]['completed'] is False
     assert 'due_at' in tasks_to_check[0]
     assert 'due_on' in tasks_to_check[0]
     assert tasks_to_check[0]['name'] == tasks_with_due_in_utl_test[7]['name']
@@ -247,6 +249,18 @@ def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-stateme
             rd_date_today, use_tzinfo=tzinfo_2, dt_base=dt_base_1)
     tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
     assert {created_task_gids[i] for i in [2, 4]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
+            rd_date_today, is_completed=True, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [8]} \
+            == {t['gid'] for t in tasks_to_check}
+
+    filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
+            rd_date_today, is_completed=None, dt_base=dt_base_1)
+    tasks_to_check = [t for t in filt_tasks if t['gid'] in created_task_gids]
+    assert {created_task_gids[i] for i in [0, 3, 5, 6, 8]} \
             == {t['gid'] for t in tasks_to_check}
 
     filt_tasks = autils.get_filtered_tasks(sect_gid, False, rd_date_today,
@@ -428,3 +442,31 @@ def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
         autils._filter_tasks_by_datetime(all_tasks[8:], dt_base_1,
                 rd_date_today, operator.ge)
     assert 'due_on' in str(ex.value)
+
+
+
+def test__filter_tasks_by_completed():
+    """
+    Tests the `_filter_tasks_by_completed()` method.
+    """
+    all_tasks = [
+        {'t': 0, 'completed': True},
+        {'t': 1, 'completed': False},
+        {'t': 2, 'completed': False},
+        {'t': 3, 'completed': True},
+        {'t': 4, 'no_completed': 'this is bad'},
+    ]
+    good_tasks = all_tasks[:4]
+
+    filt_tasks = autils._filter_tasks_by_completed(good_tasks, None)
+    assert filt_tasks == good_tasks
+
+    filt_tasks = autils._filter_tasks_by_completed(good_tasks, True)
+    assert filt_tasks == [all_tasks[i] for i in [0, 3]]
+
+    filt_tasks = autils._filter_tasks_by_completed(good_tasks, False)
+    assert filt_tasks == [all_tasks[i] for i in [1, 2]]
+
+    with pytest.raises(KeyError) as ex:
+        autils._filter_tasks_by_completed(all_tasks, True)
+    assert 'completed' in str(ex.value)

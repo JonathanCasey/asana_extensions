@@ -153,7 +153,7 @@ def get_net_include_section_gids(              # pylint: disable=too-many-locals
 def get_filtered_tasks(section_gid, match_no_due_date=False,
         min_time_until_due=None, max_time_until_due=None,
         min_time_due_assumed=None, max_time_due_assumed=None,
-        use_tzinfo=None, dt_base=None):
+        is_completed=False, use_tzinfo=None, dt_base=None):
     """
     Gets tasks in a given section that meet the due filter criteria provided.
 
@@ -185,6 +185,10 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
         timezone.  If None and `max_time_until_due` contains time durations,
         will ignore date-only tasks.  If `max_time_until_due` does not contain
         time durations, will be ignored.
+      is_completed (bool or None): Whether to return tasks that are completed.
+        The default is False to only return uncompleted tasks.  True will return
+        only completed tasks, while None can be used to return tasks regardless
+        of completion status.
       use_tzinfo (timezone or None): The timezone to use for evaluating this
         "now".  Used to ensure this is run to match the timezone that is
         targetted to be used (which is what should be supplied) in case it is
@@ -212,7 +216,11 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
     params = {
         'section': section_gid,
     }
+    if is_completed is False:
+        params['completed_since'] = 'now'
+
     fields = [
+        'completed',
         'due_at',
         'due_on',
         'name',
@@ -226,7 +234,8 @@ def get_filtered_tasks(section_gid, match_no_due_date=False,
     if dt_base is None:
         dt_base = dt.datetime.now()
     dt_base_with_tz = dt_base.astimezone(use_tzinfo)
-    filt_tasks = _filter_tasks_by_datetime(sect_tasks, dt_base_with_tz,
+    filt_tasks = _filter_tasks_by_completed(sect_tasks, is_completed)
+    filt_tasks = _filter_tasks_by_datetime(filt_tasks, dt_base_with_tz,
             min_time_until_due, operator.ge, min_time_due_assumed)
     filt_tasks = _filter_tasks_by_datetime(filt_tasks, dt_base_with_tz,
             max_time_until_due, operator.le, max_time_due_assumed)
@@ -337,3 +346,27 @@ def _filter_tasks_by_datetime(tasks, dt_base, rel_dt_until_due,
             filt_tasks.append(task)
 
     return filt_tasks
+
+
+
+def _filter_tasks_by_completed(tasks, is_completed):
+    """
+    Filters tasks based on the completion status.
+
+    Args:
+      tasks ([{str:str}]): List of tasks from asana API.  At the very least,
+        must have the `completed` key.
+      is_completed (bool or None): Whether to return tasks that are completed.
+        False will return only uncompleted tasks.  True will return only
+        completed tasks, while None can be used to return tasks regardless of
+        completion status.
+
+    Returns:
+      filt_tasks ([{str:str}]): The tasks that meet the filter criteria.  This
+        will be all tasks if `is_completed` is None; or will be tasks that
+        match the provided `is_completed` status.
+    """
+    if is_completed is None:
+        return tasks
+
+    return [t for t in tasks if t['completed'] == is_completed]
