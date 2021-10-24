@@ -32,6 +32,10 @@ workspace gid : # <id>
 # `min time until due` will default to beginning of time.
 # `max time until due` will default to end of time.
 # `min/max time until due` are inclusive bounds.
+# `only use datetime field` will only include tasks that have the date+time
+#  field populated in Asana, omitting tasks that have only a date.  This is
+#  ignored if `min/max time until due` do not have any time durations or if
+#  `no due date` is used.
 # Timeframe keys can be given in short or long form, with or without space
 #  separators, plural or singular.  Value must precede timeframe.  Only the
 #  short form is case sensitive.  Keys as `<short>, <long>` are:
@@ -50,6 +54,7 @@ workspace gid : # <id>
 # - Upcoming month, excluding upcoming week: `min: 1w1d, max: 1M`
 min time until due : # <timeframe>
 max time until due : # <timeframe>
+only use datetime field : # <YES/no>
 no due date : # <yes/NO>
 
 # Source sections to include and/or exclude can be specified by name or ID.
@@ -100,6 +105,10 @@ workspace gid : # <id>
 # `min time until due` will default to beginning of time.
 # `max time until due` will default to end of time.
 # `min/max time until due` are inclusive bounds.
+# `only use datetime field` will only include tasks that have the date+time
+#  field populated in Asana, omitting tasks that have only a date.  This is
+#  ignored if `min/max time until due` do not have any time durations or if
+#  `no due date` is used.
 # Timeframe keys can be given in short or long form, with or without space
 #  separators, plural or singular.  Value must precede timeframe.  Only the
 #  short form is case sensitive.  Keys as `<short>, <long>` are:
@@ -118,6 +127,7 @@ workspace gid : # <id>
 # - Upcoming month, excluding upcoming week: `min: 1w1d, max: 1M`
 min time until due : # <timeframe>
 max time until due : # <timeframe>
+only use datetime field : # <YES/no>
 no due date : # <yes/NO>
 
 # Source sections to include and/or exclude can be specified by name or ID.
