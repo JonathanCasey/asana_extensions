@@ -14,6 +14,7 @@ Module Attributes:
 """
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
+import datetime as dt
 import logging
 import os.path
 
@@ -142,6 +143,39 @@ def test_load_specific_from_conf(caplog):
     assert rule is not None
     assert rule._rule_params['rule_type'] == 'blank rule'
     assert caplog.record_tuples == []
+
+
+
+def test_parse_time_arg():
+    """
+    Tests the `parse_time_arg()` method in `Rule`.
+    """
+    test_str = '13:00'
+    test_time = dt.time.fromisoformat(test_str)
+    assert rule_meta.Rule.parse_time_arg(test_str) == test_time
+    assert rule_meta.Rule.parse_time_arg(test_str, None) == test_time
+    with pytest.raises(config.UnsupportedFormatError) as ex:
+        rule_meta.Rule.parse_time_arg(test_str, True)
+    assert 'Timezone required' in str(ex.value)
+
+    test_str = '13:00-05:00'
+    test_time = dt.time.fromisoformat(test_str)
+    assert rule_meta.Rule.parse_time_arg(test_str) == test_time
+    assert rule_meta.Rule.parse_time_arg(test_str, True) == test_time
+    with pytest.raises(config.UnsupportedFormatError) as ex:
+        rule_meta.Rule.parse_time_arg(test_str, None)
+    assert 'Timezone prohibited' in str(ex.value)
+
+    assert rule_meta.Rule.parse_time_arg(None) is None
+    assert rule_meta.Rule.parse_time_arg('', True) is None
+
+    with pytest.raises(AssertionError) as ex:
+        rule_meta.Rule.parse_time_arg('', 'invalid value')
+    assert '`is_tz_required` must be bool or None' in str(ex.value)
+
+    with pytest.raises(ValueError) as ex:
+        rule_meta.Rule.parse_time_arg('bad time str')
+    assert 'Invalid isoformat string' in str(ex.value)
 
 
 
