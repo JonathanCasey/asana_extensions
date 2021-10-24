@@ -158,7 +158,7 @@ def test_parse_timedelta_arg():
             minutes=1, hours=2, days=3, weeks=4, months=-5, years=6)
 
     test_str = ''
-    assert rule_meta.Rule.parse_timedelta_arg(test_str) == None
+    assert rule_meta.Rule.parse_timedelta_arg(test_str) is None
 
     test_str = '0d'
     assert rule_meta.Rule.parse_timedelta_arg(test_str) == relativedelta()
