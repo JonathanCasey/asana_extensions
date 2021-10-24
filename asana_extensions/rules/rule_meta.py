@@ -156,12 +156,12 @@ class Rule(ABC):
 
         Returns:
           (relativedelta or None): The relative datetime delta specified by the
-                string.  If None was passed in, None is returned.
+                string.  If None or empty string passed in, None is returned.
 
         Raises:
           Will pass thru any exceptions raised from timeframe parser.
         """
-        if arg_str is None:
+        if arg_str is None or arg_str == '':
             return None
 
         kwargs = {}
