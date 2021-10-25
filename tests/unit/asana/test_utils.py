@@ -193,8 +193,7 @@ def test_get_filtered_tasks( # pylint: disable=too-many-locals, too-many-stateme
     asana API, as it is critical to detect any functional breakages here.
 
     These test cases (or at least the data) are largely aligned with
-    `test__filter_tasks_by_datetime()`, with the last task here with no due date
-    being the primary difference.
+    `test__filter_tasks_by_datetime()`.
 
     ** Consumes at least 13 API calls. **
     (varies depending on data size, but only 10 calls intended)
@@ -337,15 +336,16 @@ def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
     all_tasks = [
         {'t': 0, 'due_on': '2021-01-01'},
         {'t': 1, 'due_on': '2020-12-31'},
-        {'t': 2, 'due_on': '2021-01-02'},
+        {'t': 2, 'due_on': '2021-01-02', 'due_at': None},
         {'t': 3, 'due_at': '2021-01-01T21:00-0500', 'due_on': '2021-01-01'},
         {'t': 4, 'due_at': '2021-01-02T21:00-0500', 'due_on': '2021-01-02'},
         {'t': 5, 'due_at': '2021-01-02T02:00Z', 'due_on': '2021-01-01'},
         {'t': 6, 'due_at': '2021-01-01T21:00Z', 'due_on': '2021-01-01'},
-        {'t': 7, 'due_at': '2021-01-02 21:00', 'due_on': 'bad timezone'},
-        {'t': 8, 'no_due_key': 'this is bad'},
+        {'t': 7, 'due_on': None, 'due_at': None},
+        {'t': 8, 'due_at': '2021-01-02 21:00', 'due_on': 'bad timezone'},
+        {'t': 9, 'no_due_key': 'this is bad'},
     ]
-    good_tasks = all_tasks[:7]
+    good_tasks = all_tasks[:8]
 
     dt_base_1 = dt.datetime(2021, 1, 1, 21, 0, tzinfo=dt.timezone(
             dt.timedelta(hours=-5)))
@@ -398,7 +398,7 @@ def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
     assert filt_tasks == [all_tasks[i] for i in [2, 4]]
     filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.le)
-    assert filt_tasks == good_tasks
+    assert filt_tasks == good_tasks[:7]
 
     # Set 6: Datetime filter, different tz than Set 4 (no effect)
     filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
@@ -414,7 +414,7 @@ def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
     assert filt_tasks == [all_tasks[i] for i in [2, 4]]
     filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_3,
             rd_date_today, operator.le, assumed_time_1)
-    assert filt_tasks == good_tasks
+    assert filt_tasks == good_tasks[:7]
 
     # Set 8: Datetime filter, assumed time added to Set 3
     filt_tasks = autils._filter_tasks_by_datetime(good_tasks, dt_base_1,
@@ -450,12 +450,12 @@ def test__filter_tasks_by_datetime():      # pylint: disable=too-many-statements
 
     # Set 12: Failure modes
     with pytest.raises(TypeError) as ex:
-        autils._filter_tasks_by_datetime(all_tasks[7:], dt_base_1,
+        autils._filter_tasks_by_datetime(all_tasks[8:], dt_base_1,
                 rd_datetime_2h_later, operator.ge)
     assert "can't compare offset-naive and offset-aware datetimes" \
             in str(ex.value)
     with pytest.raises(KeyError) as ex:
-        autils._filter_tasks_by_datetime(all_tasks[8:], dt_base_1,
+        autils._filter_tasks_by_datetime(all_tasks[9:], dt_base_1,
                 rd_date_today, operator.ge)
     assert 'due_on' in str(ex.value)
 
