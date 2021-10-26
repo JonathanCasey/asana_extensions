@@ -57,7 +57,7 @@ class MoveTasksRule(rule_meta.Rule):
                 or rule_params['project_gid'] is not None
         assert rule_params['is_my_tasks_list'] is False \
                 or rule_params['user_task_list_gid'] is None, "Cannot" \
-                    + " specify 'is my tasks list' and 'user task list gid'" \
+                    + " specify 'for my tasks list' and 'user task list gid'" \
                     + " together."
         is_user_task_list_given = rule_params['is_my_tasks_list'] \
                 or rule_params['user_task_list_gid'] is not None
@@ -128,6 +128,8 @@ class MoveTasksRule(rule_meta.Rule):
             rule_params['workspace_gid'] = rules_cp.getint(rule_id,
                     'workspace gid', fallback=None)
 
+            rule_params['match_no_due_date'] = rules_cp.getboolean(rule_id,
+                    'no due date', fallback=False)
             rule_params['min_time_until_due_str'] = rules_cp.get(rule_id,
                     'min time until due', fallback=None)
             rule_params['min_time_until_due'] = cls.parse_timedelta_arg(
@@ -136,8 +138,14 @@ class MoveTasksRule(rule_meta.Rule):
                     'max time until due', fallback=None)
             rule_params['max_time_until_due'] = cls.parse_timedelta_arg(
                     rule_params['max_time_until_due_str'])
-            rule_params['match_no_due_date'] = rules_cp.getboolean(rule_id,
-                    'no due date', fallback=False)
+            rule_params['min_due_assumed_time_str'] = rules_cp.get(rule_id,
+                    'assumed time for min due', fallback=None)
+            rule_params['min_due_assumed_time'] = cls.parse_time_arg(
+                    rule_params['min_due_assumed_time_str'], None)
+            rule_params['max_due_assumed_time_str'] = rules_cp.get(rule_id,
+                    'assumed time for max due', fallback=None)
+            rule_params['max_due_assumed_time'] = cls.parse_time_arg(
+                    rule_params['max_due_assumed_time_str'], None)
 
             rule_params['src_sections_include_names'] = \
                     config.parse_list_from_conf_string(rules_cp.get(rule_id,
@@ -161,13 +169,17 @@ class MoveTasksRule(rule_meta.Rule):
             rule_params['dst_section_gid'] = rules_cp.getint(rule_id,
                     'dst section gid', fallback=None)
 
+        except config.UnsupportedFormatError as ex:
+            logger.error('Failed to parse Move Tasks Rule from config.  Check'
+                    + f' time args.  Exception: {str(ex)}')
+            return None
         except KeyError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
                     + f' keys.  Exception: {str(ex)}')
             return None
         except TimeframeArgDupeError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'
-                    + f' time args.  Exception: {str(ex)}')
+                    + f' timeframe args.  Exception: {str(ex)}')
             return None
         except ValueError as ex:
             logger.error('Failed to parse Move Tasks Rule from config.  Check'

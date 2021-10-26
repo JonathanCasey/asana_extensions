@@ -16,12 +16,14 @@ Module Attributes:
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 from abc import ABC, abstractmethod
+import datetime as dt
 import logging
 import re
 import string
 
 from dateutil.relativedelta import relativedelta
 
+from asana_extensions.general import config
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 
 
@@ -130,6 +132,54 @@ class Rule(ABC):
 
 
     @classmethod
+    def parse_time_arg(cls, t_str, is_tz_required=False):
+        """
+        Parses a simple ISO format time string.  This does NOT have exhaustive
+        ISO 8601 format.
+
+        Args:
+          t_str (str or None): The string to parse a time value.  None allowed
+            for convenience.
+          is_tz_allowed (bool or None): Whether the time string is required to
+            have timezone information.  True and False mean required and not
+            required, respectively.  If None, it is required that the timezone
+            is NOT provided at all.
+
+        Returns:
+          time_parsed (time or None): The time object parsed from the time
+            string provided, with the timezone enforced as specified.  If None
+            or empty string provided, None returned.
+
+        Raises:
+          (config.UnsupportedFormatError): Raised if timezone information is
+            incompatible between the time string provided and the timezone
+            requirement specified.  Specifically, this is raised if timezone is
+            required and there is no timezone parsed from the string; or if
+            timezone is prohibited (None) and there is a timezone parsed from
+            the string.
+          (ValueError): Raised if not a valid ISO format time string.
+        """
+        assert is_tz_required is True or is_tz_required is False \
+                or is_tz_required is None, \
+                '`is_tz_required` must be bool or None'
+
+        if t_str is None or t_str == '':
+            return None
+
+        time_parsed = dt.time.fromisoformat(t_str)
+        if is_tz_required is True and time_parsed.tzinfo is None:
+            raise config.UnsupportedFormatError('Timezone required for time'
+                    + f" string, but none found.  String: '{t_str}',"
+                    + f' parsed: `{time_parsed}`')
+        if is_tz_required is None and time_parsed.tzinfo is not None:
+            raise config.UnsupportedFormatError('Timezone prohibited for time'
+                    + f" string, but one was provided.  String: '{t_str}',"
+                    + f' parsed: `{time_parsed}`')
+        return time_parsed
+
+
+
+    @classmethod
     def parse_timedelta_arg(cls, arg_str):
         """
         Parses a timedelta argument as might be specified in a config file.
@@ -156,12 +206,12 @@ class Rule(ABC):
 
         Returns:
           (relativedelta or None): The relative datetime delta specified by the
-                string.  If None was passed in, None is returned.
+                string.  If None or empty string passed in, None is returned.
 
         Raises:
           Will pass thru any exceptions raised from timeframe parser.
         """
-        if arg_str is None:
+        if arg_str is None or arg_str == '':
             return None
 
         kwargs = {}

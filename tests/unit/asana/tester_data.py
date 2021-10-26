@@ -20,6 +20,11 @@ Module Attributes:
     needed for testing.  This will be created and deleted as needed during unit
     testing.
 
+  _TASK_TEMPLATE (Template): The name format to be used for test tasks created
+    in the test workspace for unit testing.  IDs will be substituted as needed
+    for testing.  This will be created and deleted as needed during unit
+    testing.
+
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 from string import Template
@@ -31,3 +36,5 @@ _WORKSPACE = 'TEST Asana Extensions'
 _PROJECT_TEMPLATE = Template('TEST Project $pid')
 
 _SECTION_TEMPLATE = Template('TEST Section $sid')
+
+_TASK_TEMPLATE = Template('TEST Task $tid')

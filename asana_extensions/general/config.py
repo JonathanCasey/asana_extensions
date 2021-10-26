@@ -24,6 +24,14 @@ from asana_extensions.general import dirs
 
 
 
+class UnsupportedFormatError(Exception):
+    """
+    Raised when parsing any argument and it is in an invalid format (and is not
+    covered by a more specific or more appropriate error).
+    """
+
+
+
 def read_conf_file_fake_header(conf_rel_file, conf_base_dir=None,
         fake_section='fake',):
     """

@@ -100,10 +100,17 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 
 ### Asana / Meta
 
+##### Unit Tests: conftest
+- [Added] Added `conftest.py` to root of `asana` subpackage in unit tests dir,
+      with new `fixture_sections_in_utl_test()` added for use by other modules
+      in subpackage ([#18][]).
+
+
 ##### Unit Tests: Tester Data
 - [Added] `tester_data.py` added to hold test data constants, initially
       including the `_WORKSPACE`, `_PROJECT_TEMPLATE`, and `_SESSIONS_TEMPLATE`
       constants ([#10][]).
+- [Added] `_TASK_TEMPLATE` added for naming test tasks ([#18][]).
 
 
 ### Asana: Client
@@ -127,6 +134,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] All functions that make API requests directly now decorated with
       `@asana_error_handler` and all existing relevant exception handling
       removed from those functions ([#25][]).
+- [Added] `get_tasks()` method added to get tasks from asana API based on given
+      criteria ([#18][]).
 
 ##### Unit Tests
 - [Changed] `fixture_raise_no_authorization_error` and
@@ -148,6 +157,10 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       they are decorated as expected ([#25][]).
 - [Added] `test_pagination` added to ensure pagination does not cause any issues
       with this project (really an integration test) ([#25][]).
+- [Changed] Improved looping syntax by iterating by item, not be index in some
+      places ([#18][]).
+- [Added] `fixture_tasks_in_project_and_utl_test()` added to create tasks for
+      testing `get_tasks()` method (so far) ([#18][]).
 
 
 ### Asana: Utils
@@ -156,6 +169,15 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `DataConflictError` and `DataMissingError` exceptions added ([#10][]).
 - [Added] Method to get the net included section gids based on project contents
       and explicit includes/excludes added ([#10][]).
+- [Added] `get_filtered_tasks()` added to filter tasks based on due date/time in
+      a given section, including factoring in timezone as best as API will
+      allow ([#18][]).
+- [Added] `_filter_tasks_by_datetime()` and `_filter_tasks_by_completed` added
+      to support specific filter processing of `get_filtered_tasks()` ([#18][]).
+
+##### Unit Tests
+- [Added] `fixture_tasks_with_due_in_utl_test()` added for testing task
+      filtering (so far) ([#18][]).
 
 
 ### Config: .secrets.conf
@@ -169,6 +191,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] Correct description that `for my tasks list` and `user task list id`
       cannot be provided together, now matching code ([#10][]).
 - [Fixed] Cleaned up comments not meant to be committed.
+- [Added] `assumed time for min due` and `assumed time for max due` added along
+      with explanation of usage ([#18][]).
 
 
 ### General: Config
@@ -177,6 +201,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] `conf_base_dir` parameter in `read_conf_file_fake_header()`,
       `read_conf_file()` changed to `None`, with the real default set within the
       method body to better support testing ([#1][]).
+- [Added] `UnsupportedFormatError` added for cases where a config value is in
+      a parsable format, but it's use as such is not supported ([#18][]).
 
 
 ### General: Dirs
@@ -187,6 +213,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `exceptions.py` added with `TimeframeArgDupeError` ([#1][]).
 
 
+### General: Utils
+- [Added] `utils.py` added, with `is_date_only()` check, which only supports
+      ISO 8601 strings and `relativedelta` input only ([#18][]).
+
+
 ### Rules / Meta
 - [Added] `rule_meta.py` added with abstract `Rule` defining interface and some
       consolidated logic ([#1][]).
@@ -194,11 +225,27 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `rules.py` added with `load_all_from_config()` started to load all
       rules from the `rules.conf` file ([#1][]).
 - [Added] `MoveTasksRule` added to `_RULES` list in `rules.py` ([#1][]).
+- [Added] `parse_time_arg()` added to parse time-only iso-format values (not
+      full ISO 8601 format though) ([#18][]).
+- [Changed] `parse_timedelta_arg()` will now also return `None` if an empty
+      string is provided in case key is left in config but is blank ([#18][]).
 
 
 ### Rules: Move Tasks Rule
 - [Added] `move_tasks_rule.py` added with `MoveTasksRule` having initial logic
       to load from config and do non-API validation ([#1][]).
+- [Added] Support for `assumed time for min/max due` config parameters added,
+      with catch of `UnsupportedFormatError` ([#18][]).
+- [Fixed] Updated incorrect parameter name in error message ([#18][]).
+- [Changed] References to timeframe in error messages changed to be `timeframe`
+      instead of `time` to be more clear and distinuish from assumed time errors
+      ([#18][]).
+
+##### Unit Tests
+- [Changed] `[test-move-tasks-full-is-utl-and-gid]` is now split into
+      `[test-move-tasks-is-utl-and-gid]` and `[test-move-tasks-full]` to ensure
+      that if `full` is changed later, no need to worry about it reducing
+      coverage ([#18][]).
 
 
 ### Docs: CHANGELOG
@@ -252,6 +299,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#12][]
 - [#13][]
 - [#16][]
+- [#18][]
 - [#25][]
 - [#27][]
 - [#28][]
@@ -267,6 +315,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#29][] for [#27][]
 - [#30][] for [#25][]
 - [#31][] for [#28][]
+- [#32][] for [#18][]
 
 
 ---
@@ -285,6 +334,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#27]: https://github.com/JonathanCasey/asana_extensions/issues/27 'Issue #27'
 [#25]: https://github.com/JonathanCasey/asana_extensions/issues/25 'Issue #25'
 [#28]: https://github.com/JonathanCasey/asana_extensions/issues/28 'Issue #28'
+[#18]: https://github.com/JonathanCasey/asana_extensions/issues/18 'Issue #18'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -296,3 +346,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#29]: https://github.com/JonathanCasey/asana_extensions/pull/29 'PR #29'
 [#30]: https://github.com/JonathanCasey/asana_extensions/pull/30 'PR #30'
 [#31]: https://github.com/JonathanCasey/asana_extensions/pull/31 'PR #31'
+[#32]: https://github.com/JonathanCasey/asana_extensions/pull/32 'PR #32'
