@@ -1,6 +1,6 @@
 # Setup
 
-Was developed on python 3.7.
+Was developed on python 3.10.
 
 
 ### Config files

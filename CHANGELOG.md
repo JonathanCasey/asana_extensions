@@ -49,6 +49,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       workflows to more easily see results separately on GitHub ([#27][]).
 - [Changed] Codecov uploader migrated from deprecated bash uploader to new
       uploader ([#28][]).
+- [Changed] Python version changed from 3.8 to 3.10 ([#33][]).
 
 
 ### Project & Toolchain: CI Support
@@ -66,6 +67,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] CodeCov support added to project (`.codecov.yml`) and CircleCI
       ([#5][]).
 - [Changed] CodeCov targets set to 100% for project and patch ([#12][]).
+- [Fixed] Incorrect code coverage in [#32][] corrected by upgrade to python 3.10
+      ([#33][]).
 
 
 ### Project & Toolchain: Conventions
@@ -78,6 +81,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       only entries ([#5][]).
 - [Added] `python-dateutil` added to `requirements.txt` ([#1][]).
 - [Added] `asana` added to `requirements.txt` ([#9][]).
+- [Changed] Python version changed from 3.7/3.8 to 3.10 ([#33][]).
 
 
 ### Project & Toolchain: Pylint
@@ -277,6 +281,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `setup.md` added (placeholder) ([#5][]).
 - [Added] Noted that python 3.7 was used for dev ([#1][]).
 - [Added] Added setup instructions on creating config from stubs ([#1][]).
+- [Changed] Python version changed from 3.7 to 3.10 ([#33][]).
 
 
 ### Docs: Usage
@@ -303,6 +308,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#25][]
 - [#27][]
 - [#28][]
+- [#33][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -316,6 +322,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#30][] for [#25][]
 - [#31][] for [#28][]
 - [#32][] for [#18][]
+- [#34][] for [#33][]
 
 
 ---
@@ -335,6 +342,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#25]: https://github.com/JonathanCasey/asana_extensions/issues/25 'Issue #25'
 [#28]: https://github.com/JonathanCasey/asana_extensions/issues/28 'Issue #28'
 [#18]: https://github.com/JonathanCasey/asana_extensions/issues/18 'Issue #18'
+[#33]: https://github.com/JonathanCasey/asana_extensions/issues/33 'Issue #33'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -347,3 +355,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#30]: https://github.com/JonathanCasey/asana_extensions/pull/30 'PR #30'
 [#31]: https://github.com/JonathanCasey/asana_extensions/pull/31 'PR #31'
 [#32]: https://github.com/JonathanCasey/asana_extensions/pull/32 'PR #32'
+[#34]: https://github.com/JonathanCasey/asana_extensions/pull/34 'PR #34'
