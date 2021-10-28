@@ -50,7 +50,7 @@ workflows:
 aliases:
   - &default_python_image
     docker:
-      - image: circleci/python:3.8
+      - image: circleci/python:3.10
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
