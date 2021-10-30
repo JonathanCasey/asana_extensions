@@ -172,6 +172,105 @@ def test_load_specific_from_conf(caplog):
 
 
 
+def test_is_valid(monkeypatch):
+    """
+    Tests the `is_valid()` method in `Rule`.
+    """
+
+    class BlankRule(rule_meta.Rule):
+        """
+        Simple blank rule to subclass Rule.
+        """
+        @classmethod
+        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
+                **kwargs):
+            """
+            Not needed / will not be used.
+            """
+            return
+
+        @classmethod
+        def get_rule_type_names(cls):
+            """
+            Not needed / will not be used.
+            """
+            return []
+
+        def _sync_and_validate_with_api(self):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
+        def execute(self, force_test_report_only=False):
+            """
+            Not needed / will not be used.
+            """
+            return
+
+    def mock__sync_and_validate_with_api():
+        """
+        Force to return False.
+        """
+        return False
+
+    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    assert blank_rule._is_valid is None
+
+    assert blank_rule.is_valid() is True
+    assert blank_rule._is_valid is True
+
+    monkeypatch.setattr(blank_rule, '_sync_and_validate_with_api',
+            mock__sync_and_validate_with_api)
+    assert blank_rule.is_valid() is True
+    assert blank_rule._is_valid is True
+
+    blank_rule._is_valid = None
+    assert blank_rule.is_valid() is False
+    assert blank_rule._is_valid is False
+
+
+
+def test_is_criteria_met():
+    """
+    Tests the `is_criteria_met()` method in `Rule`.
+    """
+    class BlankRule(rule_meta.Rule):
+        """
+        Simple blank rule to subclass Rule.
+        """
+        @classmethod
+        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
+                **kwargs):
+            """
+            Not needed / will not be used.
+            """
+            return
+
+        @classmethod
+        def get_rule_type_names(cls):
+            """
+            Not needed / will not be used.
+            """
+            return []
+
+        def _sync_and_validate_with_api(self):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
+        def execute(self, force_test_report_only=False):
+            """
+            Not needed / will not be used.
+            """
+            return
+
+    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    assert blank_rule.is_criteria_met() is True
+
+
+
 def test_parse_time_arg():
     """
     Tests the `parse_time_arg()` method in `Rule`.
