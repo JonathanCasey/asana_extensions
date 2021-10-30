@@ -140,6 +140,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       removed from those functions ([#25][]).
 - [Added] `get_tasks()` method added to get tasks from asana API based on given
       criteria ([#18][]).
+- [Added] `move_task_to_section()` added, with option to move to top or bottom
+      ([#19][]).
 
 ##### Unit Tests
 - [Changed] `fixture_raise_no_authorization_error` and
@@ -165,6 +167,12 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       places ([#18][]).
 - [Added] `fixture_tasks_in_project_and_utl_test()` added to create tasks for
       testing `get_tasks()` method (so far) ([#18][]).
+- [Added] `fixture_tasks_movable_in_project_and_utl_test()` added for tests
+      prepared for tasks to be moved ([#19][]).
+- [Added] `filter_result_for_test()` added to only return results (presumably
+      from the asana API) that are allowed for the test ([#19][]).
+- [Changed] Refactored any existing tests that can utilize the new
+      `filter_result_for_test()` ([#19][]).
 
 
 ### Asana: Utils
@@ -305,6 +313,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#13][]
 - [#16][]
 - [#18][]
+- [#19][]
 - [#25][]
 - [#27][]
 - [#28][]
@@ -323,6 +332,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#31][] for [#28][]
 - [#32][] for [#18][]
 - [#34][] for [#33][]
+- [#38][] for [#19][]
 
 
 ---
@@ -343,6 +353,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#28]: https://github.com/JonathanCasey/asana_extensions/issues/28 'Issue #28'
 [#18]: https://github.com/JonathanCasey/asana_extensions/issues/18 'Issue #18'
 [#33]: https://github.com/JonathanCasey/asana_extensions/issues/33 'Issue #33'
+[#19]: https://github.com/JonathanCasey/asana_extensions/issues/19 'Issue #19'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -356,3 +367,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#31]: https://github.com/JonathanCasey/asana_extensions/pull/31 'PR #31'
 [#32]: https://github.com/JonathanCasey/asana_extensions/pull/32 'PR #32'
 [#34]: https://github.com/JonathanCasey/asana_extensions/pull/34 'PR #34'
+[#38]: https://github.com/JonathanCasey/asana_extensions/pull/38 'PR #38'

@@ -97,11 +97,11 @@ def fixture_sections_in_project_test(project_test):
     without the need to needlessly create and delete this section.  (Also,
     could not figure out how to get rid of all syntax and pylint errors).
 
-    ** Consumes 9 API calls. **
+    ** Consumes 5 API calls. **
     (API call count is 2*num_sects + 1)
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    num_sects = 4
+    num_sects = 2
     client = aclient._get_client()
     me_data = aclient._get_me()
 
@@ -895,8 +895,6 @@ def test_move_task_to_section__parametrized(is_utl_test, i_sect, move_to_bottom,
         manually per docs.
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    # caplog.set_level(logging.ERROR)
-
     try:
         # Simple test that project is configured, but non-error result not used
         aclient._get_me()
