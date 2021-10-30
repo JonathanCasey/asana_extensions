@@ -27,11 +27,13 @@ from asana_extensions.rules import rule_meta
 
 
 
-def test_init(caplog):
+@pytest.fixture(name='blank_rule_cls')
+def fixture_blank_rule_cls():
     """
-    Tests `__init__()` method in `Rule`.
+    Returns a blank rule with default returns for all abstract methods.  This
+    can be used as is in most cases; in most other cases, this can serve as a
+    base with tests only needing to override individual methods via monkeypatch.
     """
-
     class BlankRule(rule_meta.Rule):
         """
         Simple blank rule to subclass Rule.
@@ -63,17 +65,25 @@ def test_init(caplog):
             """
             return
 
+    return BlankRule
+
+
+
+def test_init(caplog, blank_rule_cls):
+    """
+    Tests `__init__()` method in `Rule`.
+    """
     caplog.set_level(logging.WARNING)
     caplog.clear()
 
-    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
     assert blank_rule._rule_id == 'blank-rule-id'
     assert blank_rule._rule_type == 'blank-rule-type'
     assert blank_rule._test_report_only is True
     assert blank_rule._is_valid is None
     assert caplog.record_tuples == []
 
-    blank_extra_rule = BlankRule('blank-rule-id', 'blank-rule-type', True,
+    blank_extra_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True,
             extras='extra-kwarg')
     assert blank_extra_rule._rule_id == 'blank-rule-id'
     assert blank_extra_rule._rule_type == 'blank-rule-type'
@@ -172,49 +182,17 @@ def test_load_specific_from_conf(caplog):
 
 
 
-def test_is_valid(monkeypatch):
+def test_is_valid(monkeypatch, blank_rule_cls):
     """
     Tests the `is_valid()` method in `Rule`.
     """
-
-    class BlankRule(rule_meta.Rule):
-        """
-        Simple blank rule to subclass Rule.
-        """
-        @classmethod
-        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
-                **kwargs):
-            """
-            Not needed / will not be used.
-            """
-            return
-
-        @classmethod
-        def get_rule_type_names(cls):
-            """
-            Not needed / will not be used.
-            """
-            return []
-
-        def _sync_and_validate_with_api(self):
-            """
-            Not needed / will not be used.
-            """
-            return True
-
-        def execute(self, force_test_report_only=False):
-            """
-            Not needed / will not be used.
-            """
-            return
-
     def mock__sync_and_validate_with_api():
         """
         Force to return False.
         """
         return False
 
-    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
     assert blank_rule._is_valid is None
 
     assert blank_rule.is_valid() is True
@@ -231,42 +209,11 @@ def test_is_valid(monkeypatch):
 
 
 
-def test_is_criteria_met():
+def test_is_criteria_met(blank_rule_cls):
     """
     Tests the `is_criteria_met()` method in `Rule`.
     """
-    class BlankRule(rule_meta.Rule):
-        """
-        Simple blank rule to subclass Rule.
-        """
-        @classmethod
-        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
-                **kwargs):
-            """
-            Not needed / will not be used.
-            """
-            return
-
-        @classmethod
-        def get_rule_type_names(cls):
-            """
-            Not needed / will not be used.
-            """
-            return []
-
-        def _sync_and_validate_with_api(self):
-            """
-            Not needed / will not be used.
-            """
-            return True
-
-        def execute(self, force_test_report_only=False):
-            """
-            Not needed / will not be used.
-            """
-            return
-
-    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
     assert blank_rule.is_criteria_met() is True
 
 
