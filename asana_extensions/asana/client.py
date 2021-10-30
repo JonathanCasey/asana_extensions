@@ -43,6 +43,12 @@ class MismatchedDataError(Exception):
     example, a name and gid may be provided, but API shows a different gid.
     """
 
+class UnsupportedDataError(Exception):
+    """
+    Raised when there is an unsupported data configuration provided to this
+    module either by the user/app or by the asana API.
+    """
+
 
 
 def asana_error_handler(f):
@@ -361,3 +367,50 @@ def get_tasks(params, fields=None):
     if fields is not None:
         options['opt_fields'] = fields
     return client.tasks.get_tasks(params, **options)
+
+
+
+@asana_error_handler
+def move_task_to_section(task_gid, sect_gid, move_to_bottom=False):
+    """
+    Moves the given task to the given section.  It will be removed from the
+    section the task it current is in for the project of the section.  It may
+    also move the task into the project of the section if not already in it, but
+    that is unclear from the API docs.
+
+    Optionally, this can move the task to the bottom of the section, but the
+    default per the API will be the top.
+
+    Args:
+      task_gid (int): The gid of the task to move.
+      sect_gid (int): The gid of the section to move the task into.
+      move_to_bottom (bool): True will add the task to the bottom of the
+        section; otherwise, will add the task to the top.
+
+    Raises:
+      (asana.error.AsanaError): Any errors from the API not handled by
+        `@asana_error_handler`.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    client = _get_client()
+
+    # Leverage that adding task to project+section defaults to add to bottom,
+    #  but adding task to section direct defaults to add to top
+    if move_to_bottom:
+        section = client.sections.get_section(sect_gid)
+        if len(section['projects']) != 1:
+            raise UnsupportedDataError('Expected section to only have 1'
+                    + f' project, but found {len(section["projects"])} in'
+                    + f' section {section["name"]} ({sect_gid}).')
+        proj_gid = section['projects'][0]['gid']
+
+        params = {
+            'project': proj_gid,
+            'section': sect_gid,
+        }
+        client.tasks.add_project_for_task(task_gid, params)
+    else:
+        params = {
+            'task': task_gid,
+        }
+        client.sections.add_task_for_section(sect_gid, params)

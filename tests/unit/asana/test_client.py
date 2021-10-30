@@ -133,6 +133,12 @@ def fixture_tasks_in_project_and_utl_test(project_test,
     data that should match the `data` element returned by the API.  The tasks
     in the user task list and the test project are the same tasks.
 
+    This differs from the `fixture_tasks_movable_in_project_and_utl_test()` in
+    that these are expected to not be altered.
+
+    `fixture_tasks_movable_in_project_and_utl_test()` counts on this adding
+    tasks to the first section of the UTL and to the project!
+
     Will delete the tasks once done with all tests.
 
     This is not being used with the autouse keyword so that, if running tests
@@ -167,6 +173,66 @@ def fixture_tasks_in_project_and_utl_test(project_test,
             'task': task_data['gid'],
         }
         client.sections.add_task_for_section(sections_in_project_test[0]['gid'],
+                params)
+
+    yield task_data_list
+
+    for task_data in task_data_list:
+        client.tasks.delete_task(task_data['gid'])
+
+
+
+@pytest.fixture(name='tasks_movable_in_project_and_utl_test', scope='session')
+def fixture_tasks_movable_in_project_and_utl_test(project_test,
+        sections_in_project_test, sections_in_utl_test):
+    """
+    Creates some tasks in both the user task list (in the test workspace) and
+    the test project, and returns a list of them, each of which is the dict of
+    data that should match the `data` element returned by the API.  The tasks
+    in the user task list and the test project are the same tasks.
+
+    This differs from the `fixture_tasks_in_project_and_utl_test()` in that
+    these are expected to be movable.  As such, this should only be used by
+    tests that factor in this moving.  If multiple test functions use this
+    fixture, some sort of ordering of dependency it likely required.
+
+    This counts on `fixture_tasks_in_project_and_utl_test()` adding tasks to the
+    first section of the UTL and to the project!
+
+    Will delete the tasks once done with all tests.
+
+    This is not being used with the autouse keyword so that, if running tests
+    that do not require this section fixture, they can run more optimally
+    without the need to needlessly create and delete this section.  (Also,
+    could not figure out how to get rid of all syntax and pylint errors).
+
+    ** Consumes 7 API calls. **
+    (API call count is 3*num_sects + 1)
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    num_tasks = 2
+    client = aclient._get_client()
+    me_data = aclient._get_me()
+
+    task_data_list = []
+    for _ in range(num_tasks):
+        task_name = tester_data._TASK_TEMPLATE.substitute({'tid': uuid.uuid4()})
+        params = {
+            'assignee': me_data['gid'],
+            'assignee_section': sections_in_utl_test[1]['gid'],
+            'name': task_name,
+            'projects': [
+                project_test['gid'],
+            ],
+        }
+        task_data = client.tasks.create_task(params)
+        task_data_list.append(task_data)
+
+        # No way to add project section at task creation, so need separate call
+        params = {
+            'task': task_data['gid'],
+        }
+        client.sections.add_task_for_section(sections_in_project_test[1]['gid'],
                 params)
 
     yield task_data_list
@@ -728,6 +794,47 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
     monkeypatch.setattr(client.tasks, 'get_tasks', raise_asana_error)
     subtest_asana_error_handler_func(caplog, asana.error.NoAuthorizationError,
             0, aclient.get_tasks, {})
+
+
+
+@pytest.mark.asana_error_data.with_args(asana.error.PremiumOnlyError)
+def test_move_task_to_section(monkeypatch, caplog,
+        sections_in_project_test, sections_in_utl_test,
+        tasks_movable_in_project_and_utl_test, tasks_in_project_and_utl_test):
+    """
+    Tests the `move_task_to_section()` method.
+
+    Note that while `tasks_in_project_and_utl_test` is not used, it is required
+    as it counts on the existence of the tasks created by that fixture in the
+    particular section they are created.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 4 API call. **
+    (varies depending on data size, but only 4 calls intended)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    caplog.set_level(logging.ERROR)
+
+    try:
+        ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    utl_gid = aclient.get_user_task_list_gid(ws_gid, True)
+
+
+
+
 
 
 
