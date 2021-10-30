@@ -51,6 +51,18 @@ def test_init(caplog):
             """
             return []
 
+        def _sync_and_validate_with_api(self):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
+        def execute(self, force_test_report_only=False):
+            """
+            Not needed / will not be used.
+            """
+            return
+
     caplog.set_level(logging.WARNING)
     caplog.clear()
 
@@ -58,6 +70,7 @@ def test_init(caplog):
     assert blank_rule._rule_id == 'blank-rule-id'
     assert blank_rule._rule_type == 'blank-rule-type'
     assert blank_rule._test_report_only is True
+    assert blank_rule._is_valid is None
     assert caplog.record_tuples == []
 
     blank_extra_rule = BlankRule('blank-rule-id', 'blank-rule-type', True,
@@ -65,6 +78,7 @@ def test_init(caplog):
     assert blank_extra_rule._rule_id == 'blank-rule-id'
     assert blank_extra_rule._rule_type == 'blank-rule-type'
     assert blank_extra_rule._test_report_only is True
+    assert blank_rule._is_valid is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.WARNING,
                 'Discarded excess kwargs provided to BlankRule: extras'),
@@ -105,6 +119,18 @@ def test_load_specific_from_conf(caplog):
             Not needed / will not be used.
             """
             return []
+
+        def _sync_and_validate_with_api(self):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
+        def execute(self, force_test_report_only=False):
+            """
+            Not needed / will not be used.
+            """
+            return
 
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_rule_meta')
