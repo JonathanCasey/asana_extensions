@@ -59,3 +59,20 @@ def load_all_from_config(conf_rel_file='rules.conf'):
             loaded_rules.append(new_rule)
 
     return loaded_rules
+
+
+
+def execute_rules(rules, force_test_report_only=False):
+    """
+    Execute all provided rules.  If either an individual rule is set to test
+    report only or the caller of this method specified to force to be test
+    report only, no changes will be made via the API for that rule -- only
+    simulated results will be reported (but still based on data from API).
+
+    Args:
+      force_test_report_only (bool): If True, will ensure this runs as a test
+        report only with no changes made via the API for all rules; if False,
+        will defer to the `_test_report_only` setting of each rule.
+    """
+    for rule in rules:
+        rule.execute(force_test_report_only)
