@@ -175,7 +175,7 @@ def test_load_specific_from_conf(caplog):  # pylint: disable=too-many-statements
 
 
 
-def test_load_specific_from_conf_impossible(monkeypatch, caplog):
+def test_load_specific_from_conf__impossible(monkeypatch, caplog):
     """
     Tests "impossible" cases in the `load_specific_from_conf()` method in
     `MoveTasksRule`.  These require mocking, as normally these are not possible
@@ -230,9 +230,9 @@ def test_load_specific_from_conf_impossible(monkeypatch, caplog):
 
 
 
-def test_get_provider_names():
+def test_get_rule_type_names():
     """
-    Tests the `get_provider_names()` method in `MoveTasksRule`.  Not an
+    Tests the `get_rule_type_names()` method in `MoveTasksRule`.  Not an
     exhaustive test.
     """
     assert 'move tasks' in move_tasks_rule.MoveTasksRule.get_rule_type_names()
