@@ -756,7 +756,7 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
     This does require the asana account be configured to support unit testing.
     See CONTRIBUTING.md.
 
-    ** Consumes at least 4 API call. **
+    ** Consumes at least 4 API calls. **
     (varies depending on data size, but only 4 calls intended)
 
     Raises:
