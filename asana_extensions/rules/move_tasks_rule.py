@@ -267,7 +267,9 @@ class MoveTasksRule(rule_meta.Rule):
         except (asana.error.AsanaError, aclient.ClientCreationError,
                 aclient.DataNotFoundError, aclient.DuplicateNameError,
                 aclient.MismatchedDataError, autils.DataConflictError,
-                autils.DataMissingError):
+                autils.DataMissingError) as ex:
+            logger.error(f'Failed to sync and validate rule "{self._rule_id}"'
+                    + f' with the API.  Skipping rule.  Exception: {str(ex)}')
             return False
 
         return True
@@ -302,4 +304,15 @@ class MoveTasksRule(rule_meta.Rule):
 
         for task in tasks_to_move[::-1]:
             # For now, hardcoded to move to top, maintaining order
-            aclient.move_task_to_section(task['gid'], rps['dst_section_gid'])
+            if self._test_report_only or force_test_report_only:
+                msg = '[Test Report Only] For MoveTasksRule'
+                msg += f' "{self._rule_id}", would have moved task'
+                msg += f' "{task["name"]}" [{task["gid"]}]'
+                msg += ' to top of section'
+                if rps['dst_section_name'] is not None:
+                    msg += f' "{rps["dst_section_name"]}"'
+                msg += f' [{rps["dst_section_gid"]}].'
+                logger.info(msg)
+            else:
+                aclient.move_task_to_section(task['gid'],
+                        rps['dst_section_gid'])
