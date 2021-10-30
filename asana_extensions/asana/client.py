@@ -43,12 +43,6 @@ class MismatchedDataError(Exception):
     example, a name and gid may be provided, but API shows a different gid.
     """
 
-class UnsupportedDataError(Exception):
-    """
-    Raised when there is an unsupported data configuration provided to this
-    module either by the user/app or by the asana API.
-    """
-
 
 
 def asana_error_handler(f):
@@ -398,14 +392,8 @@ def move_task_to_section(task_gid, sect_gid, move_to_bottom=False):
     #  but adding task to section direct defaults to add to top
     if move_to_bottom:
         section = client.sections.get_section(sect_gid)
-        if len(section['projects']) != 1:
-            raise UnsupportedDataError('Expected section to only have 1'
-                    + f' project, but found {len(section["projects"])} in'
-                    + f' section {section["name"]} ({sect_gid}).')
-        proj_gid = section['projects'][0]['gid']
-
         params = {
-            'project': proj_gid,
+            'project': section['project']['gid'],
             'section': sect_gid,
         }
         client.tasks.add_project_for_task(task_gid, params)

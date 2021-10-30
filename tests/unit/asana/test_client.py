@@ -97,11 +97,11 @@ def fixture_sections_in_project_test(project_test):
     without the need to needlessly create and delete this section.  (Also,
     could not figure out how to get rid of all syntax and pylint errors).
 
-    ** Consumes 5 API calls. **
+    ** Consumes 9 API calls. **
     (API call count is 2*num_sects + 1)
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    num_sects = 2
+    num_sects = 4
     client = aclient._get_client()
     me_data = aclient._get_me()
 
@@ -135,9 +135,6 @@ def fixture_tasks_in_project_and_utl_test(project_test,
 
     This differs from the `fixture_tasks_movable_in_project_and_utl_test()` in
     that these are expected to not be altered.
-
-    `fixture_tasks_movable_in_project_and_utl_test()` counts on this adding
-    tasks to the first section of the UTL and to the project!
 
     Will delete the tasks once done with all tests.
 
@@ -196,9 +193,6 @@ def fixture_tasks_movable_in_project_and_utl_test(project_test,
     tests that factor in this moving.  If multiple test functions use this
     fixture, some sort of ordering of dependency it likely required.
 
-    This counts on `fixture_tasks_in_project_and_utl_test()` adding tasks to the
-    first section of the UTL and to the project!
-
     Will delete the tasks once done with all tests.
 
     This is not being used with the autouse keyword so that, if running tests
@@ -210,16 +204,19 @@ def fixture_tasks_movable_in_project_and_utl_test(project_test,
     (API call count is 3*num_sects + 1)
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
-    num_tasks = 2
+    num_tasks = 3
     client = aclient._get_client()
     me_data = aclient._get_me()
 
     task_data_list = []
-    for _ in range(num_tasks):
+    for i_task in range(num_tasks):
         task_name = tester_data._TASK_TEMPLATE.substitute({'tid': uuid.uuid4()})
+        i_sect = 0
+        if i_task >= 2:
+            i_sect = 1
         params = {
             'assignee': me_data['gid'],
-            'assignee_section': sections_in_utl_test[1]['gid'],
+            'assignee_section': sections_in_utl_test[i_sect]['gid'],
             'name': task_name,
             'projects': [
                 project_test['gid'],
@@ -232,13 +229,62 @@ def fixture_tasks_movable_in_project_and_utl_test(project_test,
         params = {
             'task': task_data['gid'],
         }
-        client.sections.add_task_for_section(sections_in_project_test[1]['gid'],
-                params)
+        client.sections.add_task_for_section(
+                sections_in_project_test[i_sect]['gid'], params)
 
     yield task_data_list
 
     for task_data in task_data_list:
         client.tasks.delete_task(task_data['gid'])
+
+
+
+def filter_result_for_test(found_data, allowed_data, match_key,
+        key_by_index=False):
+    """
+    The asana API often returns iterators of results.  In this test module, many
+    results are first filtered by the allowable values so that any additional
+    items that may have been added by other tests do not conflate test results.
+
+    This only works for single-depth `match_key`s, so, for example, it can check
+    the 'gid' key if task data is supplied, but it couldn't check the 'gid' of
+    the first project in the list of projects in that task data.
+
+    Args:
+      found_data ([{str:any}]): The list of data returned by the asana API for
+        a query.  This is likely really a single-iteration generator, but either
+        will be compatible.
+      allowed_data ([{str:any}]): The list of data that is "allowed" to be in
+        the `found_data`.  All other data in `found_data` will be excluded.
+      match_key (str/int): The key to match in each item of the `found_data` and
+        `allowed_data`.  Probably should be a string, but no reason it couldn't
+        be an int if you know what you are doing.
+      key_by_index (bool): Whether the results should be a dict keyed by the
+        index of the allowed data item (True) or whether a simple ordered list
+        should be returned (False).
+
+    Returns:
+      filt_data ([{str:any}]/{int:{str:any}}): The `found_data` that was present
+        in the `allowed_data`.  This will be a dict indexed by the corresponding
+        index number of the matching `allowed_data` entry if `key_by_index` is
+        True; otherwise will be a list in the order of the `found_data` (which
+        would be the order provided by the API if this is directly from an
+        asana API query).
+    """
+    if key_by_index:
+        filt_data = {}
+    else:
+        filt_data = []
+    # Nested fors must be in this order - expect found_data is a single-iter gen
+    for found_item in found_data:
+        for i_allowed_item, allowed_item in enumerate(allowed_data):
+            if found_item[match_key] == allowed_item[match_key]:
+                if key_by_index:
+                    filt_data[i_allowed_item] = found_item
+                else:
+                    filt_data.append(found_item)
+                break
+    return filt_data
 
 
 
@@ -330,6 +376,7 @@ def test_asana_error_handler(caplog):
     'get_user_task_list_gid',
     'get_section_gids_in_project_or_utl',
     'get_tasks',
+    'move_task_to_section',
 ])
 def test_dec_usage_asana_error_handler(func_name):
     """
@@ -741,15 +788,8 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
         'projects',
     ]
     tasks_found = aclient.get_tasks(params, fields)
-    # Filter/match list since other tests may have added more tasks to server
-    tasks_to_check = {}
-    # Nested fors must be in this order - tasks_found is a single-iter generator
-    for task_found in tasks_found:
-        for i_task_expected, task_expected in enumerate(
-                tasks_in_project_and_utl_test):
-            if task_found['gid'] == task_expected['gid']:
-                tasks_to_check[i_task_expected] = task_found
-                break
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_in_project_and_utl_test, 'gid', True)
     assert len(tasks_to_check) == len(tasks_in_project_and_utl_test)
     for i_task_expected, task_found in tasks_to_check.items():
         task_expected = tasks_in_project_and_utl_test[i_task_expected]
@@ -769,15 +809,8 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
         'projects',
     ]
     tasks_found = aclient.get_tasks(params, fields)
-    # Filter/match list since other tests may have added more tasks to server
-    tasks_to_check = {}
-    # Nested fors must be in this order - tasks_found is a single-iter generator
-    for task_found in tasks_found:
-        for i_task_expected, task_expected in enumerate(
-                tasks_in_project_and_utl_test):
-            if task_found['gid'] == task_expected['gid']:
-                tasks_to_check[i_task_expected] = task_found
-                break
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_in_project_and_utl_test, 'gid', True)
     assert len(tasks_to_check) == len(tasks_in_project_and_utl_test)
     for i_task_expected, task_found in tasks_to_check.items():
         task_expected = tasks_in_project_and_utl_test[i_task_expected]
@@ -800,13 +833,9 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
 @pytest.mark.asana_error_data.with_args(asana.error.PremiumOnlyError)
 def test_move_task_to_section(monkeypatch, caplog,
         sections_in_project_test, sections_in_utl_test,
-        tasks_movable_in_project_and_utl_test, tasks_in_project_and_utl_test):
+        tasks_movable_in_project_and_utl_test):
     """
     Tests the `move_task_to_section()` method.
-
-    Note that while `tasks_in_project_and_utl_test` is not used, it is required
-    as it counts on the existence of the tasks created by that fixture in the
-    particular section they are created.
 
     This does require the asana account be configured to support unit testing.
     See CONTRIBUTING.md.
@@ -823,18 +852,65 @@ def test_move_task_to_section(monkeypatch, caplog,
     caplog.set_level(logging.ERROR)
 
     try:
-        ws_gid = aclient.get_workspace_gid_from_name(tester_data._WORKSPACE)
+        # Simple test that project is configured, but non-error result not used
+        aclient._get_me()
     except aclient.DataNotFoundError as ex:
         # This is an error with the tester, not the module under test
         raise TesterNotInitializedError('Cannot run unit tests: Must create a'
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    utl_gid = aclient.get_user_task_list_gid(ws_gid, True)
+    aclient.move_task_to_section(
+            tasks_movable_in_project_and_utl_test[0]['gid'],
+            sections_in_project_test[1]['gid'])
+    params = {
+        'section': sections_in_project_test[1]['gid'],
+    }
+    tasks_found = aclient.get_tasks(params)
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_movable_in_project_and_utl_test, 'gid')
+    assert len(tasks_to_check) == 2
+    assert tasks_to_check[0]['gid'] \
+            == tasks_movable_in_project_and_utl_test[0]['gid']
 
+    aclient.move_task_to_section(
+            tasks_movable_in_project_and_utl_test[0]['gid'],
+            sections_in_project_test[0]['gid'], True)
+    params = {
+        'section': sections_in_project_test[0]['gid'],
+    }
+    tasks_found = aclient.get_tasks(params)
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_movable_in_project_and_utl_test, 'gid')
+    assert len(tasks_to_check) == 2
+    assert tasks_to_check[-1]['gid'] \
+            == tasks_movable_in_project_and_utl_test[0]['gid']
 
+    aclient.move_task_to_section(
+            tasks_movable_in_project_and_utl_test[0]['gid'],
+            sections_in_utl_test[1]['gid'])
+    params = {
+        'section': sections_in_utl_test[1]['gid'],
+    }
+    tasks_found = aclient.get_tasks(params)
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_movable_in_project_and_utl_test, 'gid')
+    assert len(tasks_to_check) == 2
+    assert tasks_to_check[0]['gid'] \
+            == tasks_movable_in_project_and_utl_test[0]['gid']
 
-
+    aclient.move_task_to_section(
+            tasks_movable_in_project_and_utl_test[0]['gid'],
+            sections_in_utl_test[0]['gid'], True)
+    params = {
+        'section': sections_in_utl_test[0]['gid'],
+    }
+    tasks_found = aclient.get_tasks(params)
+    tasks_to_check = filter_result_for_test(tasks_found,
+            tasks_movable_in_project_and_utl_test, 'gid')
+    assert len(tasks_to_check) == 2
+    assert tasks_to_check[-1]['gid'] \
+            == tasks_movable_in_project_and_utl_test[0]['gid']
 
 
 
