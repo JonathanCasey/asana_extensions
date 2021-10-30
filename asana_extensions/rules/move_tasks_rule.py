@@ -35,14 +35,14 @@ class MoveTasksRule(rule_meta.Rule):
     Instance Attributes:
       _rules_params ({str:str/int/bool/etc}): The generic dictionary that
         defines the parameters for this rule.
-      _is_valid (bool or None): Cached value as to whether the rule is valid.
-        If not validated yet, will be None.
 
       [inherited from Rule]:
         _rule_id (str): The id used as the section name in the rules conf.
         _rule_type (str): The type of rule, such as "move tasks".
         _test_report_only (bool): Whether or not this is for reporting for
           testing only or whether rule is live.
+        _is_valid (bool or None): Cached value as to whether the rule is valid.
+          If not validated yet, will be None.
     """
     def __init__(self, rule_params, **kwargs):
         """
@@ -84,8 +84,6 @@ class MoveTasksRule(rule_meta.Rule):
                 + " date (but not both)."
 
         self._rule_params = rule_params
-
-        self._is_valid = None
 
 
 
@@ -272,47 +270,6 @@ class MoveTasksRule(rule_meta.Rule):
                 autils.DataMissingError):
             return False
 
-        return True
-
-
-
-    def is_valid(self):
-        """
-        Check whether this rule is valid or not.  This ideally utilizes a cached
-        value so that the check for being valid does not need to be done more
-        than once since that could involve heavy API access.  As a result, it is
-        likely that this should call `_sync_and_validate_with_api()`.
-
-        Returns:
-          (bool): True if is valid; False if invalid.
-        """
-        if self._is_valid is None:
-            self._is_valid = self._sync_and_validate_with_api()
-        return self._is_valid
-
-
-
-    def is_criteria_met(self):
-        """
-        Checks whether the criteria to run this rule, if any, has been met.  If
-        any additional processing is required for this, it should be done and
-        stored as appropriate.  In such a case, it may be advisable to cache
-        the overall result.
-
-        Where possible, this should be decoupled from `is_valid()`, but in many
-        cases it will likely make sense for this to only run if `is_valid()` is
-        True.  Hence, this may get masked by that result in those cases.
-
-        Some rules do not have any specific criteria as to whether the rule
-        should run (e.g. no specific datetime at which it should run if script
-        expected to be called multiple times), in which case this should just
-        return True.
-
-        Returns:
-          (bool): True if criteria is met for rule to run or there is no
-            criteria (i.e. this is not applicable); False if not ready to run.
-        """
-        # No offline criteria other than validity check
         return True
 
 

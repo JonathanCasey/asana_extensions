@@ -49,6 +49,8 @@ class Rule(ABC):
       _rule_type (str): The type of rule, such as "move tasks".
       _test_report_only (bool): Whether or not this is for reporting for
         testing only or whether rule is live.
+      _is_valid (bool or None): Cached value as to whether the rule is valid.
+        If not validated yet, will be None.
     """
     def __init__(self, rule_id, rule_type, test_report_only, **kwargs):
         """
@@ -69,6 +71,8 @@ class Rule(ABC):
         if kwargs:
             logger.warning('Discarded excess kwargs provided to'
                     + f' {self.__class__.__name__}: {", ".join(kwargs.keys())}')
+
+        self._is_valid = None
 
 
 
@@ -146,21 +150,23 @@ class Rule(ABC):
 
 
 
-    @abstractmethod
     def is_valid(self):
         """
         Check whether this rule is valid or not.  This ideally utilizes a cached
         value so that the check for being valid does not need to be done more
         than once since that could involve heavy API access.  As a result, it is
-        likely that this should call `_sync_and_validate_with_api()`.
+        likely that this should call `_sync_and_validate_with_api()`.  In most
+        cases, can just rely on the logic in this metaclass.
 
         Returns:
           (bool): True if is valid; False if invalid.
         """
+        if self._is_valid is None:
+            self._is_valid = self._sync_and_validate_with_api()
+        return self._is_valid
 
 
 
-    @abstractmethod
     def is_criteria_met(self):
         """
         Checks whether the criteria to run this rule, if any, has been met.  If
@@ -177,10 +183,14 @@ class Rule(ABC):
         expected to be called multiple times), in which case this should just
         return True.
 
+        If a rule does need to implement a criteria check, this should be
+        overridden.
+
         Returns:
           (bool): True if criteria is met for rule to run or there is no
             criteria (i.e. this is not applicable); False if not ready to run.
         """
+        return True
 
 
 
