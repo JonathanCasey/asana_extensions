@@ -831,17 +831,15 @@ def test_get_tasks(monkeypatch, caplog,        # pylint: disable=too-many-locals
 
 
 @pytest.mark.asana_error_data.with_args(asana.error.PremiumOnlyError)
-def test_move_task_to_section(monkeypatch, caplog,
-        sections_in_project_test, sections_in_utl_test,
-        tasks_movable_in_project_and_utl_test):
+def test_move_task_to_section__common(monkeypatch, caplog, raise_asana_error):
     """
-    Tests the `move_task_to_section()` method.
+    Tests common elements for the `move_task_to_section()` method.
 
     This does require the asana account be configured to support unit testing.
     See CONTRIBUTING.md.
 
-    ** Consumes at least 4 API call. **
-    (varies depending on data size, but only 4 calls intended)
+    ** Consumes at least 1 API call. **
+    (varies depending on data size, but only 1 call intended)
 
     Raises:
       (TesterNotInitializedError): If test workspace does not exist on asana
@@ -860,57 +858,75 @@ def test_move_task_to_section(monkeypatch, caplog,
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    aclient.move_task_to_section(
-            tasks_movable_in_project_and_utl_test[0]['gid'],
-            sections_in_project_test[1]['gid'])
-    params = {
-        'section': sections_in_project_test[1]['gid'],
-    }
-    tasks_found = aclient.get_tasks(params)
-    tasks_to_check = filter_result_for_test(tasks_found,
-            tasks_movable_in_project_and_utl_test, 'gid')
-    assert len(tasks_to_check) == 2
-    assert tasks_to_check[0]['gid'] \
-            == tasks_movable_in_project_and_utl_test[0]['gid']
+    # Function-specific practical test of @asana_error_handler
+    client = aclient._get_client()
+    # Need to monkeypatch cached client since class dynamically creates attrs
+    monkeypatch.setattr(client.sections, 'add_task_for_section',
+            raise_asana_error)
+    subtest_asana_error_handler_func(caplog, asana.error.PremiumOnlyError,
+            0, aclient.move_task_to_section, -1, -2)
+
+
+
+@pytest.mark.parametrize('is_utl_test, i_sect, move_to_bottom', [
+    # The order is crucial, as each depends on the residual state of the tasks
+    (False, 1, False),
+    (False, 0, True),
+    (True,  1, False),
+    (True,  0, True),
+])
+def test_move_task_to_section__parametrized(is_utl_test, i_sect, move_to_bottom,
+        sections_in_project_test, sections_in_utl_test,
+        tasks_movable_in_project_and_utl_test):
+    """
+    Tests parametrized paths for the `move_task_to_section()` method.
+
+    This does require the asana account be configured to support unit testing.
+    See CONTRIBUTING.md.
+
+    ** Consumes at least 14 API calls total. **
+    (varies depending on data size, but only 4 calls intended)
+    (API call count is 3 [+1 if not is_utl_test] for each parameter)
+    (  with equal num with and without is_utl_test: 3.5*num_parameters)
+
+    Raises:
+      (TesterNotInitializedError): If test workspace does not exist on asana
+        account tied to access token, will stop test.  User must create
+        manually per docs.
+    """
+    # pylint: disable=no-member     # asana.Client dynamically adds attrs
+    # caplog.set_level(logging.ERROR)
+
+    try:
+        # Simple test that project is configured, but non-error result not used
+        aclient._get_me()
+    except aclient.DataNotFoundError as ex:
+        # This is an error with the tester, not the module under test
+        raise TesterNotInitializedError('Cannot run unit tests: Must create a'
+                + f' workspace named "{tester_data._WORKSPACE}" in the asana'
+                + ' account tied to access token in .secrets.conf') from ex
+
+    if is_utl_test:
+        sects = sections_in_utl_test
+    else:
+        sects = sections_in_project_test
 
     aclient.move_task_to_section(
             tasks_movable_in_project_and_utl_test[0]['gid'],
-            sections_in_project_test[0]['gid'], True)
+            sects[i_sect]['gid'], move_to_bottom)
     params = {
-        'section': sections_in_project_test[0]['gid'],
+        'section': sects[i_sect]['gid'],
     }
     tasks_found = aclient.get_tasks(params)
     tasks_to_check = filter_result_for_test(tasks_found,
             tasks_movable_in_project_and_utl_test, 'gid')
     assert len(tasks_to_check) == 2
-    assert tasks_to_check[-1]['gid'] \
-            == tasks_movable_in_project_and_utl_test[0]['gid']
-
-    aclient.move_task_to_section(
-            tasks_movable_in_project_and_utl_test[0]['gid'],
-            sections_in_utl_test[1]['gid'])
-    params = {
-        'section': sections_in_utl_test[1]['gid'],
-    }
-    tasks_found = aclient.get_tasks(params)
-    tasks_to_check = filter_result_for_test(tasks_found,
-            tasks_movable_in_project_and_utl_test, 'gid')
-    assert len(tasks_to_check) == 2
-    assert tasks_to_check[0]['gid'] \
-            == tasks_movable_in_project_and_utl_test[0]['gid']
-
-    aclient.move_task_to_section(
-            tasks_movable_in_project_and_utl_test[0]['gid'],
-            sections_in_utl_test[0]['gid'], True)
-    params = {
-        'section': sections_in_utl_test[0]['gid'],
-    }
-    tasks_found = aclient.get_tasks(params)
-    tasks_to_check = filter_result_for_test(tasks_found,
-            tasks_movable_in_project_and_utl_test, 'gid')
-    assert len(tasks_to_check) == 2
-    assert tasks_to_check[-1]['gid'] \
-            == tasks_movable_in_project_and_utl_test[0]['gid']
+    if move_to_bottom:
+        assert tasks_to_check[-1]['gid'] \
+                == tasks_movable_in_project_and_utl_test[0]['gid']
+    else:
+        assert tasks_to_check[0]['gid'] \
+                == tasks_movable_in_project_and_utl_test[0]['gid']
 
 
 
