@@ -22,6 +22,39 @@ import pytest
 from asana_extensions.general import config
 from asana_extensions.rules import move_tasks_rule
 from asana_extensions.rules import rule_meta
+from tests.unit.rules import test_rule_meta
+
+
+
+@pytest.fixture(name='blank_move_tasks_rule')
+def fixture_blank_move_tasks_rule():
+    """
+    Returns a blank move tasks rule that does the absolute bare minimum to be
+    initialized (though may add some extra if it helps cover more tests easily).
+
+    Tests using this could always "hack" in more _rule_params if the test knows
+    what it is doing.
+    """
+    kwargs = {
+        'rule_id': 'blank rule id',
+        'rule_type': 'move tasks',
+        'test_report_only': True,
+    }
+    # At very least, need to define all keys in `__init__()` and pass asserts
+    rule_params = {
+        'project_name': None,
+        'project_gid': -1,
+        'is_my_tasks_list': None,
+        'user_task_list_gid': None,
+        'workspace_name': None,
+        'workspace_gid': -2,
+        'min_time_until_due_str': None,
+        'max_time_until_due_str': None,
+        'min_time_until_due': None,
+        'max_time_until_due': None,
+        'match_no_due_date': True,
+    }
+    return move_tasks_rule.MoveTasksRule(rule_params, **kwargs)
 
 
 
@@ -246,3 +279,33 @@ def test_get_rule_type_names():
             in move_tasks_rule.MoveTasksRule.get_rule_type_names()
     assert 'not move tasks' \
             not in move_tasks_rule.MoveTasksRule.get_rule_type_names()
+
+
+
+def test_is_valid(monkeypatch, blank_move_tasks_rule):
+    """
+    Tests the `is_valid()` method in `MoveTasksRule`.
+
+    This is inherited from `Rule` and not overridden, but since it is expected
+    that it could be overridden, should be tested.
+    """
+    def mock__sync_and_validate_with_api():
+        """
+        Force to return True.
+        """
+        return True
+
+    monkeypatch.setattr(blank_move_tasks_rule, '_sync_and_validate_with_api',
+            mock__sync_and_validate_with_api)
+    test_rule_meta.subtest_is_valid(monkeypatch, blank_move_tasks_rule)
+
+
+
+def test_is_criteria_met(blank_move_tasks_rule):
+    """
+    Tests the `is_criteria_met()` method in `MoveTasksRule`.
+
+    This is inherited from `Rule` and not overridden, but since it is expected
+    that it could be overridden, should be tested.
+    """
+    test_rule_meta.subtest_is_criteria_met(blank_move_tasks_rule)
