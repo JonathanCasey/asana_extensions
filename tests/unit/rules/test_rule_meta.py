@@ -182,6 +182,15 @@ def test_load_specific_from_conf(caplog):
 
 
 
+def test_get_rule_id(blank_rule_cls):
+    """
+    Tests the `get_rule_id()` method in `Rule`.
+    """
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
+    assert blank_rule.get_rule_id() == 'blank-rule-id'
+
+
+
 def subtest_is_valid(monkeypatch, rule_test):
     """
     Steps to test the `is_valid()` method in `Rule` and any of its subclasses

@@ -80,5 +80,7 @@ def execute_rules(rules, force_test_report_only=False):
     """
     any_errors = False
     for rule in rules:
-        any_errors = rule.execute(force_test_report_only) or any_errors
+        if not rule.execute(force_test_report_only):
+            logger.error(f'Failure in fully executing "{rule.get_rule_id()}".')
+            any_errors = True
     return not any_errors

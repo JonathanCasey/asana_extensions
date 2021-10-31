@@ -121,6 +121,17 @@ class Rule(ABC):
 
 
 
+    def get_rule_id(self):
+        """
+        Get the id/name of this rule.
+
+        Returns:
+          _rule_id (str): The ID or name of this rule.
+        """
+        return self._rule_id
+
+
+
     @classmethod
     @abstractmethod
     def get_rule_type_names(cls):
