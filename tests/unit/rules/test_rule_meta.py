@@ -63,7 +63,7 @@ def fixture_blank_rule_cls():
             """
             Not needed / will not be used.
             """
-            return
+            return True
 
     return BlankRule
 
@@ -140,7 +140,7 @@ def test_load_specific_from_conf(caplog):
             """
             Not needed / will not be used.
             """
-            return
+            return True
 
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_rule_meta')

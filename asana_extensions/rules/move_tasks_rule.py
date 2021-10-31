@@ -288,19 +288,37 @@ class MoveTasksRule(rule_meta.Rule):
           force_test_report_only (bool): If True, will ensure this runs as a
             test report only with no changes made via the API; if False, will
             defer to the `_test_report_only` setting of the rule.
+
+        Returns:
+          (bool): True if fully completed without any errors; False any errors,
+            regardless of whether it resulted in partial or full failure.
         """
-        if not self.is_valid() or not self.is_criteria_met():
-            return
+        if not self.is_valid():
+            logger.error(f'Failed to execute "{self._rule_id}" since invalid.')
+            return False
+        if not self.is_criteria_met():
+            logger.info(f'Skipping execution of "{self._rule_id}" completely'
+                    + ' since criteria not met.')
+            return False
+
+        any_errors = False
 
         rps = self._rule_params # Shorten name since used so much here
         tasks_to_move = []
         for src_sect_gid in rps['src_net_include_section_gids']:
             # Could lock in a dt_base before loop, but likely not an issue
             # For now, hardcoded for incomplete tasks
-            tasks_to_move.extend(autils.get_filtered_tasks(src_sect_gid,
-                    rps['match_no_due_date'],
-                    rps['min_time_until_due'], rps['max_time_until_due'],
-                    rps['min_due_assumed_time'], rps['max_due_assumed_time']))
+            try:
+                tasks_to_move.extend(autils.get_filtered_tasks(src_sect_gid,
+                        rps['match_no_due_date'],
+                        rps['min_time_until_due'], rps['max_time_until_due'],
+                        rps['min_due_assumed_time'],
+                        rps['max_due_assumed_time']))
+            except (asana.error.AsanaError, aclient.ClientCreationError) as ex:
+                logger.error(f'Failed to filter tasks for "{self._rule_id}"'
+                        + f' in section [{src_sect_gid}].  Skipping section.'
+                        + f'  Exception: {str(ex)}')
+                any_errors = True
 
         for task in tasks_to_move[::-1]:
             # For now, hardcoded to move to top, maintaining order
@@ -314,5 +332,17 @@ class MoveTasksRule(rule_meta.Rule):
                 msg += f' [{rps["dst_section_gid"]}].'
                 logger.info(msg)
             else:
-                aclient.move_task_to_section(task['gid'],
-                        rps['dst_section_gid'])
+                try:
+                    aclient.move_task_to_section(task['gid'],
+                            rps['dst_section_gid'])
+                except (asana.error.AsanaError,
+                        aclient.ClientCreationError) as ex:
+                    msg = f'Failed to move task {task["gid"]} to section'
+                    if rps['dst_section_name'] is not None:
+                        msg += f' "{rps["dst_section_name"]}"'
+                    msg += f' [{rps["dst_section_gid"]}] for "{self._rule_id}".'
+                    msg += f'  Skipping task.  Exception: {str(ex)}'
+                    logger.error(msg)
+                    any_errors = True
+
+        return not any_errors

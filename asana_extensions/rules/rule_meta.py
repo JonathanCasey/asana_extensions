@@ -207,6 +207,10 @@ class Rule(ABC):
           force_test_report_only (bool): If True, will ensure this runs as a
             test report only with no changes made via the API; if False, will
             defer to the `_test_report_only` setting of the rule.
+
+        Returns:
+          (bool): True if fully completed without any errors; False any errors,
+            regardless of whether it resulted in partial or full failure.
         """
 
 

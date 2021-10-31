@@ -530,3 +530,58 @@ def test_is_criteria_met(blank_move_tasks_rule):
     that it could be overridden, should be tested.
     """
     test_rule_meta.subtest_is_criteria_met(blank_move_tasks_rule)
+
+
+
+def test_execute(monkeypatch, caplog, blank_move_tasks_rule):
+    """
+    Tests the `execute()` method in `MoveTasksRule`.
+    """
+    caplog.set_level(logging.INFO)
+    bmtr = blank_move_tasks_rule # Shorten name since used so much here
+
+    def mock_is_valid(self):
+        """
+        """
+        if 'mock_fail_is_valid' in self._rule_params:
+            return False
+        return True
+
+    def mock_is_criteria_met(self):
+        """
+        """
+        if 'mock_fail_is_criteria_met' in self._rule_params:
+            return False
+        return True
+
+    monkeypatch.setattr(move_tasks_rule.MoveTasksRule, 'is_valid',
+            mock_is_valid)
+    monkeypatch.setattr(move_tasks_rule.MoveTasksRule, 'is_criteria_met',
+            mock_is_criteria_met)
+
+    # All items are int/str/bool, so no need for deep copy
+    rule_params_backup = copy.copy(bmtr._rule_params)
+
+    def reset_rule_params():
+        """
+        Restore the rule params for the blank rule to the original/backup.
+        """
+        bmtr._rule_params = copy.copy(rule_params_backup)
+
+    caplog.clear()
+    bmtr._rule_params['mock_fail_is_valid'] = True
+    assert bmtr.execute() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to execute "blank rule id" since invalid.'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    bmtr._rule_params['mock_fail_is_criteria_met'] = True
+    assert bmtr.execute() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Skipping execution of "blank rule id" completely since criteria'
+            + ' not met.'),
+    ]
