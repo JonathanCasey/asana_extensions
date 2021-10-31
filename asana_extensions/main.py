@@ -28,13 +28,14 @@ else:
 
 
 
-def main(force_test_report_only, log_level):
+def main(force_test_report_only, log_level, modules):
     """
     Launches the main app.
     """
     _config_root_logger(log_level)
-    all_rules = rules.load_all_from_config()
-    rules.execute_rules(all_rules, force_test_report_only)
+    if any(x.lower() in ['rules', 'all'] for x in modules):
+        all_rules = rules.load_all_from_config()
+        rules.execute_rules(all_rules, force_test_report_only)
     logger.info('Asana Extensions run complete!')
 
 
@@ -110,6 +111,12 @@ def _setup_and_call_main(_args=None):
                 + '  Defaults to "Warning".  Can specify by name or number to'
                 + ' match python `logging` module: notset/0, debug/10, info/20,'
                 + ' warning/30, error/40, critical/50.')
+    parser.add_argument('-m', '--modules',
+            nargs='+',
+            help='The modules to run in this invocation.  Required.  Can'
+                + ' specify "all" to run all modules.  Otherwise, can provide a'
+                + ' space-separate list of module names.  Supported modules:'
+                + ' rules.')
 
     main(**vars(parser.parse_args(_args)))
 
