@@ -64,6 +64,9 @@ def fixture_blank_move_tasks_rule():
         'src_sections_exclude_gids': None,
         'dst_section_name': None,
         'dst_section_gid': -3,
+        # Below added for `execute()`
+        'min_due_assumed_time': None,
+        'max_due_assumed_time': None,
     }
     return move_tasks_rule.MoveTasksRule(rule_params, **kwargs)
 
@@ -533,7 +536,8 @@ def test_is_criteria_met(blank_move_tasks_rule):
 
 
 
-def test_execute(monkeypatch, caplog, blank_move_tasks_rule):
+def test_execute(                          # pylint: disable=too-many-statements
+        monkeypatch, caplog, blank_move_tasks_rule):
     """
     Tests the `execute()` method in `MoveTasksRule`.
     """
@@ -542,6 +546,7 @@ def test_execute(monkeypatch, caplog, blank_move_tasks_rule):
 
     def mock_is_valid(self):
         """
+        Return True unless flagged to force to False.
         """
         if 'mock_fail_is_valid' in self._rule_params:
             return False
@@ -549,15 +554,53 @@ def test_execute(monkeypatch, caplog, blank_move_tasks_rule):
 
     def mock_is_criteria_met(self):
         """
+        Return True unless flagged to force to False.
         """
         if 'mock_fail_is_criteria_met' in self._rule_params:
             return False
         return True
 
+    def mock_get_filtered_tasks(section_gid, match_no_due_date=False,
+        min_time_until_due=None, max_time_until_due=None,
+        min_time_due_assumed=None, max_time_due_assumed=None,
+        is_completed=False, use_tzinfo=None, dt_base=None):
+        """
+        Return some varying task gids and/or raise errors.
+        """
+        # pylint: disable=unused-argument
+        if section_gid == -4:
+            return [{'name': 'ten', 'gid': -10}, {'name': 'eleven', 'gid': -11}]
+        if section_gid == -5:
+            return [{'name': 'twelve', 'gid': -12}]
+        if section_gid == -6:
+            return []
+        if section_gid == -7:
+            return [{'name': 'thirteen', 'gid': -13}]
+        if section_gid == -8:
+            return [{'name': 'fourteen', 'gid': -14}]
+        if section_gid == 'raise-asana-error':
+            raise asana.error.InvalidRequestError(section_gid)
+        if section_gid == 'raise-client-creation-error':
+            raise aclient.ClientCreationError(section_gid)
+        return None # Should not reach
+
+    def mock_move_task_to_section(task_gid, sect_gid, move_to_bottom=False):
+        """
+        Raise errors if certain task gids are passed in.
+        """
+        # pylint: disable=unused-argument
+        if task_gid == -13:
+            raise asana.error.InvalidRequestError('raise-asana-error')
+        if task_gid == -14:
+            raise aclient.ClientCreationError('raise-client-creation-error')
+
     monkeypatch.setattr(move_tasks_rule.MoveTasksRule, 'is_valid',
             mock_is_valid)
     monkeypatch.setattr(move_tasks_rule.MoveTasksRule, 'is_criteria_met',
             mock_is_criteria_met)
+    monkeypatch.setattr(autils, 'get_filtered_tasks', mock_get_filtered_tasks)
+    monkeypatch.setattr(aclient, 'move_task_to_section',
+            mock_move_task_to_section)
 
     # All items are int/str/bool, so no need for deep copy
     rule_params_backup = copy.copy(bmtr._rule_params)
@@ -584,4 +627,75 @@ def test_execute(monkeypatch, caplog, blank_move_tasks_rule):
         ('asana_extensions.rules.move_tasks_rule', logging.INFO,
             'Skipping execution of "blank rule id" completely since criteria'
             + ' not met.'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    bmtr._rule_params['src_net_include_section_gids'] = [-4, -5, -6]
+    bmtr._test_report_only = False
+    assert bmtr.execute() is True
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Successfully moved task "twelve" [-12] to section [-3] per'
+                + ' "blank rule id".'),
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Successfully moved task "eleven" [-11] to section [-3] per'
+                + ' "blank rule id".'),
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Successfully moved task "ten" [-10] to section [-3] per'
+                + ' "blank rule id".'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    bmtr._rule_params['src_net_include_section_gids'] = \
+            [-8, -5, -6, 'raise-asana-error']
+    bmtr._rule_params['dst_section_name'] = 'test-dst-sect'
+    bmtr._test_report_only = False
+    assert bmtr.execute() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to filter tasks for "blank rule id" in section'
+                + ' [raise-asana-error].  Skipping section.  Exception:'
+                + ' Invalid Request'),
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Successfully moved task "twelve" [-12] to section "test-dst-sect"'
+                + ' [-3] per "blank rule id".'),
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to move task "fourteen" [-14] to section "test-dst-sect"'
+                + ' [-3] for "blank rule id".  Skipping task.  Exception:'
+                + ' raise-client-creation-error'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    bmtr._rule_params['src_net_include_section_gids'] = \
+            [-5, -7, 'raise-client-creation-error']
+    bmtr._test_report_only = False
+    assert bmtr.execute() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to filter tasks for "blank rule id" in section'
+                + ' [raise-client-creation-error].  Skipping section.'
+                + '  Exception: raise-client-creation-error'),
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to move task "thirteen" [-13] to section [-3] for'
+                + ' "blank rule id".  Skipping task.  Exception:'
+                + ' Invalid Request'),
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            'Successfully moved task "twelve" [-12] to section [-3] per'
+                + ' "blank rule id".'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    bmtr._rule_params['src_net_include_section_gids'] = [-5]
+    bmtr._rule_params['dst_section_name'] = 'test-dst-sect'
+    bmtr._test_report_only = False
+    assert bmtr.execute(True) is True
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.INFO,
+            '[Test Report Only] For MoveTasksRule "blank rule id", would have'
+                + ' moved task "twelve" [-12] to top of section "test-dst-sect"'
+                + ' [-3].'),
     ]

@@ -335,9 +335,16 @@ class MoveTasksRule(rule_meta.Rule):
                 try:
                     aclient.move_task_to_section(task['gid'],
                             rps['dst_section_gid'])
+                    msg = f'Successfully moved task "{task["name"]}"'
+                    msg += f' [{task["gid"]}] to section'
+                    if rps['dst_section_name'] is not None:
+                        msg += f' "{rps["dst_section_name"]}"'
+                    msg += f' [{rps["dst_section_gid"]}] per "{self._rule_id}".'
+                    logger.info(msg)
                 except (asana.error.AsanaError,
                         aclient.ClientCreationError) as ex:
-                    msg = f'Failed to move task {task["gid"]} to section'
+                    msg = f'Failed to move task "{task["name"]}"'
+                    msg += f' [{task["gid"]}] to section'
                     if rps['dst_section_name'] is not None:
                         msg += f' "{rps["dst_section_name"]}"'
                     msg += f' [{rps["dst_section_gid"]}] for "{self._rule_id}".'
