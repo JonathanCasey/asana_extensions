@@ -233,21 +233,21 @@ class MoveTasksRule(rule_meta.Rule):
                 rps['workspace_gid'] = aclient.get_workspace_gid_from_name(
                             rps['workspace_name'], rps['workspace_gid'])
 
-            if rps['is_my_tasks_list']:
-                rps['user_task_list_gid'] = aclient.get_user_task_list_gid(
-                        rps['workspace_gid'], True)
-
             if rps['project_name'] is not None:
                 # For now, hardcoded for non-archived project
                 #   Could use None, but workaround for now is to specify by gid
                 rps['project_gid'] = aclient.get_project_gid_from_name(
                         rps['workspace_gid'], rps['project_name'],
                         rps['project_gid'])
-                rps['effective_project_gid'] = rps['project_gid']
 
+            if rps['is_my_tasks_list']:
+                rps['user_task_list_gid'] = aclient.get_user_task_list_gid(
+                        rps['workspace_gid'], True)
+
+            if rps['project_gid'] is not None:
+                rps['effective_project_gid'] = rps['project_gid']
             elif rps['user_task_list_gid'] is not None:
                 rps['effective_project_gid'] = rps['user_task_list_gid']
-
             # Else, shouldn't be possible based on assertions in __init__()
 
             # Always want to default to include for move task rule

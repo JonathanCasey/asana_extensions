@@ -14,11 +14,15 @@ Module Attributes:
 """
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
+import copy
 import logging
 import os.path
 
+import asana
 import pytest
 
+from asana_extensions.asana import client as aclient
+from asana_extensions.asana import utils as autils
 from asana_extensions.general import config
 from asana_extensions.rules import move_tasks_rule
 from asana_extensions.rules import rule_meta
@@ -53,6 +57,13 @@ def fixture_blank_move_tasks_rule():
         'min_time_until_due': None,
         'max_time_until_due': None,
         'match_no_due_date': True,
+        # Below added for `_sync_and_validate_with_api()`
+        'src_sections_include_names': None,
+        'src_sections_include_gids': None,
+        'src_sections_exclude_names': None,
+        'src_sections_exclude_gids': None,
+        'dst_section_name': None,
+        'dst_section_gid': -3,
     }
     return move_tasks_rule.MoveTasksRule(rule_params, **kwargs)
 
@@ -279,6 +290,85 @@ def test_get_rule_type_names():
             in move_tasks_rule.MoveTasksRule.get_rule_type_names()
     assert 'not move tasks' \
             not in move_tasks_rule.MoveTasksRule.get_rule_type_names()
+
+
+
+def test__sync_and_validate_with_api(monkeypatch, caplog,
+        blank_move_tasks_rule):
+    """
+    Tests the `_sync_and_validate_with_api()` method in `MoveTasksRule`.
+
+    The general design is to have mock functions that can return values to allow
+    the code to continue; but can pass in an alternative value to trigger an
+    exception.  Between all of the mock functions, all possible exceptions
+    caught by `_sync_and_validate_with_api()` are tested.
+    """
+    # pylint: disable=unused-argument
+
+    def mock_get_workspace_gid_from_name(ws_name, ws_gid=None):
+        """
+        Return the matching gid (if not triggering exception).
+        """
+        if ws_name == 'raise-client-creation-error':
+            raise aclient.ClientCreationError()
+        return -2
+
+    def mock_get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
+        """
+        Return the matching gid (if not triggering exception).
+        """
+        if workspace_gid == 'raise-asana-error':
+            raise asana.error.InvalidRequestError()
+        return -4
+
+    def mock_get_project_gid_from_name(ws_gid, proj_name, proj_gid=None,
+            archived=False):
+        """
+        Return the matching gid (if not triggering exception).
+        """
+        if ws_gid == 'raise-data-not-found-error':
+            raise aclient.DataNotFoundError()
+        return -1
+
+    def mock_get_net_include_section_gids(proj_or_utl_gid,
+            include_sect_names=None, include_sect_gids=None,
+            exclude_sect_names=None, exclude_sect_gids=None,
+            default_to_include=True):
+        """
+        Return some gids (if not triggering exception).
+        """
+        if proj_or_utl_gid == 'raise-data-conflict-error':
+            raise autils.DataConflictError()
+        if proj_or_utl_gid == 'raise-data-missing-error':
+            raise autils.DataMissingError()
+        return [-5, -6]
+
+    def mock_get_section_gid_from_name(proj_or_utl_gid, sect_name,
+            sect_gid=None):
+        """
+        Return the matching gid (if not triggering exception).
+        """
+        if proj_or_utl_gid == 'raise-duplicate-name-error':
+            raise aclient.DuplicateNameError()
+        if proj_or_utl_gid == 'raise-mismatched-data-error':
+            raise aclient.MismatchedDataError()
+        return -3
+
+    monkeypatch.setattr(aclient, 'get_workspace_gid_from_name',
+            mock_get_workspace_gid_from_name)
+    monkeypatch.setattr(aclient, 'get_user_task_list_gid',
+            mock_get_user_task_list_gid)
+    monkeypatch.setattr(aclient, 'get_project_gid_from_name',
+            mock_get_project_gid_from_name)
+    monkeypatch.setattr(autils, 'get_net_include_section_gids',
+            mock_get_net_include_section_gids)
+    monkeypatch.setattr(aclient, 'get_section_gid_from_name',
+            mock_get_section_gid_from_name)
+
+    # All items are int/str/bool, so no need for deep copy
+    rule_params_backup = copy.copy(blank_move_tasks_rule._rule_params)
+
+    assert blank_move_tasks_rule._sync_and_validate_with_api() is True
 
 
 
