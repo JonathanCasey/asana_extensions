@@ -293,8 +293,8 @@ def test_get_rule_type_names():
 
 
 
-def test__sync_and_validate_with_api(monkeypatch, caplog,
-        blank_move_tasks_rule):
+def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
+        monkeypatch, caplog, blank_move_tasks_rule):
     """
     Tests the `_sync_and_validate_with_api()` method in `MoveTasksRule`.
 
@@ -303,32 +303,33 @@ def test__sync_and_validate_with_api(monkeypatch, caplog,
     exception.  Between all of the mock functions, all possible exceptions
     caught by `_sync_and_validate_with_api()` are tested.
     """
-    # pylint: disable=unused-argument
-
     def mock_get_workspace_gid_from_name(ws_name, ws_gid=None):
         """
         Return the matching gid (if not triggering exception).
         """
+        # pylint: disable=unused-argument
         if ws_name == 'raise-client-creation-error':
-            raise aclient.ClientCreationError()
-        return -2
+            raise aclient.ClientCreationError(ws_name)
+        return -102
 
     def mock_get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
         """
         Return the matching gid (if not triggering exception).
         """
+        # pylint: disable=unused-argument
         if workspace_gid == 'raise-asana-error':
-            raise asana.error.InvalidRequestError()
-        return -4
+            raise asana.error.InvalidRequestError(workspace_gid)
+        return -104
 
     def mock_get_project_gid_from_name(ws_gid, proj_name, proj_gid=None,
             archived=False):
         """
         Return the matching gid (if not triggering exception).
         """
+        # pylint: disable=unused-argument
         if ws_gid == 'raise-data-not-found-error':
-            raise aclient.DataNotFoundError()
-        return -1
+            raise aclient.DataNotFoundError(ws_gid)
+        return -101
 
     def mock_get_net_include_section_gids(proj_or_utl_gid,
             include_sect_names=None, include_sect_gids=None,
@@ -337,22 +338,24 @@ def test__sync_and_validate_with_api(monkeypatch, caplog,
         """
         Return some gids (if not triggering exception).
         """
+        # pylint: disable=unused-argument
         if proj_or_utl_gid == 'raise-data-conflict-error':
-            raise autils.DataConflictError()
+            raise autils.DataConflictError(proj_or_utl_gid)
         if proj_or_utl_gid == 'raise-data-missing-error':
-            raise autils.DataMissingError()
-        return [-5, -6]
+            raise autils.DataMissingError(proj_or_utl_gid)
+        return [-105, -106]
 
     def mock_get_section_gid_from_name(proj_or_utl_gid, sect_name,
             sect_gid=None):
         """
         Return the matching gid (if not triggering exception).
         """
+        # pylint: disable=unused-argument
         if proj_or_utl_gid == 'raise-duplicate-name-error':
-            raise aclient.DuplicateNameError()
+            raise aclient.DuplicateNameError(proj_or_utl_gid)
         if proj_or_utl_gid == 'raise-mismatched-data-error':
-            raise aclient.MismatchedDataError()
-        return -3
+            raise aclient.MismatchedDataError(proj_or_utl_gid)
+        return -103
 
     monkeypatch.setattr(aclient, 'get_workspace_gid_from_name',
             mock_get_workspace_gid_from_name)
@@ -365,10 +368,142 @@ def test__sync_and_validate_with_api(monkeypatch, caplog,
     monkeypatch.setattr(aclient, 'get_section_gid_from_name',
             mock_get_section_gid_from_name)
 
-    # All items are int/str/bool, so no need for deep copy
-    rule_params_backup = copy.copy(blank_move_tasks_rule._rule_params)
+    bmtr = blank_move_tasks_rule # Shorten name since used so much here
 
-    assert blank_move_tasks_rule._sync_and_validate_with_api() is True
+    # All items are int/str/bool, so no need for deep copy
+    rule_params_backup = copy.copy(bmtr._rule_params)
+
+    def reset_rule_params():
+        """
+        Restore the rule params for the blank rule to the original/backup.
+        """
+        bmtr._rule_params = copy.copy(rule_params_backup)
+
+    caplog.set_level(logging.ERROR)
+
+    assert bmtr._sync_and_validate_with_api() is True
+    assert bmtr._rule_params['workspace_gid'] == -2
+    assert bmtr._rule_params['project_gid'] == -1
+    assert bmtr._rule_params['user_task_list_gid'] is None
+    assert bmtr._rule_params['effective_project_gid'] == -1
+    assert bmtr._rule_params['src_net_include_section_gids'] == [-105, -106]
+    assert bmtr._rule_params['dst_section_gid'] == -3
+
+    reset_rule_params()
+    bmtr._rule_params['workspace_name'] = 'test-ws'
+    bmtr._rule_params['project_name'] = 'test-proj'
+    bmtr._rule_params['dst_section_name'] = 'test-dst-sect'
+    assert bmtr._sync_and_validate_with_api() is True
+    assert bmtr._rule_params['workspace_gid'] == -102
+    assert bmtr._rule_params['project_gid'] == -101
+    assert bmtr._rule_params['user_task_list_gid'] is None
+    assert bmtr._rule_params['effective_project_gid'] == -101
+    assert bmtr._rule_params['src_net_include_section_gids'] == [-105, -106]
+    assert bmtr._rule_params['dst_section_gid'] == -103
+
+    reset_rule_params()
+    bmtr._rule_params['project_gid'] = None
+    bmtr._rule_params['is_my_tasks_list'] = True
+    assert bmtr._sync_and_validate_with_api() is True
+    assert bmtr._rule_params['workspace_gid'] == -2
+    assert bmtr._rule_params['project_gid'] is None
+    assert bmtr._rule_params['user_task_list_gid'] == -104
+    assert bmtr._rule_params['effective_project_gid'] == -104
+    assert bmtr._rule_params['src_net_include_section_gids'] == [-105, -106]
+    assert bmtr._rule_params['dst_section_gid'] == -3
+
+    reset_rule_params()
+    bmtr._rule_params['project_gid'] = None
+    bmtr._rule_params['user_task_list_gid'] = -4
+    assert bmtr._sync_and_validate_with_api() is True
+    assert bmtr._rule_params['workspace_gid'] == -2
+    assert bmtr._rule_params['project_gid'] is None
+    assert bmtr._rule_params['user_task_list_gid'] == -4
+    assert bmtr._rule_params['effective_project_gid'] == -4
+    assert bmtr._rule_params['src_net_include_section_gids'] == [-105, -106]
+    assert bmtr._rule_params['dst_section_gid'] == -3
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-client-creation-error'
+    bmtr._rule_params['workspace_name'] = error
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-asana-error'
+    bmtr._rule_params['workspace_gid'] = error
+    bmtr._rule_params['project_gid'] = None
+    bmtr._rule_params['is_my_tasks_list'] = True
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + '  Skipping rule.  Exception: Invalid Request'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-data-not-found-error'
+    bmtr._rule_params['workspace_gid'] = error
+    bmtr._rule_params['project_name'] = 'test-proj'
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-data-conflict-error'
+    bmtr._rule_params['project_gid'] = error
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-data-missing-error'
+    bmtr._rule_params['project_gid'] = error
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-duplicate-name-error'
+    bmtr._rule_params['project_gid'] = error
+    bmtr._rule_params['dst_section_name'] = 'test-dst-sect'
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
+
+    caplog.clear()
+    reset_rule_params()
+    error = 'raise-mismatched-data-error'
+    bmtr._rule_params['project_gid'] = error
+    bmtr._rule_params['dst_section_name'] = 'test-dst-sect'
+    assert bmtr._sync_and_validate_with_api() is False
+    assert caplog.record_tuples == [
+        ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
+            'Failed to sync and validate rule "blank rule id" with the API.'
+            + f'  Skipping rule.  Exception: {error}'),
+    ]
 
 
 
