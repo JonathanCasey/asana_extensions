@@ -423,6 +423,9 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._rule_params['src_net_include_section_gids'] == [-105, -106]
     assert bmtr._rule_params['dst_section_gid'] == -3
 
+    msg_base_err  = 'Failed to sync and validate rule "blank rule id" with the'
+    msg_base_err += ' API.  Skipping rule.  Exception:'
+
     caplog.clear()
     reset_rule_params()
     error = 'raise-client-creation-error'
@@ -430,8 +433,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
     caplog.clear()
@@ -443,8 +445,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + '  Skipping rule.  Exception: Invalid Request'),
+            f'{msg_base_err} Invalid Request'),
     ]
 
     caplog.clear()
@@ -455,8 +456,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
     caplog.clear()
@@ -466,8 +466,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
     caplog.clear()
@@ -477,8 +476,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
     caplog.clear()
@@ -489,8 +487,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
     caplog.clear()
@@ -501,8 +498,7 @@ def test__sync_and_validate_with_api(      # pylint: disable=too-many-statements
     assert bmtr._sync_and_validate_with_api() is False
     assert caplog.record_tuples == [
         ('asana_extensions.rules.move_tasks_rule', logging.ERROR,
-            'Failed to sync and validate rule "blank rule id" with the API.'
-            + f'  Skipping rule.  Exception: {error}'),
+            f'{msg_base_err} {error}'),
     ]
 
 
