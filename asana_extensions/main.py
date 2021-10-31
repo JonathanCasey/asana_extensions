@@ -43,10 +43,23 @@ def _setup_and_call_main():
     `if __name__ == '__main__':` prior to `main()` call, but this allows unit
     testing a lot more easily.
     """
-    for sig in ('INT', 'TERM', 'QUIT', 'HUP'):
-        signal.signal(getattr(signal, 'SIG%s' % sig), _shutdown)
+    _register_shutdown_signals()
 
     main()
+
+
+
+def _register_shutdown_signals():
+    """
+    Registers the shutdown signals that will be supported, handling any platform
+    dependent discrepancies gracefully.
+    """
+    for sig in ('INT', 'TERM', 'QUIT', 'HUP'):
+        try:
+            signal.signal(getattr(signal, f'SIG{sig}'), _shutdown)
+        except AttributeError:
+            # Likely a platform didn't support one of the options
+            continue
 
 
 
