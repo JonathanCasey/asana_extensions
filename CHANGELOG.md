@@ -237,10 +237,26 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `rules.py` added with `load_all_from_config()` started to load all
       rules from the `rules.conf` file ([#1][]).
 - [Added] `MoveTasksRule` added to `_RULES` list in `rules.py` ([#1][]).
-- [Added] `parse_time_arg()` added to parse time-only iso-format values (not
-      full ISO 8601 format though) ([#18][]).
+- [Added] `parse_time_arg()` added to `Rule` to parse time-only iso-format
+      values (not full ISO 8601 format though) ([#18][]).
 - [Changed] `parse_timedelta_arg()` will now also return `None` if an empty
       string is provided in case key is left in config but is blank ([#18][]).
+- [Added] `_is_valid` added to `Rule` to store cached validation results
+      ([#2][]).
+- [Added] `get_rule_id()` accessor method added to `Rule` ([#2][]).
+- [Added] `_sync_and_validate_with_api()` and `_execute()` abstract methods
+      added to `Rule` ([#2][]).
+- [Added] `is_valid()` and `is_criteria_met()` methods added to `Rule` with
+      default logic for any subclasses that don't need to override ([#2][]).
+- [Added] `execute_rules()` added to `rules.py` to perform the actions for all
+      provided rules ([#2][]).
+
+##### Unit Tests: conftest
+- [Added] Added `conftest.py` to root of `rules` subpackage in unit tests dir,
+      with new `fixture_blank_rule_cls()` added for use by other modules
+      in subpackage ([#2][]).
+- [Changed] Some existing functions that used a `BlankRule` class refactored to
+      use `fixture_blank_rule_cls()` ([#2][]).
 
 
 ### Rules: Move Tasks Rule
@@ -252,12 +268,22 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] References to timeframe in error messages changed to be `timeframe`
       instead of `time` to be more clear and distinuish from assumed time errors
       ([#18][]).
+- [Added] Implemented `_sync_and_validate_with_api()` to do API-dependent
+      pre-processing [#2][].
+- [Added] Implemented `execute()` to check and perform `MoveTasksRule` action
+      ([#2][]).
 
 ##### Unit Tests
 - [Changed] `[test-move-tasks-full-is-utl-and-gid]` is now split into
       `[test-move-tasks-is-utl-and-gid]` and `[test-move-tasks-full]` to ensure
       that if `full` is changed later, no need to worry about it reducing
       coverage ([#18][]).
+- [Added] `fixture_blank_move_tasks_rule()` added as a basis for a blank
+      `MoveTasksRule` ([#2][]).
+- [Changed] `test_load_specific_from_conf_impossible()` renamed to
+      `test_load_specific_from_conf__impossible()` ([#2][]).
+- [Changed] `test_get_provider_names()` renamed to `test_get_rule_type_names()`
+      ([#2][]).
 
 
 ### Docs: CHANGELOG
@@ -305,6 +331,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 
 #### Issues
 - [#1][]
+- [#2][]
 - [#5][]
 - [#7][]
 - [#9][]
@@ -333,6 +360,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#32][] for [#18][]
 - [#34][] for [#33][]
 - [#38][] for [#19][]
+- [#41][] for [#2][]
 
 
 ---
@@ -354,6 +382,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#18]: https://github.com/JonathanCasey/asana_extensions/issues/18 'Issue #18'
 [#33]: https://github.com/JonathanCasey/asana_extensions/issues/33 'Issue #33'
 [#19]: https://github.com/JonathanCasey/asana_extensions/issues/19 'Issue #19'
+[#2]: https://github.com/JonathanCasey/asana_extensions/issues/2 'Issue #2'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -368,3 +397,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#32]: https://github.com/JonathanCasey/asana_extensions/pull/32 'PR #32'
 [#34]: https://github.com/JonathanCasey/asana_extensions/pull/34 'PR #34'
 [#38]: https://github.com/JonathanCasey/asana_extensions/pull/38 'PR #38'
+[#41]: https://github.com/JonathanCasey/asana_extensions/pull/41 'PR #41'

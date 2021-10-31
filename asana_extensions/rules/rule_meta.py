@@ -178,7 +178,7 @@ class Rule(ABC):
 
 
 
-    def is_criteria_met(self):
+    def is_criteria_met(self):                     # pylint: disable=no-self-use
         """
         Checks whether the criteria to run this rule, if any, has been met.  If
         any additional processing is required for this, it should be done and
