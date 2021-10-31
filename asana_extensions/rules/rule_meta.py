@@ -49,6 +49,8 @@ class Rule(ABC):
       _rule_type (str): The type of rule, such as "move tasks".
       _test_report_only (bool): Whether or not this is for reporting for
         testing only or whether rule is live.
+      _is_valid (bool or None): Cached value as to whether the rule is valid.
+        If not validated yet, will be None.
     """
     def __init__(self, rule_id, rule_type, test_report_only, **kwargs):
         """
@@ -69,6 +71,8 @@ class Rule(ABC):
         if kwargs:
             logger.warning('Discarded excess kwargs provided to'
                     + f' {self.__class__.__name__}: {", ".join(kwargs.keys())}')
+
+        self._is_valid = None
 
 
 
@@ -117,6 +121,17 @@ class Rule(ABC):
 
 
 
+    def get_rule_id(self):
+        """
+        Get the id/name of this rule.
+
+        Returns:
+          _rule_id (str): The ID or name of this rule.
+        """
+        return self._rule_id
+
+
+
     @classmethod
     @abstractmethod
     def get_rule_type_names(cls):
@@ -127,6 +142,86 @@ class Rule(ABC):
         Returns:
           ([str]): A list of names that are valid to use as the type for this
             rule.
+        """
+
+
+
+    @abstractmethod
+    def _sync_and_validate_with_api(self):
+        """
+        Sync configuration data with the API and further validate, storing any
+        newly prepared configuration info.  This is largely a contintuation
+        of __init__() where API-dependent items can be completed in case it is
+        ideal to decouple the API access from __init__().
+
+        Returns:
+          (bool): True if completed successfully; False if failed for any
+            reason (this should probably catch nearly all exceptions).
+        """
+
+
+
+    def is_valid(self):
+        """
+        Check whether this rule is valid or not.  This ideally utilizes a cached
+        value so that the check for being valid does not need to be done more
+        than once since that could involve heavy API access.  As a result, it is
+        likely that this should call `_sync_and_validate_with_api()`.  In most
+        cases, can just rely on the logic in this metaclass.
+
+        Returns:
+          (bool): True if is valid; False if invalid.
+        """
+        if self._is_valid is None:
+            self._is_valid = self._sync_and_validate_with_api()
+        return self._is_valid
+
+
+
+    def is_criteria_met(self):                     # pylint: disable=no-self-use
+        """
+        Checks whether the criteria to run this rule, if any, has been met.  If
+        any additional processing is required for this, it should be done and
+        stored as appropriate.  In such a case, it may be advisable to cache
+        the overall result.
+
+        Where possible, this should be decoupled from `is_valid()`, but in many
+        cases it will likely make sense for this to only run if `is_valid()` is
+        True.  Hence, this may get masked by that result in those cases.
+
+        Some rules do not have any specific criteria as to whether the rule
+        should run (e.g. no specific datetime at which it should run if script
+        expected to be called multiple times), in which case this should just
+        return True.
+
+        If a rule does need to implement a criteria check, this should be
+        overridden.
+
+        Returns:
+          (bool): True if criteria is met for rule to run or there is no
+            criteria (i.e. this is not applicable); False if not ready to run.
+        """
+        return True
+
+
+
+    @abstractmethod
+    def execute(self, force_test_report_only=False):
+        """
+        Execute the rule.  This should likely check if it is valid and the
+        criteria to run the rule has been met (if any).  If either the rule is
+        set to test report only or the caller of this method specified to force
+        to be test report only, no changes will be made via the API -- only
+        simulated results will be reported (but still based on data from API).
+
+        Args:
+          force_test_report_only (bool): If True, will ensure this runs as a
+            test report only with no changes made via the API; if False, will
+            defer to the `_test_report_only` setting of the rule.
+
+        Returns:
+          (bool): True if fully completed without any errors; False any errors,
+            regardless of whether it resulted in partial or full failure.
         """
 
 

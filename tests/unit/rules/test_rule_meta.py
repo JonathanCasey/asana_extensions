@@ -27,44 +27,26 @@ from asana_extensions.rules import rule_meta
 
 
 
-def test_init(caplog):
+def test_init(caplog, blank_rule_cls):
     """
     Tests `__init__()` method in `Rule`.
     """
-
-    class BlankRule(rule_meta.Rule):
-        """
-        Simple blank rule to subclass Rule.
-        """
-        @classmethod
-        def load_specific_from_conf(cls, rules_cp, rule_id, rule_params=None,
-                **kwargs):
-            """
-            Not needed / will not be used.
-            """
-            return
-
-        @classmethod
-        def get_rule_type_names(cls):
-            """
-            Not needed / will not be used.
-            """
-            return []
-
     caplog.set_level(logging.WARNING)
     caplog.clear()
 
-    blank_rule = BlankRule('blank-rule-id', 'blank-rule-type', True)
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
     assert blank_rule._rule_id == 'blank-rule-id'
     assert blank_rule._rule_type == 'blank-rule-type'
     assert blank_rule._test_report_only is True
+    assert blank_rule._is_valid is None
     assert caplog.record_tuples == []
 
-    blank_extra_rule = BlankRule('blank-rule-id', 'blank-rule-type', True,
+    blank_extra_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True,
             extras='extra-kwarg')
     assert blank_extra_rule._rule_id == 'blank-rule-id'
     assert blank_extra_rule._rule_type == 'blank-rule-type'
     assert blank_extra_rule._test_report_only is True
+    assert blank_rule._is_valid is None
     assert caplog.record_tuples == [
             ('asana_extensions.rules.rule_meta', logging.WARNING,
                 'Discarded excess kwargs provided to BlankRule: extras'),
@@ -106,6 +88,18 @@ def test_load_specific_from_conf(caplog):
             """
             return []
 
+        def _sync_and_validate_with_api(self):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
+        def execute(self, force_test_report_only=False):
+            """
+            Not needed / will not be used.
+            """
+            return True
+
     this_dir = os.path.dirname(os.path.realpath(__file__))
     conf_dir = os.path.join(this_dir, 'test_rule_meta')
     rules_cp = config.read_conf_file('mock_rule_meta.conf', conf_dir)
@@ -143,6 +137,69 @@ def test_load_specific_from_conf(caplog):
     assert rule is not None
     assert rule._rule_params['rule_type'] == 'blank rule'
     assert caplog.record_tuples == []
+
+
+
+def test_get_rule_id(blank_rule_cls):
+    """
+    Tests the `get_rule_id()` method in `Rule`.
+    """
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
+    assert blank_rule.get_rule_id() == 'blank-rule-id'
+
+
+
+def subtest_is_valid(monkeypatch, rule_test):
+    """
+    Steps to test the `is_valid()` method in `Rule` and any of its subclasses
+    that do not override this non-abstract method.
+    """
+    def mock__sync_and_validate_with_api():
+        """
+        Force to return False.
+        """
+        return False
+
+    assert rule_test._is_valid is None
+
+    assert rule_test.is_valid() is True
+    assert rule_test._is_valid is True
+
+    monkeypatch.setattr(rule_test, '_sync_and_validate_with_api',
+            mock__sync_and_validate_with_api)
+    assert rule_test.is_valid() is True
+    assert rule_test._is_valid is True
+
+    rule_test._is_valid = None
+    assert rule_test.is_valid() is False
+    assert rule_test._is_valid is False
+
+
+
+def test_is_valid(monkeypatch, blank_rule_cls):
+    """
+    Tests the `is_valid()` method in `Rule`.
+    """
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
+    subtest_is_valid(monkeypatch, blank_rule)
+
+
+
+def subtest_is_criteria_met(rule_test):
+    """
+    Steps to test the `is_criteria_met()` method in `Rule` and any of its
+    subclasses that do not override this non-abstract method.
+    """
+    assert rule_test.is_criteria_met() is True
+
+
+
+def test_is_criteria_met(blank_rule_cls):
+    """
+    Tests the `is_criteria_met()` method in `Rule`.
+    """
+    blank_rule = blank_rule_cls('blank-rule-id', 'blank-rule-type', True)
+    subtest_is_criteria_met(blank_rule)
 
 
 

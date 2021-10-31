@@ -10,6 +10,10 @@ Module Attributes:
 """
 import logging
 
+import asana
+
+from asana_extensions.asana import client as aclient
+from asana_extensions.asana import utils as autils
 from asana_extensions.general import config
 from asana_extensions.general.exceptions import *   # pylint: disable=wildcard-import
 from asana_extensions.rules import rule_meta
@@ -37,6 +41,8 @@ class MoveTasksRule(rule_meta.Rule):
         _rule_type (str): The type of rule, such as "move tasks".
         _test_report_only (bool): Whether or not this is for reporting for
           testing only or whether rule is live.
+        _is_valid (bool or None): Cached value as to whether the rule is valid.
+          If not validated yet, will be None.
     """
     def __init__(self, rule_params, **kwargs):
         """
@@ -209,3 +215,141 @@ class MoveTasksRule(rule_meta.Rule):
         # pylint: disable=multi-line-list-eol-close, closing-comma
         return ['move tasks', 'auto-promote tasks', 'auto-promote',
                 'auto promote tasks', 'auto promote', 'promote tasks']
+
+
+
+    def _sync_and_validate_with_api(self):
+        """
+        Sync configuration data with the API and further validate, storing any
+        newly prepared configuration info.
+
+        Returns:
+          (bool): True if completed successfully; False if failed for any
+            reason (this should probably catch nearly all exceptions).
+        """
+        rps = self._rule_params # Shorten name since used so much here
+        try:
+            if rps['workspace_name'] is not None:
+                rps['workspace_gid'] = aclient.get_workspace_gid_from_name(
+                            rps['workspace_name'], rps['workspace_gid'])
+
+            if rps['project_name'] is not None:
+                # For now, hardcoded for non-archived project
+                #   Could use None, but workaround for now is to specify by gid
+                rps['project_gid'] = aclient.get_project_gid_from_name(
+                        rps['workspace_gid'], rps['project_name'],
+                        rps['project_gid'])
+
+            if rps['is_my_tasks_list']:
+                rps['user_task_list_gid'] = aclient.get_user_task_list_gid(
+                        rps['workspace_gid'], True)
+
+            if rps['project_gid'] is not None:
+                rps['effective_project_gid'] = rps['project_gid']
+            elif rps['user_task_list_gid'] is not None:
+                rps['effective_project_gid'] = rps['user_task_list_gid']
+            # Else, shouldn't be possible based on assertions in __init__()
+
+            # Always want to default to include for move task rule
+            rps['src_net_include_section_gids'] = \
+                    autils.get_net_include_section_gids(
+                            rps['effective_project_gid'],
+                            rps['src_sections_include_names'],
+                            rps['src_sections_include_gids'],
+                            rps['src_sections_exclude_names'],
+                            rps['src_sections_exclude_gids'])
+
+            if rps['dst_section_name'] is not None:
+                rps['dst_section_gid'] = aclient.get_section_gid_from_name(
+                        rps['effective_project_gid'], rps['dst_section_name'],
+                        rps['dst_section_gid'])
+
+        except (asana.error.AsanaError, aclient.ClientCreationError,
+                aclient.DataNotFoundError, aclient.DuplicateNameError,
+                aclient.MismatchedDataError, autils.DataConflictError,
+                autils.DataMissingError) as ex:
+            logger.error(f'Failed to sync and validate rule "{self._rule_id}"'
+                    + f' with the API.  Skipping rule.  Exception: {str(ex)}')
+            return False
+
+        return True
+
+
+
+    def execute(self, force_test_report_only=False):
+        """
+        Execute the rule.  This should likely check if it is valid and the
+        criteria to run the rule has been met (if any).  If either the rule is
+        set to test report only or the caller of this method specified to force
+        to be test report only, no changes will be made via the API -- only
+        simulated results will be reported (but still based on data from API).
+
+        Args:
+          force_test_report_only (bool): If True, will ensure this runs as a
+            test report only with no changes made via the API; if False, will
+            defer to the `_test_report_only` setting of the rule.
+
+        Returns:
+          (bool): True if fully completed without any errors; False any errors,
+            regardless of whether it resulted in partial or full failure.
+        """
+        if not self.is_valid():
+            logger.error(f'Failed to execute "{self._rule_id}" since invalid.')
+            return False
+        if not self.is_criteria_met():
+            logger.info(f'Skipping execution of "{self._rule_id}" completely'
+                    + ' since criteria not met.')
+            return False
+
+        any_errors = False
+
+        rps = self._rule_params # Shorten name since used so much here
+        tasks_to_move = []
+        for src_sect_gid in rps['src_net_include_section_gids']:
+            # Could lock in a dt_base before loop, but likely not an issue
+            # For now, hardcoded for incomplete tasks
+            try:
+                tasks_to_move.extend(autils.get_filtered_tasks(src_sect_gid,
+                        rps['match_no_due_date'],
+                        rps['min_time_until_due'], rps['max_time_until_due'],
+                        rps['min_due_assumed_time'],
+                        rps['max_due_assumed_time']))
+            except (asana.error.AsanaError, aclient.ClientCreationError) as ex:
+                logger.error(f'Failed to filter tasks for "{self._rule_id}"'
+                        + f' in section [{src_sect_gid}].  Skipping section.'
+                        + f'  Exception: {str(ex)}')
+                any_errors = True
+
+        for task in tasks_to_move[::-1]:
+            # For now, hardcoded to move to top, maintaining order
+            if self._test_report_only or force_test_report_only:
+                msg = '[Test Report Only] For MoveTasksRule'
+                msg += f' "{self._rule_id}", would have moved task'
+                msg += f' "{task["name"]}" [{task["gid"]}]'
+                msg += ' to top of section'
+                if rps['dst_section_name'] is not None:
+                    msg += f' "{rps["dst_section_name"]}"'
+                msg += f' [{rps["dst_section_gid"]}].'
+                logger.info(msg)
+            else:
+                try:
+                    aclient.move_task_to_section(task['gid'],
+                            rps['dst_section_gid'])
+                    msg = f'Successfully moved task "{task["name"]}"'
+                    msg += f' [{task["gid"]}] to section'
+                    if rps['dst_section_name'] is not None:
+                        msg += f' "{rps["dst_section_name"]}"'
+                    msg += f' [{rps["dst_section_gid"]}] per "{self._rule_id}".'
+                    logger.info(msg)
+                except (asana.error.AsanaError,
+                        aclient.ClientCreationError) as ex:
+                    msg = f'Failed to move task "{task["name"]}"'
+                    msg += f' [{task["gid"]}] to section'
+                    if rps['dst_section_name'] is not None:
+                        msg += f' "{rps["dst_section_name"]}"'
+                    msg += f' [{rps["dst_section_gid"]}] for "{self._rule_id}".'
+                    msg += f'  Skipping task.  Exception: {str(ex)}'
+                    logger.error(msg)
+                    any_errors = True
+
+        return not any_errors
