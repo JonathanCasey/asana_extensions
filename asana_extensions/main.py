@@ -31,12 +31,44 @@ else:
 def main(force_test_report_only, log_level, modules):
     """
     Launches the main app.
+
+    Args:
+      force_test_report_only (bool): True to force test report only mode; False
+        to allow full execution (pending other settings).
+      log_level (Level/int/str): The desired log level.  This can be specified
+        as a level constant from the logging module, or it can be an int or str
+        reprenting the numeric value (possibly as a str) or textual name
+        (possibly with incorrect case) of the level.
+      modules ([str]): The list of module names of what to execute.  See the
+        arg parsing code in `_setup_and_call_main()` for details of options.
     """
     _config_root_logger(log_level)
+    any_errors = False
+
     if any(x.lower() in ['rules', 'all'] for x in modules):
-        all_rules = rules.load_all_from_config()
-        rules.execute_rules(all_rules, force_test_report_only)
-    logger.info('Asana Extensions run complete!')
+        any_errors = _main_rules(force_test_report_only) or any_errors
+
+    if any_errors:
+        logger.warning('Asana Extensions run completed, but with errors...')
+    else:
+        logger.info('Asana Extensions run completed successfully!')
+
+
+
+def _main_rules(force_test_report_only):
+    """
+    The main function for execution the rules modules.
+
+    Args:
+      force_test_report_only (bool): True to force test report only mode; False
+        to allow full execution (pending other settings).
+
+    Return:
+      (bool): True if fully successful (even in test report only mode); False if
+        any errors occurred that partially or fully prevented completion.
+    """
+    all_rules = rules.load_all_from_config()
+    return rules.execute_rules(all_rules, force_test_report_only)
 
 
 
