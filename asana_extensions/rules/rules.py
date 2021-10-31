@@ -73,6 +73,12 @@ def execute_rules(rules, force_test_report_only=False):
       force_test_report_only (bool): If True, will ensure this runs as a test
         report only with no changes made via the API for all rules; if False,
         will defer to the `_test_report_only` setting of each rule.
+
+    Returns:
+      (bool): True if fully completed without any errors; False any errors,
+        regardless of whether it resulted in partial or full failure.
     """
+    any_errors = False
     for rule in rules:
-        rule.execute(force_test_report_only)
+        any_errors = rule.execute(force_test_report_only) or any_errors
+    return not any_errors
