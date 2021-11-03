@@ -176,6 +176,8 @@ def _register_shutdown_signals(signals=None):
         try:
             signal.signal(getattr(signal, sig), _shutdown)
         except AttributeError:
+            logger.debug(f'Signal "{sig}" not registered for shutdown.  Likely'
+                    + ' not supported by this OS.')
             # Likely a platform didn't support one of the options
             continue
 

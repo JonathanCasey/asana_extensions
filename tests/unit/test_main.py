@@ -180,6 +180,54 @@ def test__config_root_logger():
 
 
 
+def test__register_shutdown_signals(monkeypatch, caplog):
+    """
+    Tests the `_register_shutdown_signals()` method.
+    """
+    def mock_shutdown(signum, _frame):
+        """
+
+        """
+        main.logger.warning(f'Would have exited from signal {str(signum)}')
+
+    monkeypatch.setattr(main, '_shutdown', mock_shutdown)
+
+    caplog.set_level(logging.DEBUG)
+
+    hardcoded_signals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP']
+    supported_signals = []
+    default_handlers = {}
+    for sig_name in hardcoded_signals:
+        try:
+            sig = getattr(signal, sig_name)
+            default_handlers[sig] = signal.getsignal(sig)
+            supported_signals.append(sig)
+        except AttributeError:
+            default_handlers[sig] = None
+
+    main._register_shutdown_signals()
+    for sig in supported_signals:
+        assert signal.getsignal(sig) \
+                == mock_shutdown      # pylint: disable=comparison-with-callable
+
+    # Should be supported on all platforms but not one of the hardcoded
+    test_signal = 'SIGSEGV'
+    main._register_shutdown_signals([test_signal])
+    assert signal.getsignal(getattr(signal, test_signal)) \
+                == mock_shutdown      # pylint: disable=comparison-with-callable
+
+    # Just make sure nothing implodes...should do nothing but log
+    caplog.clear()
+    bogus_signal = 'completely_bogus_signal'
+    main._register_shutdown_signals([bogus_signal])
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.DEBUG,
+            'Signal "completely_bogus_signal" not registered for shutdown.'
+                + '  Likely not supported by this OS.'),
+    ]
+
+
+
 def test__shutdown(caplog):
     """
     Tests the `_shutdown()` method.
