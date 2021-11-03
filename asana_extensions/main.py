@@ -43,12 +43,15 @@ def main(force_test_report_only, log_level, modules):
         arg parsing code in `_setup_and_call_main()` for details of options.
     """
     _config_root_logger(log_level)
-    any_errors = False
+    any_errors = None
 
     if any(x.lower() in ['rules', 'all'] for x in modules):
-        any_errors = _main_rules(force_test_report_only) or any_errors
+        any_errors = not _main_rules(force_test_report_only) \
+                or any_errors or False
 
-    if any_errors:
+    if any_errors is None:
+        logger.info('Asana Extensions had no modules to run -- fully skipped.')
+    elif any_errors:
         logger.warning('Asana Extensions run completed, but with errors...')
     else:
         logger.info('Asana Extensions run completed successfully!')

@@ -21,6 +21,57 @@ from asana_extensions.rules import rules as rules_mod
 
 
 
+def test_global():
+    """
+    Tests items at the global scope not otherwise fully tested.
+    """
+    # Since only used (right now0 for logger name which is untested code, this
+    #  gives the best chance of detecting a mistake there.
+    assert main._NAME_MOD_OVERRIDE == 'asana_extensions.main'
+
+
+
+def test_main(monkeypatch, caplog):
+    """
+    Tests the `main()` method.
+    """
+    def mock__main_rules(force_test_report_only=False):
+        """
+        Return true/false, but do so based on test report arg for convenience.
+        """
+        return force_test_report_only
+
+    monkeypatch.setattr(main, '_main_rules', mock__main_rules)
+
+    caplog.set_level(logging.INFO)
+
+    caplog.clear()
+    main.main(False, logging.WARNING, [])
+    assert caplog.record_tuples == []
+
+    caplog.clear()
+    main.main(False, logging.INFO, [])
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.INFO,
+            'Asana Extensions had no modules to run -- fully skipped.'),
+    ]
+
+    caplog.clear()
+    main.main(False, logging.INFO, ['rules'])
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.WARNING,
+            'Asana Extensions run completed, but with errors...'),
+    ]
+
+    caplog.clear()
+    main.main(True, logging.INFO, ['all'])
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.INFO,
+            'Asana Extensions run completed successfully!'),
+    ]
+
+
+
 def test__main_rules(monkeypatch, caplog):
     """
     Tests the `_main_rules()` method.
