@@ -16,6 +16,8 @@ Module Attributes:
 
 import logging
 
+import pytest
+
 from asana_extensions import main
 from asana_extensions.rules import rules as rules_mod
 
@@ -138,3 +140,39 @@ def test__main_rules(monkeypatch, caplog):
     assert caplog.record_tuples == [
         ('asana_extensions.rules.rules', logging.INFO, 'Test report only'),
     ]
+
+
+
+def test__config_root_logger():
+    """
+    Tests the `_config_root_logger()` method.
+    """
+    root_logger = logging.getLogger()
+    assert root_logger.getEffectiveLevel() == logging.WARNING
+
+    main._config_root_logger('info')
+    assert root_logger.getEffectiveLevel() == logging.INFO
+
+    main._config_root_logger(15)
+    assert root_logger.getEffectiveLevel() == 15
+
+    main._config_root_logger(10)
+    assert root_logger.getEffectiveLevel() == logging.DEBUG
+
+    with pytest.raises(ValueError) as ex:
+        main._config_root_logger('20')
+    assert "Unknown level: '20'" in str(ex.value)
+
+    with pytest.raises(ValueError) as ex:
+        main._config_root_logger('invalid-level')
+    assert "Unknown level: 'INVALID-LEVEL'" in str(ex.value)
+
+    class Dummy:                        # pylint: disable=too-few-public-methods
+        """
+        Dummy class that does nothing.
+        """
+
+    with pytest.raises(TypeError) as ex:
+        main._config_root_logger(Dummy())
+    assert 'Invalid log level type (somehow).  See --help for -l.' \
+            in str(ex.value)

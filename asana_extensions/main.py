@@ -111,7 +111,7 @@ def _config_root_logger(log_level):
     try:
         root_logger.setLevel(int(log_level))
         return
-    except ValueError:
+    except (TypeError, ValueError):
         # Probably an invalid type that couldn't be cast -- let fall thru
         pass
 
