@@ -42,7 +42,12 @@ def main(force_test_report_only, log_level, modules):
       modules ([str]): The list of module names of what to execute.  See the
         arg parsing code in `_setup_and_call_main()` for details of options.
     """
-    _config_root_logger(log_level)
+    try:
+        _config_root_logger(log_level)
+    except (TypeError, ValueError) as ex:
+        _config_root_logger(logging.NOTSET)
+        logger.warning(f'Logger setting failed (Exception: {ex}).  Defaulting'
+                + ' to not set.')
     any_errors = None
 
     if any(x.lower() in ['rules', 'all'] for x in modules):

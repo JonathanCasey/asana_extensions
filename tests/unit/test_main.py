@@ -70,6 +70,16 @@ def test_main(monkeypatch, caplog):
             'Asana Extensions run completed successfully!'),
     ]
 
+    caplog.clear()
+    main.main(False, 'bad log level', [])
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.WARNING,
+            "Logger setting failed (Exception: Unknown level: 'BAD LOG LEVEL')."
+                + "  Defaulting to not set."),
+        ('asana_extensions.main', logging.INFO,
+            'Asana Extensions had no modules to run -- fully skipped.'),
+    ]
+
 
 
 def test__main_rules(monkeypatch, caplog):
