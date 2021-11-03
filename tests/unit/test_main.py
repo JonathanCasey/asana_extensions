@@ -15,6 +15,7 @@ Module Attributes:
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
 import logging
+import signal
 
 import pytest
 
@@ -176,3 +177,25 @@ def test__config_root_logger():
         main._config_root_logger(Dummy())
     assert 'Invalid log level type (somehow).  See --help for -l.' \
             in str(ex.value)
+
+
+
+def test__shutdown(caplog):
+    """
+    Tests the `_shutdown()` method.
+
+    ...might be best to keep this to the end of the file.  It seems some code
+    intellisense doesn't like this handling of something that calls sys.exit()
+    and will instead assume nothing else can possibly run.  After all, what
+    comes after the end of the universe?
+    """
+    caplog.set_level(logging.WARNING)
+
+    caplog.clear()
+    with pytest.raises(SystemExit) as ex:
+        main._shutdown(signal.SIGINT, None)
+    assert '1' in str(ex.value)
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.WARNING,
+            'Exiting from signal Signals.SIGINT ...'),
+    ]
