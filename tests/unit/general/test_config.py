@@ -11,6 +11,7 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+import logging
 import os.path
 
 import pytest
@@ -157,3 +158,100 @@ def test_parse_list_from_conf_string():
             conf_str_ints_mixed, config.CastType.INT)
     assert conf_list_floats == config.parse_list_from_conf_string(
             conf_str_floats, config.CastType.FLOAT)
+
+
+
+def test_level_filter(caplog, capsys):
+    """
+    Tests `LevelFilter` entirely.
+
+    Note that caplog does NOT respect filters added to handlers, so results in
+    records/record_tuples must then also be checked against capsys to confirm
+    logging actually went through or did not as expected (stderr used for all as
+    default).
+    """
+    filter_above_info = config.LevelFilter(min_exc_level=logging.INFO)
+    filter_above_info_upto_warning = config.LevelFilter('info', 30)
+    filter_upto_warning = config.LevelFilter(max_inc_level='WARNING')
+
+    handlers = {}
+    loggers = {}
+    test_levels = ['INFO', 'WARNING', 'ERROR']
+    for level in test_levels:
+        handlers[level] = logging.StreamHandler()
+        handlers[level].setLevel(level)
+
+        loggers[level] = logging.getLogger(f'test logger {level.lower()}')
+        loggers[level].addHandler(handlers[level])
+        loggers[level].setLevel(level)
+
+    caplog.set_level(logging.DEBUG)
+
+    caplog.clear()
+    for level in test_levels:
+        loggers[level].info(f'1. test, msg info, log {level}')
+    assert caplog.record_tuples == [
+        ('test logger info', logging.INFO, '1. test, msg info, log INFO'),
+    ]
+    assert '1. test, msg info, log INFO' in capsys.readouterr().err
+
+    caplog.clear()
+    for level in test_levels:
+        loggers[level].warning(f'2. test, msg warning, log {level}')
+    assert caplog.record_tuples == [
+        ('test logger info', logging.WARNING,
+            '2. test, msg warning, log INFO'),
+        ('test logger warning', logging.WARNING,
+            '2. test, msg warning, log WARNING'),
+    ]
+    stderr = capsys.readouterr().err
+    assert '2. test, msg warning, log INFO' in stderr
+    assert '2. test, msg warning, log WARNING' in stderr
+
+    caplog.clear()
+    handlers['INFO'].addFilter(filter_above_info)
+    for level in test_levels:
+        loggers[level].info(f'3. test, msg info, log {level}')
+        loggers[level].warning(f'3. test, msg warning, log {level}')
+    assert caplog.record_tuples == [
+        ('test logger info', logging.INFO,
+            '3. test, msg info, log INFO'),
+        ('test logger info', logging.WARNING,
+            '3. test, msg warning, log INFO'),
+        ('test logger warning', logging.WARNING,
+            '3. test, msg warning, log WARNING'),
+    ]
+    stderr = capsys.readouterr().err
+    assert '3. test, msg info, log INFO' not in stderr
+    assert '3. test, msg warning, log INFO' in stderr
+    assert '3. test, msg warning, log WARNING' in stderr
+
+    handlers['INFO'].removeFilter(filter_above_info)
+    caplog.clear()
+    handlers['INFO'].addFilter(filter_above_info_upto_warning)
+    handlers['WARNING'].addFilter(filter_upto_warning)
+    for level in test_levels:
+        loggers[level].info(f'4. test, msg info, log {level}')
+        loggers[level].warning(f'4. test, msg warning, log {level}')
+        loggers[level].error(f'4. test, msg error, log {level}')
+    assert caplog.record_tuples == [
+        ('test logger info', logging.INFO,
+            '4. test, msg info, log INFO'),
+        ('test logger info', logging.WARNING,
+            '4. test, msg warning, log INFO'),
+        ('test logger info', logging.ERROR,
+            '4. test, msg error, log INFO'),
+        ('test logger warning', logging.WARNING,
+            '4. test, msg warning, log WARNING'),
+        ('test logger warning', logging.ERROR,
+            '4. test, msg error, log WARNING'),
+        ('test logger error', logging.ERROR,
+            '4. test, msg error, log ERROR'),
+    ]
+    stderr = capsys.readouterr().err
+    assert '4. test, msg info, log INFO' not in stderr
+    assert '4. test, msg warning, log INFO' in stderr
+    assert '4. test, msg error, log INFO' not in stderr
+    assert '4. test, msg warning, log WARNING' in stderr
+    assert '4. test, msg error, log WARNING' not in stderr
+    assert '4. test, msg error, log ERROR' in stderr

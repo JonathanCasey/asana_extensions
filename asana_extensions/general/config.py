@@ -18,6 +18,7 @@ Module Attributes:
 import configparser
 from enum import Enum
 import itertools
+import logging
 import os.path
 
 from asana_extensions.general import dirs
@@ -165,3 +166,73 @@ def parse_list_from_conf_string(conf_str, val_type, delim=',',
             pass
 
     return list_out
+
+
+
+class LevelFilter(logging.Filter):      # pylint: disable=too-few-public-methods
+    """
+    A logging filter for the level to set min and max log levels for a handler.
+    While the min level is redundant given logging already implements this with
+    the base level functionality, the max level adds a new control.
+
+    Class Attributes:
+      N/A
+
+    Instance Attributes:
+      _min_exc_levelno (int or None): The min log level above which is to be
+        included (exclusive).  Can be None to skip min level check.
+      _max_inc_levelno (int or None): The max log level below which is to be
+        included (inclusive).  Can be None to skip max level check.
+    """
+    def __init__(self, min_exc_level=None, max_inc_level=None):
+        """
+        Creates the level filter.
+
+        Args:
+          min_exc_level (int/str/None): The min log level above which is to be
+            inclued (exclusive).  Can be provided as the int level number or as
+            the level name.  Can be omitted/None to disable filtering the min
+            level.
+          max_inc_level (int/str/None): The max log level below which is to be
+            inclued (inclusive).  Can be provided as the int level number or as
+            the level name.  Can be omitted/None to disable filtering the max
+            level.
+        """
+        try:
+            self._min_exc_levelno = int(min_exc_level)
+        except ValueError:
+            # Level name dict is bi-directional lookup -- See python source
+            self._min_exc_levelno = logging.getLevelName(min_exc_level.upper())
+        except TypeError:
+            self._min_exc_levelno = None
+
+        try:
+            self._max_inc_levelno = int(max_inc_level)
+        except ValueError:
+            # Level name dict is bi-directional lookup -- See python source
+            self._max_inc_levelno = logging.getLevelName(max_inc_level.upper())
+        except TypeError:
+            self._max_inc_levelno = None
+
+        super().__init__()
+
+
+
+    def filter(self, record):
+        """
+        Filters the provided record according to the logic in this method.
+
+        Args:
+          record (LogRecord): The log record that is being checked whether to
+            log.
+
+        Returns:
+          (bool): True if should log; False to drop.
+        """
+        if self._min_exc_levelno is not None \
+                and record.levelno <= self._min_exc_levelno:
+            return False
+        if self._max_inc_levelno is not None \
+                and record.levelno > self._max_inc_levelno:
+            return False
+        return True

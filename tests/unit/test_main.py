@@ -151,7 +151,7 @@ def test__main_rules(monkeypatch, caplog):
 
 
 
-def test__config_root_logger():
+def test__config_root_logger(capsys):
     """
     Tests the `_config_root_logger()` method.
     """
@@ -183,6 +183,23 @@ def test__config_root_logger():
         main._config_root_logger(Dummy())
     assert 'Invalid log level type (somehow).  See --help for -l.' \
             in str(ex.value)
+
+    main._config_root_logger(logging.DEBUG)
+    main.logger.debug('debug log msg')
+    main.logger.info('info log msg')
+    main.logger.warning('warning log msg')
+    main.logger.error('error log msg')
+    stdmsg = capsys.readouterr()
+    stdout = stdmsg.out
+    stderr = stdmsg.err
+    assert 'debug log msg' in stdout
+    assert 'info log msg' in stdout
+    assert 'warning log msg' not in stdout
+    assert 'error log msg' not in stdout
+    assert 'debug log msg' not in stderr
+    assert 'info log msg' not in stderr
+    assert 'warning log msg' in stderr
+    assert 'error log msg' in stderr
 
 
 

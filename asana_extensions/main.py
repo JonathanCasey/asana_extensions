@@ -14,6 +14,7 @@ import logging
 import signal
 import sys
 
+from asana_extensions.general import config
 from asana_extensions.rules import rules
 
 
@@ -99,6 +100,14 @@ def _config_root_logger(log_level):
         supported value.
     """
     root_logger = logging.getLogger() # Root logger will config app-wide
+
+    handler_stdout = logging.StreamHandler(sys.stdout)
+    handler_stdout.setLevel(logging.NOTSET)
+    handler_stdout.addFilter(config.LevelFilter(max_inc_level=logging.INFO))
+    handler_stderr = logging.StreamHandler()
+    handler_stderr.setLevel(logging.WARNING)
+    root_logger.addHandler(handler_stdout)
+    root_logger.addHandler(handler_stderr)
 
     str_value_error = None
 
