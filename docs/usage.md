@@ -31,7 +31,39 @@ arguments.  As of writing, these are:
 
 
 This project is developed with python 3.10, but it is very likely that earlier
-versions such as 3.6 and 3.7 work at this time.
+versions such as 3.7 work at this time.  Versions earlier than python 3.7 are
+known to not work.
+
+
+### Ubuntu
+On Linux, at least on Ubuntu, there is a shell script wrapper for the most
+common case.  This can be run via `./bin/asana_extensions_exec_all.sh -l`.  The
+`-l` can be omitted, but it will log activity and email fatal error alerts if
+`rsyslog` has been configured correctly.
+
+When first testing, the `script_opts` are recommended to be changed to remove
+the `-e` so it runs in test mode and add `-l info` to monitor how it goes.
+
+##### Monitoring log output
+There is also a log written to the location configured via `rsyslog` when the
+`-l` arg us used with the `/bin/asana_extensions_exec_all.sh` script.  This can
+be monitored with `tail -f /path/to/log/file.log` for live changes.
+
+This can be piped to show only messages with certain keywords by appending
+` | grep <keyword>`, where `<keyword>` is the filter of interest.  Another
+powerful option is to invert match to exclude terms, such as `INFO` with
+` | grep -i -v info` (`-i` matches case insensitive).
+
+Note that, at this time, debug and info level messages are logged as `info` and
+warning and error level messages are logged as `warning`.  This is planned to be
+improved in the future.  In the meantime, the contents of the message does still
+indicate the correct level, so that can be reviewed.
+
+All info and lower messages are written to the log file before all the warning
+and higher messages (probably because of the order of `logger` calls in the
+shell script).  This should also get improved in the future at the same time as
+resolving log levels as noted above.
+
 
 
 ## Asana Support and Deprecations
