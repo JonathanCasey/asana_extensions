@@ -236,7 +236,7 @@ def test__setup_and_call_main(monkeypatch, caplog):
 
     caplog.clear()
     main._setup_and_call_main(
-            '--modules rules all --log_level info --execute'.split())
+            '--modules rules all --log-level info --execute'.split())
     assert caplog.record_tuples == [
         (main_mod_name, logging.INFO, 'Force test report only: False'),
         (main_mod_name, logging.INFO, 'Log level: info'),

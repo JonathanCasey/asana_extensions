@@ -142,7 +142,7 @@ def _setup_and_call_main(_args=None):
             default=True,
             help='Execute the module(s).  Without this, it will run in test'
                 + ' report only mode.')
-    parser.add_argument('-l', '--log_level',
+    parser.add_argument('-l', '--log-level',
             default=logging.WARNING,
             help='Set the log level through the app.  Will only report logged'
                 + ' messages that are the specified level or more severe.'
