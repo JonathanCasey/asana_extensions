@@ -28,6 +28,11 @@ def load_all_from_config(conf_rel_file='rules.conf'):
     """
     Loads all rules from the rules config file.
 
+    This should ideally catch all errors except ones so catastrophic that the
+    operation of the entire app should cease immediately.  Callers of this
+    method are not intended to require try/except handling for things like
+    mis-configured rules, etc.
+
     Args:
       conf_rel_file (str): The config file from which to load all rules.  Can
         omit to use default rule file name.

@@ -230,6 +230,15 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       ISO 8601 strings and `relativedelta` input only ([#18][]).
 
 
+### Main
+- [Added] `main.py` added to `/asana_extensions` for main entry point for app
+      ([#20][]).
+  - Set logger level based on CLI arg.
+  - Set whether to force test report only mode based on CLI arg.
+  - Execute modules based on CLI arg (so far, only `rules` or `all`).
+  - Shutdown signal handler added.
+
+
 ### Rules / Meta
 - [Added] `rule_meta.py` added with abstract `Rule` defining interface and some
       consolidated logic ([#1][]).
@@ -341,6 +350,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#16][]
 - [#18][]
 - [#19][]
+- [#20][]
 - [#25][]
 - [#27][]
 - [#28][]
@@ -361,6 +371,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#34][] for [#33][]
 - [#38][] for [#19][]
 - [#41][] for [#2][]
+- [#42][] for [#20][]
 
 
 ---
@@ -383,6 +394,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#33]: https://github.com/JonathanCasey/asana_extensions/issues/33 'Issue #33'
 [#19]: https://github.com/JonathanCasey/asana_extensions/issues/19 'Issue #19'
 [#2]: https://github.com/JonathanCasey/asana_extensions/issues/2 'Issue #2'
+[#20]: https://github.com/JonathanCasey/asana_extensions/issues/20 'Issue #20'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -398,3 +410,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#34]: https://github.com/JonathanCasey/asana_extensions/pull/34 'PR #34'
 [#38]: https://github.com/JonathanCasey/asana_extensions/pull/38 'PR #38'
 [#41]: https://github.com/JonathanCasey/asana_extensions/pull/41 'PR #41'
+[#42]: https://github.com/JonathanCasey/asana_extensions/pull/42 'PR #42'

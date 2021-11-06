@@ -214,6 +214,11 @@ class Rule(ABC):
         to be test report only, no changes will be made via the API -- only
         simulated results will be reported (but still based on data from API).
 
+        This should ideally catch all errors except ones so catastrophic that
+        the operation of the entire app should cease immediately.  Callers of
+        this method are not intended to require try/except handling for things
+        like mis-configured rules, etc.
+
         Args:
           force_test_report_only (bool): If True, will ensure this runs as a
             test report only with no changes made via the API; if False, will
