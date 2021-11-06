@@ -15,6 +15,7 @@ Module Attributes:
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
 
 import logging
+import types
 import uuid
 import warnings
 
@@ -406,6 +407,7 @@ def test__get_client(monkeypatch):
         return {}
 
     # read_conf_file() returning bad config allows to confirm client cache works
+    orig_read_conf_file = config.read_conf_file
     monkeypatch.setattr(config, 'read_conf_file', mock_read_conf_file)
     client = aclient._get_client()
     assert client is not None
@@ -415,6 +417,57 @@ def test__get_client(monkeypatch):
         aclient._get_client()
     assert "Could not create client - Could not find necessary section/key in" \
             + " .secrets.conf: 'asana'" in str(ex.value)
+
+    monkeypatch.setattr(config, 'read_conf_file', orig_read_conf_file)
+
+    def mock_client_access_token__missing(          # pylint: disable=invalid-name
+            accessToken):                      # pylint: disable=unused-argument
+        """
+        Mock the client creation via access token with header keys missing.
+        """
+        return types.SimpleNamespace(headers={})
+
+    def mock_client_access_token__empty(          # pylint: disable=invalid-name
+            accessToken):                      # pylint: disable=unused-argument
+        """
+        Mock the client creation via access token with header keys present, but
+        empty values.
+        """
+        return types.SimpleNamespace(headers={'asana-enable': ''})
+
+    def mock_client_access_token__existing(       # pylint: disable=invalid-name
+            accessToken):                      # pylint: disable=unused-argument
+        """
+        Mock the client creation via access token with header keys present and
+        with some existing values.
+        """
+        return types.SimpleNamespace(headers={'asana-enable': 'existing'})
+
+    monkeypatch.setattr(asana.Client, 'access_token',
+            mock_client_access_token__missing)
+    client = aclient._get_client()
+    assert client is not None
+    assert client.headers == {
+        'asana-enable': 'new_user_task_lists',
+    }
+
+    monkeypatch.delattr(aclient._get_client, 'client')
+    monkeypatch.setattr(asana.Client, 'access_token',
+            mock_client_access_token__existing)
+    client = aclient._get_client()
+    assert client is not None
+    assert client.headers == {
+        'asana-enable': 'existing,new_user_task_lists',
+    }
+
+    monkeypatch.delattr(aclient._get_client, 'client')
+    monkeypatch.setattr(asana.Client, 'access_token',
+            mock_client_access_token__empty)
+    client = aclient._get_client()
+    assert client is not None
+    assert client.headers == {
+        'asana-enable': 'new_user_task_lists',
+    }
 
 
 
