@@ -109,6 +109,10 @@ def _config_root_logger(log_level):
     root_logger.addHandler(handler_stdout)
     root_logger.addHandler(handler_stderr)
 
+    formatter = logging.Formatter('<%(name)s> %(levelname)s: %(message)s')
+    handler_stdout.setFormatter(formatter)
+    handler_stderr.setFormatter(formatter)
+
     str_value_error = None
 
     try:

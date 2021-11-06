@@ -200,6 +200,10 @@ def test__config_root_logger(capsys):
     assert 'info log msg' not in stderr
     assert 'warning log msg' in stderr
     assert 'error log msg' in stderr
+    assert '<asana_extensions.main> DEBUG: debug log msg' in stdout
+    assert '<asana_extensions.main> INFO: info log msg' in stdout
+    assert '<asana_extensions.main> WARNING: warning log msg' in stderr
+    assert '<asana_extensions.main> ERROR: error log msg' in stderr
 
 
 
