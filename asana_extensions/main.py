@@ -7,7 +7,7 @@ Module Attributes:
     cases since, in this module, `__name__` is often expected to be `__main__`.
   logger (Logger): Logger for this module.
 
-(C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.
+(C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 import argparse
 import logging
