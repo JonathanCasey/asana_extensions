@@ -167,9 +167,8 @@ def test__config_root_logger():
     main._config_root_logger(10)
     assert root_logger.getEffectiveLevel() == logging.DEBUG
 
-    with pytest.raises(ValueError) as ex:
-        main._config_root_logger('20')
-    assert "Unknown level: '20'" in str(ex.value)
+    main._config_root_logger('20')
+    assert root_logger.getEffectiveLevel() == logging.INFO
 
     with pytest.raises(ValueError) as ex:
         main._config_root_logger('invalid-level')

@@ -100,13 +100,17 @@ def _config_root_logger(log_level):
     """
     root_logger = logging.getLogger() # Root logger will config app-wide
 
+    str_value_error = None
+
     try:
         root_logger.setLevel(log_level.upper())
         return
     except AttributeError:
         # Likely passed in an int, which has no method `upper()` -- retry below
         pass
-    # ValueError is probably an "unknown level" from logger -- let it be raised
+    except ValueError as ex:
+        # ValueError is probably "unknown level" from logger but might be intstr
+        str_value_error = ex
 
     try:
         root_logger.setLevel(int(log_level))
@@ -114,6 +118,9 @@ def _config_root_logger(log_level):
     except (TypeError, ValueError):
         # Probably an invalid type that couldn't be cast -- let fall thru
         pass
+
+    if str_value_error is not None:
+        raise str_value_error
 
     raise TypeError('Invalid log level type (somehow).  See --help for -l.')
 
