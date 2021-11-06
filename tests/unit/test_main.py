@@ -60,6 +60,13 @@ def test_main(monkeypatch, caplog):
     ]
 
     caplog.clear()
+    main.main(False, logging.INFO, None)
+    assert caplog.record_tuples == [
+        ('asana_extensions.main', logging.INFO,
+            'Asana Extensions had no modules to run -- fully skipped.'),
+    ]
+
+    caplog.clear()
     main.main(False, logging.INFO, ['rules'])
     assert caplog.record_tuples == [
         ('asana_extensions.main', logging.WARNING,
@@ -180,13 +187,71 @@ def test__config_root_logger():
 
 
 
+def test__setup_and_call_main(monkeypatch, caplog):
+    """
+    Tests the `_setup_and_call_main()` method.
+    """
+    def mock_main(force_test_report_only, log_level, modules):
+        """
+        Since this is all about testing the values passed in to `main()`, this
+        only needs to give some feedback on what each value was.
+        """
+        main.logger.info('Force test report only:'
+                f' {str(force_test_report_only)}')
+        main.logger.info(f'Log level: {str(log_level)}')
+        if modules is None:
+            main.logger.info(f'Modules: {str(modules)}')
+        else:
+            main.logger.info(f'Modules: `{"`|`".join(modules)}`')
+
+    monkeypatch.setattr(main, 'main', mock_main)
+
+    caplog.set_level(logging.INFO)
+
+    main_mod_name = 'asana_extensions.main'
+
+    with pytest.raises(SystemExit) as ex:
+        main._setup_and_call_main('--unknown-arg'.split())
+    assert str(ex.value) == '2'
+
+    with pytest.raises(SystemExit) as ex:
+        main._setup_and_call_main('-m'.split())
+    assert str(ex.value) == '2'
+
+    caplog.clear()
+    main._setup_and_call_main(''.split())
+    assert caplog.record_tuples == [
+        (main_mod_name, logging.INFO, 'Force test report only: True'),
+        (main_mod_name, logging.INFO, 'Log level: 30'),
+        (main_mod_name, logging.INFO, 'Modules: None'),
+    ]
+
+    caplog.clear()
+    main._setup_and_call_main("-e -l 20 -m 'bad-mod'".split())
+    assert caplog.record_tuples == [
+        (main_mod_name, logging.INFO, 'Force test report only: False'),
+        (main_mod_name, logging.INFO, 'Log level: 20'),
+        (main_mod_name, logging.INFO, "Modules: `'bad-mod'`"),
+    ]
+
+    caplog.clear()
+    main._setup_and_call_main(
+            '--modules rules all --log_level info --execute'.split())
+    assert caplog.record_tuples == [
+        (main_mod_name, logging.INFO, 'Force test report only: False'),
+        (main_mod_name, logging.INFO, 'Log level: info'),
+        (main_mod_name, logging.INFO, "Modules: `rules`|`all`"),
+    ]
+
+
+
 def test__register_shutdown_signals(monkeypatch, caplog):
     """
     Tests the `_register_shutdown_signals()` method.
     """
     def mock_shutdown(signum, _frame):
         """
-
+        Instead of actually shutting down via sys.exit(), just log a message.
         """
         main.logger.warning(f'Would have exited from signal {str(signum)}')
 

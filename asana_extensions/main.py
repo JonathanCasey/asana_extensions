@@ -50,7 +50,7 @@ def main(force_test_report_only, log_level, modules):
                 + ' to not set.')
     any_errors = None
 
-    if any(x.lower() in ['rules', 'all'] for x in modules):
+    if modules and any(x.lower() in ['rules', 'all'] for x in modules):
         any_errors = not _main_rules(force_test_report_only) \
                 or any_errors or False
 
