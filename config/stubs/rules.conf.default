@@ -73,7 +73,8 @@ assumed time for max due : # <HH:MM> or delete
 #  all be used.
 # Sections in both the inclusion and exclusion lists at the same time will raise
 #  as error and cause the rule to be skipped.
-# Multiple can be listed with newline separator and/or comma separator.
+# Multiple names can be listed with newline separate ONLY.
+# Multiple gids can be listed with newline separator and/or comma separator.
 # If inclusion provided, will default to excluding all.
 # Otherwise, if exclusion or nothing provided, will default to including all.
 src sections include names : # <names>
@@ -155,7 +156,8 @@ assumed time for max due : # <HH:MM> or delete
 #  all be used.
 # Sections in both the inclusion and exclusion lists at the same time will raise
 #  as error and cause the rule to be skipped.
-# Multiple can be listed with newline separator and/or comma separator.
+# Multiple names can be listed with newline separate ONLY.
+# Multiple gids can be listed with newline separator and/or comma separator.
 # If inclusion provided, will default to excluding all.
 # Otherwise, if exclusion or nothing provided, will default to including all.
 src sections include names : # <names>
