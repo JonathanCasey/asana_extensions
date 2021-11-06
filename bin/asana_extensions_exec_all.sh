@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# script_dir="$( cd "$( dirname "$0" )" && pwd )"
 cd "$( dirname "$0" )/.."
 app_root_dir="$( pwd )"
 
@@ -20,12 +19,12 @@ done
 out_log="/tmp/asana_extensions_stdout.log"
 err_log="/tmp/asana_extensions_stderr.log"
 
-script="asana_extensions/main.py"
+script="-m asana_extensions"
 script_opts="-e -m all"
-tmp_log="1> $out_log 2> $err_log"
+tmp_log="1>$out_log 2>$err_log"
 
 log_stdout="logger -s -t '[asana_extensions]' -p local7.info < $out_log"
-log_stderr="logger -s -t '[asana_extensions]' -p local7.error < $err_log"
+log_stderr="logger -s -t '[asana_extensions]' -p local7.warn < $err_log"
 
 rm_stdout="rm $out_log"
 rm_stderr="rm $err_log"
@@ -59,5 +58,6 @@ if [ $log -eq 1 ]; then
   eval $rm_stdout
   eval $rm_stderr
 else
-  $python $script $script_opts
+
+  eval $PYTHON_BIN $script $script_opts
 fi
