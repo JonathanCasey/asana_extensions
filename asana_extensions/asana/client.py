@@ -164,7 +164,7 @@ def _find_gid_from_name(data, resource_type, name, expected_gid=None):
             continue
         if entry['name'] == name:
             if found_gid is None:
-                found_gid = entry['gid']
+                found_gid = int(entry['gid'])
             else:
                 raise DuplicateNameError(f'The {resource_type} "{name}"'
                         + f' matched at least 2 gids: {found_gid} and'
@@ -267,7 +267,7 @@ def get_section_gid_from_name(proj_or_utl_gid, sect_name, sect_gid=None):
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    sections = client.sections.get_sections_for_project(proj_or_utl_gid)
+    sections = client.sections.get_sections_for_project(str(proj_or_utl_gid))
     return _find_gid_from_name(sections, 'section', sect_name, sect_gid)
 
 
@@ -302,7 +302,7 @@ def get_user_task_list_gid(workspace_gid, is_me=False, user_gid=None):
         # From API docs, access is equivalent subbing 'me' in for gid
         user_gid = 'me'
     params = {
-        'workspace': workspace_gid,
+        'workspace': str(workspace_gid),
     }
 
     client = _get_client()
@@ -332,7 +332,7 @@ def get_section_gids_in_project_or_utl(proj_or_utl_gid):
     """
     # pylint: disable=no-member     # asana.Client dynamically adds attrs
     client = _get_client()
-    sections = client.sections.get_sections_for_project(proj_or_utl_gid)
+    sections = client.sections.get_sections_for_project(str(proj_or_utl_gid))
     return [int(s['gid']) for s in sections]
 
 
@@ -404,14 +404,14 @@ def move_task_to_section(task_gid, sect_gid, move_to_bottom=False):
     # Leverage that adding task to project+section defaults to add to bottom,
     #  but adding task to section direct defaults to add to top
     if move_to_bottom:
-        section = client.sections.get_section(sect_gid)
+        section = client.sections.get_section(str(sect_gid))
         params = {
-            'project': section['project']['gid'],
-            'section': sect_gid,
+            'project': str(section['project']['gid']),
+            'section': str(sect_gid),
         }
-        client.tasks.add_project_for_task(task_gid, params)
+        client.tasks.add_project_for_task(str(task_gid), params)
     else:
         params = {
-            'task': task_gid,
+            'task': str(task_gid),
         }
-        client.sections.add_task_for_section(sect_gid, params)
+        client.sections.add_task_for_section(str(sect_gid), params)
