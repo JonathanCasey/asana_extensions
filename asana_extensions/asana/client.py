@@ -88,9 +88,22 @@ def _get_client():
             parser = config.read_conf_file('.secrets.conf')
             pat = parser['asana']['personal access token']
             _get_client.client = asana.Client.access_token(pat)
+
+            asana_enable_to_add = ','.join([
+                'new_user_task_lists',
+            ])
+            if 'asana-enable' in _get_client.client.headers \
+                    and _get_client.client.headers['asana-enable']:
+                _get_client.client.headers['asana-enable'] = \
+                        _get_client.client.headers['asana-enable'] + ',' \
+                        + asana_enable_to_add
+            else:
+                _get_client.client.headers['asana-enable'] = asana_enable_to_add
+
         except KeyError as ex:
             raise ClientCreationError('Could not create client - Could not find'
                     + f' necessary section/key in .secrets.conf: {ex}') from ex
+
     return _get_client.client
 
 

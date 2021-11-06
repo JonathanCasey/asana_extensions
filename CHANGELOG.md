@@ -142,6 +142,9 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       criteria ([#18][]).
 - [Added] `move_task_to_section()` added, with option to move to top or bottom
       ([#19][]).
+- [Changed] Asana API deprecation warning fixed by explicitly using the
+      `new_user_task_lists` (thereby dropping support for older user task list
+      version, which probably didn't work here anyways) ([#37][]).
 
 ##### Unit Tests
 - [Changed] `fixture_raise_no_authorization_error` and
@@ -355,6 +358,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#27][]
 - [#28][]
 - [#33][]
+- [#37][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -372,6 +376,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#38][] for [#19][]
 - [#41][] for [#2][]
 - [#42][] for [#20][]
+- [#43][] for [#37][]
 
 
 ---
@@ -395,6 +400,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#19]: https://github.com/JonathanCasey/asana_extensions/issues/19 'Issue #19'
 [#2]: https://github.com/JonathanCasey/asana_extensions/issues/2 'Issue #2'
 [#20]: https://github.com/JonathanCasey/asana_extensions/issues/20 'Issue #20'
+[#37]: https://github.com/JonathanCasey/asana_extensions/issues/37 'Issue #37'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -411,3 +417,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#38]: https://github.com/JonathanCasey/asana_extensions/pull/38 'PR #38'
 [#41]: https://github.com/JonathanCasey/asana_extensions/pull/41 'PR #41'
 [#42]: https://github.com/JonathanCasey/asana_extensions/pull/42 'PR #42'
+[#43]: https://github.com/JonathanCasey/asana_extensions/pull/43 'PR #43'

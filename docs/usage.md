@@ -32,3 +32,16 @@ arguments.  As of writing, these are:
 
 This project is developed with python 3.10, but it is very likely that earlier
 versions such as 3.6 and 3.7 work at this time.
+
+
+## Asana Support and Deprecations
+This project aims to stay up to date with API deprecations.  During the period
+of time between deprecation and removal of API items, this project may opt to
+fully switch away from deprecated features.
+
+At this time, the following are deprecated via the API, but this project has
+already migrated support and no longer supports the old methodology:
+- `new_user_task_lists`: This project now supports the "User Task List v2".
+      Support for the prior version user task list has been dropped.  For more
+      info, see
+      [this Asana forum thread](https://forum.asana.com/t/update-on-our-planned-api-changes-to-user-task-lists-a-k-a-my-tasks/103828).
