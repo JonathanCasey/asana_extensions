@@ -14,6 +14,7 @@ import logging
 import signal
 import sys
 
+from asana_extensions import version
 from asana_extensions.general import config
 from asana_extensions.rules import rules
 
@@ -154,7 +155,8 @@ def _setup_and_call_main(_args=None):
     """
     _register_shutdown_signals()
 
-    parser = argparse.ArgumentParser(description='Process inputs.')
+    parser = argparse.ArgumentParser(description='Process inputs.',
+            prog='asana_extensions')
     parser.add_argument('-e', '--execute',
             dest='force_test_report_only',
             action='store_const',
@@ -175,6 +177,10 @@ def _setup_and_call_main(_args=None):
                 + ' specify "all" to run all modules.  Otherwise, can provide a'
                 + ' space-separate list of module names.  Supported modules:'
                 + ' rules.')
+    parser.add_argument('--version',
+            action='version',
+            version='%(prog)s ' + version.get_full_version_string(),
+            help='The version of this application/package.')
 
     main(**vars(parser.parse_args(_args)))
 

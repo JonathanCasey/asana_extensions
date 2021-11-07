@@ -20,6 +20,7 @@ import signal
 import pytest
 
 from asana_extensions import main
+from asana_extensions import version
 from asana_extensions.rules import rules as rules_mod
 
 
@@ -227,7 +228,7 @@ def test__config_root_logger(capsys):
 
 
 
-def test__setup_and_call_main(monkeypatch, caplog):
+def test__setup_and_call_main(monkeypatch, caplog, capsys):
     """
     Tests the `_setup_and_call_main()` method.
     """
@@ -282,6 +283,16 @@ def test__setup_and_call_main(monkeypatch, caplog):
         (main_mod_name, logging.INFO, 'Log level: info'),
         (main_mod_name, logging.INFO, "Modules: `rules`|`all`"),
     ]
+
+    caplog.clear()
+    with pytest.raises(SystemExit) as ex:
+        main._setup_and_call_main('--version'.split())
+    assert caplog.record_tuples == []
+    stdout, _ = capsys.readouterr()
+    ver_parts = stdout.split('_')
+    assert ver_parts[0] == 'asana'
+    assert ver_parts[1] == f'extensions v{version._VERSION}'
+    assert len(ver_parts) == 4
 
 
 
