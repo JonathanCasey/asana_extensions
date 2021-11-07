@@ -68,7 +68,7 @@ def fixture_tasks_with_due_in_utl_test(sections_in_utl_test):
             'assignee': me_data['gid'],
             'assignee_section': sections_in_utl_test[1]['gid'],
             'name': task_name,
-            'workspace': ws_gid,
+            'workspace': str(ws_gid),
         }
         params = {**params, **task_due_param}
         task_data = client.tasks.create_task(params)

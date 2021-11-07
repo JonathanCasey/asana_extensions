@@ -172,7 +172,7 @@ def _find_gid_from_name(data, resource_type, name, expected_gid=None):
 
     if found_gid is None:
         raise DataNotFoundError(f'The {resource_type} "{name}" was not found')
-    if expected_gid is not None and found_gid != expected_gid:
+    if expected_gid is not None and str(found_gid) != str(expected_gid):
         raise MismatchedDataError(f'The {resource_type} "{name}" found gid'
                 + f' {found_gid}, but expected gid {expected_gid}')
     if expected_gid is None:
