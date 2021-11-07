@@ -47,20 +47,20 @@ workflows:
   version-format:
     jobs:
       - version-dev:
-        context:
-          - docker-hub-creds
-        filters:
-          branches:
-            ignore:
-              - stable
-              - /release\/.*/
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              ignore:
+                - stable
+                - /release\/.*/
       - version-stable:
-        context:
-          - docker-hub-creds
-        filters:
-          branches:
-            only:
-              - stable
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              only:
+                - stable
 
 
 
