@@ -24,6 +24,26 @@ from asana_extensions.rules import rules as rules_mod
 
 
 
+@pytest.fixture(autouse=True)
+def fixture_ensure_logging_framework_not_altered():
+    """
+    This fixes an issue where some tests could fail when run together.  This is
+    related to the StreamHandler use by the root logger in this project and
+    `capsys`.
+
+    Since `main.py` is the only place where the `_config_root_logger()` calls
+    are made (at least one of those tests using `capsys`), this is the only test
+    module that should need this.
+
+    Thanks to gaborbernat for this code suggestion in a comment on
+    [pytest-dev/pytest#14](https://github.com/pytest-dev/pytest/issues/14).
+    """
+    before_handlers = list(logging.getLogger().handlers)
+    yield
+    logging.getLogger().handlers = before_handlers
+
+
+
 def test_global():
     """
     Tests items at the global scope not otherwise fully tested.
@@ -151,7 +171,7 @@ def test__main_rules(monkeypatch, caplog):
 
 
 
-def test__config_root_logger():
+def test__config_root_logger(capsys):
     """
     Tests the `_config_root_logger()` method.
     """
@@ -167,9 +187,8 @@ def test__config_root_logger():
     main._config_root_logger(10)
     assert root_logger.getEffectiveLevel() == logging.DEBUG
 
-    with pytest.raises(ValueError) as ex:
-        main._config_root_logger('20')
-    assert "Unknown level: '20'" in str(ex.value)
+    main._config_root_logger('20')
+    assert root_logger.getEffectiveLevel() == logging.INFO
 
     with pytest.raises(ValueError) as ex:
         main._config_root_logger('invalid-level')
@@ -184,6 +203,27 @@ def test__config_root_logger():
         main._config_root_logger(Dummy())
     assert 'Invalid log level type (somehow).  See --help for -l.' \
             in str(ex.value)
+
+    main._config_root_logger(logging.DEBUG)
+    main.logger.debug('debug log msg')
+    main.logger.info('info log msg')
+    main.logger.warning('warning log msg')
+    main.logger.error('error log msg')
+    stdmsg = capsys.readouterr()
+    stdout = stdmsg.out
+    stderr = stdmsg.err
+    assert 'debug log msg' in stdout
+    assert 'info log msg' in stdout
+    assert 'warning log msg' not in stdout
+    assert 'error log msg' not in stdout
+    assert 'debug log msg' not in stderr
+    assert 'info log msg' not in stderr
+    assert 'warning log msg' in stderr
+    assert 'error log msg' in stderr
+    assert '<asana_extensions.main> DEBUG: debug log msg' in stdout
+    assert '<asana_extensions.main> INFO: info log msg' in stdout
+    assert '<asana_extensions.main> WARNING: warning log msg' in stderr
+    assert '<asana_extensions.main> ERROR: error log msg' in stderr
 
 
 

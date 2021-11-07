@@ -13,6 +13,7 @@ Module Attributes:
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 #pylint: disable=protected-access  # Allow for purpose of testing those elements
+#pylint: disable=too-many-lines
 
 import logging
 import types
@@ -76,7 +77,8 @@ def fixture_project_test():
         'name': proj_name,
         'owner': me_data['gid'],
     }
-    proj_data = client.projects.create_project_for_workspace(ws_gid, params)
+    proj_data = client.projects.create_project_for_workspace(str(ws_gid),
+            params)
 
     yield proj_data
 
@@ -632,12 +634,12 @@ def test_get_project_gid_from_name(monkeypatch, caplog, project_test,
 
     # Sanity check that this works with an actual project
     proj_gid = aclient.get_project_gid_from_name(ws_gid, project_test['name'],
-            project_test['gid'])
-    assert proj_gid == project_test['gid']
+            int(project_test['gid']))
+    assert proj_gid == int(project_test['gid'])
 
     # To ensure compatible with _extract_gid_from_name(), validate data format
     client = aclient._get_client()
-    projects = client.projects.get_projects({'workspace': ws_gid})
+    projects = client.projects.get_projects({'workspace': str(ws_gid)})
     project = next(projects)
     assert 'gid' in project
     assert 'name' in project
@@ -677,14 +679,15 @@ def test_get_section_gid_from_name(monkeypatch, caplog, project_test,
     # Sanity check that this works with an actual section
     try:
         sect_gid = aclient.get_section_gid_from_name(project_test['gid'],
-                section_in_project_test['name'], section_in_project_test['gid'])
+                section_in_project_test['name'],
+                int(section_in_project_test['gid']))
     except aclient.DataNotFoundError as ex:
         # This is an error with the tester, not the module under test
         raise TesterNotInitializedError('Cannot run unit tests: Must create a'
                 + f' workspace named "{tester_data._WORKSPACE}" in the asana'
                 + ' account tied to access token in .secrets.conf') from ex
 
-    assert sect_gid == section_in_project_test['gid']
+    assert sect_gid == int(section_in_project_test['gid'])
 
     # To ensure compatible with _extract_gid_from_name(), validate data format
     client = aclient._get_client()

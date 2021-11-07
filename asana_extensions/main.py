@@ -7,13 +7,14 @@ Module Attributes:
     cases since, in this module, `__name__` is often expected to be `__main__`.
   logger (Logger): Logger for this module.
 
-(C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.
+(C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 import argparse
 import logging
 import signal
 import sys
 
+from asana_extensions.general import config
 from asana_extensions.rules import rules
 
 
@@ -100,13 +101,29 @@ def _config_root_logger(log_level):
     """
     root_logger = logging.getLogger() # Root logger will config app-wide
 
+    handler_stdout = logging.StreamHandler(sys.stdout)
+    handler_stdout.setLevel(logging.NOTSET)
+    handler_stdout.addFilter(config.LevelFilter(max_inc_level=logging.INFO))
+    handler_stderr = logging.StreamHandler()
+    handler_stderr.setLevel(logging.WARNING)
+    root_logger.addHandler(handler_stdout)
+    root_logger.addHandler(handler_stderr)
+
+    formatter = logging.Formatter('<%(name)s> %(levelname)s: %(message)s')
+    handler_stdout.setFormatter(formatter)
+    handler_stderr.setFormatter(formatter)
+
+    str_value_error = None
+
     try:
         root_logger.setLevel(log_level.upper())
         return
     except AttributeError:
         # Likely passed in an int, which has no method `upper()` -- retry below
         pass
-    # ValueError is probably an "unknown level" from logger -- let it be raised
+    except ValueError as ex:
+        # ValueError is probably "unknown level" from logger but might be intstr
+        str_value_error = ex
 
     try:
         root_logger.setLevel(int(log_level))
@@ -114,6 +131,9 @@ def _config_root_logger(log_level):
     except (TypeError, ValueError):
         # Probably an invalid type that couldn't be cast -- let fall thru
         pass
+
+    if str_value_error is not None:
+        raise str_value_error
 
     raise TypeError('Invalid log level type (somehow).  See --help for -l.')
 

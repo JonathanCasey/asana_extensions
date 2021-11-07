@@ -7,7 +7,7 @@ Module Attributes:
   logger (Logger): Logger for this module.
   _RULES ((Class<Rule<>>)): All rule classes supported.
 
-(C) Copyright 2020 Jonathan Casey.  All Rights Reserved Worldwide.
+(C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
 import logging
 

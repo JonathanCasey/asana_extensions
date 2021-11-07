@@ -156,19 +156,21 @@ class MoveTasksRule(rule_meta.Rule):
             rule_params['src_sections_include_names'] = \
                     config.parse_list_from_conf_string(rules_cp.get(rule_id,
                         'src sections include names', fallback=None),
-                        config.CastType.STRING, strip_quotes=True)
+                        config.CastType.STRING, delim=None, delim_newlines=True,
+                        strip_quotes=True)
             rule_params['src_sections_include_gids'] = \
                     config.parse_list_from_conf_string(rules_cp.get(rule_id,
                         'src sections include gids', fallback=None),
-                        config.CastType.INT)
+                        config.CastType.INT, delim_newlines=True)
             rule_params['src_sections_exclude_names'] = \
                     config.parse_list_from_conf_string(rules_cp.get(rule_id,
                         'src sections exclude names', fallback=None),
-                        config.CastType.STRING, strip_quotes=True)
+                        config.CastType.STRING, delim=None, delim_newlines=True,
+                        strip_quotes=True)
             rule_params['src_sections_exclude_gids'] = \
                     config.parse_list_from_conf_string(rules_cp.get(rule_id,
                         'src sections exclude gids', fallback=None),
-                        config.CastType.INT)
+                        config.CastType.INT, delim_newlines=True)
 
             rule_params['dst_section_name'] = rules_cp.get(rule_id,
                     'dst section name', fallback=None)

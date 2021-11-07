@@ -14,3 +14,10 @@ Automation extensions for Asana that I use.  Configurable automations include:
 - [Setup](docs/setup.md)
 - [Usage](docs/usage.md)
 - [Contributing](CONTRIBUTING.md)
+
+This is expected to be multi-platform.  It was developed in Windows 10 and is
+used in Ubuntu 20.04.
+
+This only supports a single account at this time.  To use with multiple
+accounts, clone as many times as needed into different directories, each having
+their own personal access tokens and other relevant configurations.

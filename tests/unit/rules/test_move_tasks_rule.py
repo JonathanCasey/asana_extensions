@@ -92,6 +92,16 @@ def test_load_specific_from_conf(caplog):  # pylint: disable=too-many-statements
             'test-move-tasks-success')
     assert rule is not None
     assert caplog.record_tuples == []
+    assert rule._rule_params['src_sections_include_names'] == [
+        'test src section include name 1',
+        'test src section include name 2, test src section include name 2b,',
+        'test src section include name 3',
+    ]
+    assert rule._rule_params['src_sections_include_gids'] == [1, 2, 3, 4]
+    assert rule._rule_params['src_sections_exclude_names'] == [
+        'test src section exclude name 1',
+    ]
+    assert rule._rule_params['src_sections_exclude_gids'] == [1]
 
     with pytest.raises(AssertionError) as ex:
         move_tasks_rule.MoveTasksRule.load_specific_from_conf(rules_cp,
