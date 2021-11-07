@@ -64,13 +64,20 @@ def _get_git_commit_hash():
     Returns:
       git_hash (str): The 7-character short git commit hash for the most recent
         commit/checkout.  `x` if git is not installed.
-    """
-    result = subprocess.run(('git', 'rev-parse', '--short', 'HEAD'),
-            cwd=dirs.get_root_path(), shell=True,
-            capture_output=True, encoding='utf-8')
 
-    if result.returncode == 1:
-        return 'x'
+    Raises:
+      (subprocess.CalledProcessError): Raised if an unexpected non-zero return
+        code is received from shell invocation.
+    """
+    try:
+        result = subprocess.run(('git', 'rev-parse', '--short', 'HEAD'),
+                cwd=dirs.get_root_path(), shell=True,
+                capture_output=True, encoding='utf-8', check=True)
+    except subprocess.CalledProcessError as ex:
+        if ex.returncode == 1:
+            # No .git dir / not cloned
+            return 'x'
+        raise
 
     git_hash = result.stdout.strip()
     return git_hash
@@ -85,15 +92,23 @@ def _get_git_branch_code():
 
     Return:
       git_branch_code (str): The current git branch code.
-    """
-    result = subprocess.run(('git', 'symbolic-ref', 'HEAD'),
-            cwd=dirs.get_root_path(), shell=True,
-            capture_output=True, encoding='utf-8')
 
-    if result.returncode == 1:
-        return 'x'
-    if result.returncode == 128:
-        return 'h'
+    Raises:
+      (subprocess.CalledProcessError): Raised if an unexpected non-zero return
+        code is received from shell invocation.
+    """
+    try:
+        result = subprocess.run(('git', 'symbolic-ref', 'HEAD'),
+                cwd=dirs.get_root_path(), shell=True,
+                capture_output=True, encoding='utf-8', check=True)
+    except subprocess.CalledProcessError as ex:
+        if ex.returncode == 1:
+            # No .git dir / not cloned
+            return 'x'
+        if ex.returncode == 128:
+            # Detached head
+            return 'h'
+        raise
 
     branch_ptn = re.compile('^refs/heads/')
     git_branch = branch_ptn.sub('', result.stdout.strip())
@@ -118,13 +133,20 @@ def _get_git_status_code():
     Returns:
       git_status_code (str): The git status code summary string.  Literal `x-x`
         if git is not installed.
-    """
-    result = subprocess.run(('git', 'status', '--short'),
-            cwd=dirs.get_root_path(), shell=True,
-            capture_output=True, encoding='utf-8')
 
-    if result.returncode == 1:
-        return 'x-x'
+    Raises:
+      (subprocess.CalledProcessError): Raised if an unexpected non-zero return
+        code is received from shell invocation.
+    """
+    try:
+        result = subprocess.run(('git', 'status', '--short'),
+                cwd=dirs.get_root_path(), shell=True,
+                capture_output=True, encoding='utf-8', check=True)
+    except subprocess.CalledProcessError as ex:
+        if ex.returncode == 1:
+            # No .git dir / not cloned
+            return 'x-x'
+        raise
 
     git_status = result.stdout  # Do NOT strip -- need leading whitespace!
 
