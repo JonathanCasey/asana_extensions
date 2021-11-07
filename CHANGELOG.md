@@ -35,6 +35,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `.editorconfig` and `.gitattributes` added ([#5][]).
 - [Added] VS Code related items added to `.gitignore` ([#5][]).
 - [Added] `.conf` extensions in `config` dir added to `.gitignore` ([#1][]).
+- [Added] `.env` extensions in `config` dir added to `.gitignore` ([#3][]).
 
 
 ### Project & Toolchain: CircleCI
@@ -145,6 +146,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] Asana API deprecation warning fixed by explicitly using the
       `new_user_task_lists` (thereby dropping support for older user task list
       version, which probably didn't work here anyways) ([#37][]).
+- [Fixed] Issue where gids are mixed up between str and int for comparison,
+      asana module calls is resolved ([#48][]).
 
 ##### Unit Tests
 - [Changed] `fixture_raise_no_authorization_error` and
@@ -195,9 +198,25 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       filtering (so far) ([#18][]).
 
 
+### Bin: asana_extensions_exec_all.sh
+- [Added] `asana_extensions_exec_all.sh` added as a wrapper script for Ubuntu,
+      with rsyslog and email failure support added ([#3][]).
+
+
 ### Config: .secrets.conf
 - [Added] `.secrets.conf` file created (with `.default` stub), with `asana`
       section for personal access token key added ([#9][]).
+
+
+### Config: .secrets.env
+- [Added] `.secrets.env` file created (with `.default` stub), with parameters
+      for email server and admin email config (for Ubuntu bin script) ([#3][]).
+
+
+### Config: asana_extensions.env
+- [Added] `asana_extensions.env` file created (with `.default` stub) with
+      parameter to specify path to python bin to use (for Ubuntu bin script)
+      ([#3][]).
 
 
 ### Config: rules.conf
@@ -208,6 +227,9 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] Cleaned up comments not meant to be committed.
 - [Added] `assumed time for min due` and `assumed time for max due` added along
       with explanation of usage ([#18][]).
+- [Fixed] For sections, names can only be listed by newline separators now, but
+      gids can now properly be listed by any combo of newlines and commas
+      ([#49][]).
 
 
 ### General: Config
@@ -218,6 +240,14 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       method body to better support testing ([#1][]).
 - [Added] `UnsupportedFormatError` added for cases where a config value is in
       a parsable format, but it's use as such is not supported ([#18][]).
+- [Changed] `parse_list_from_conf_string()` now also takes `delim_newlines` as
+      a parameter and will split on that and/or the `delim` parameter ([#49][]).
+- [Changed] The `delim` parameter in `parse_list_from_conf_string()` can be
+      `None` to not split on a character string ([#49][]).
+- [Fixed] Empty string entries in list parser from conf string are now dropped
+      ([#49][]).
+- [Added] `LevelFilter` added for logging so an upper severity can be specified
+      for logging routing ([#45][]).
 
 
 ### General: Dirs
@@ -233,13 +263,28 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       ISO 8601 strings and `relativedelta` input only ([#18][]).
 
 
-### Main
+### Main / __main__
 - [Added] `main.py` added to `/asana_extensions` for main entry point for app
       ([#20][]).
   - Set logger level based on CLI arg.
   - Set whether to force test report only mode based on CLI arg.
   - Execute modules based on CLI arg (so far, only `rules` or `all`).
   - Shutdown signal handler added.
+- [Fixed] `__main__.py` added to `/asana_extensions` as the real entry point
+      when executing as a module (which is required) -- it is an extremely slim
+      wrapper for `main.py` ([#3][], [#44][]).
+- [Changed] `StreamHandler`s added to root logger config with `LevelFilter` so
+      can split low severity and high severity between stdout and stderr,
+      respectively ([#45][]).
+- [Fixed] In `_config_root_logger()`, raising the `ValueError` from string
+      parsing is deferred until after trying int parsing so numbers passed as
+      strings will work ([#46][]).
+
+##### Unit Tests
+- [Fixed] `fixture_ensure_logging_framework_not_altered()` added with `autouse`
+      to fix issue where some tests would fail due to root logger usage of
+      `StreamHandler` in some tests clashing with `capsys` fixture in some tests
+      ([#51][]).
 
 
 ### Rules / Meta
@@ -284,6 +329,9 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       pre-processing [#2][].
 - [Added] Implemented `execute()` to check and perform `MoveTasksRule` action
       ([#2][]).
+- [Fixed] For sections, names can only be listed by newline separators now, but
+      gids can now properly be listed by any combo of newlines and commas
+      ([#49][]).
 
 ##### Unit Tests
 - [Changed] `[test-move-tasks-full-is-utl-and-gid]` is now split into
@@ -321,6 +369,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] Link to `setup.md`, `usage.md`, `CONTRIBUTING.md` added ([#5][]).
 - [Added] Code cov badge added ([#7][]).
 - [Added] Added the move tasks rule to list of supported feature ([#1][]).
+- [Added] Notes regarding OS support and how to use with multiple Asana accounts
+      added ([#3][]).
 
 
 ### Docs: Setup
@@ -328,11 +378,21 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] Noted that python 3.7 was used for dev ([#1][]).
 - [Added] Added setup instructions on creating config from stubs ([#1][]).
 - [Changed] Python version changed from 3.7 to 3.10 ([#33][]).
+- [Added] Noted python 3.7 as the likely min version ([#3][]).
+- [Added] Guidance on setting up each config file added while trying to minimize
+      duplication with notes in stub files ([#3][]).
+- [Added] Steps to install python and/or Ubuntu prerequisites added ([#3][]).
+- [Added] Guidance on setting up rsyslog and scheduling
+      (cron/systemd/task scheduler) added ([#3][]).
 
 
 ### Docs: Usage
 - [Added] `usage.md` added with workflow tips ([#5][]).
 - [Added] Added note to run through setup prior to first use ([#1][]).
+- [Fixed] Python 3.6 removed as an example of a possible earlier python version
+      to use now that it is confirmed to not work ([#3][]).
+- [Added] Executing shell script in Ubuntu added ([#3][]).
+- [Added] Tips on monitoring log output in Ubuntu added ([#3][]).
 
 
 ### Ref Links
@@ -344,6 +404,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 #### Issues
 - [#1][]
 - [#2][]
+- [#3][]
 - [#5][]
 - [#7][]
 - [#9][]
@@ -359,6 +420,12 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#28][]
 - [#33][]
 - [#37][]
+- [#44][]
+- [#45][]
+- [#46][]
+- [#48][]
+- [#49][]
+- [#51][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -377,6 +444,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#41][] for [#2][]
 - [#42][] for [#20][]
 - [#43][] for [#37][]
+- [#50][] for [#3][], [#44][], [#45][], [#46][], [#48][], [#49][], [#51][]
 
 
 ---
@@ -401,6 +469,13 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#2]: https://github.com/JonathanCasey/asana_extensions/issues/2 'Issue #2'
 [#20]: https://github.com/JonathanCasey/asana_extensions/issues/20 'Issue #20'
 [#37]: https://github.com/JonathanCasey/asana_extensions/issues/37 'Issue #37'
+[#3]: https://github.com/JonathanCasey/asana_extensions/issues/3 'Issue #3'
+[#44]: https://github.com/JonathanCasey/asana_extensions/issues/44 'Issue #44'
+[#45]: https://github.com/JonathanCasey/asana_extensions/issues/45 'Issue #45'
+[#46]: https://github.com/JonathanCasey/asana_extensions/issues/46 'Issue #46'
+[#48]: https://github.com/JonathanCasey/asana_extensions/issues/48 'Issue #48'
+[#49]: https://github.com/JonathanCasey/asana_extensions/issues/49 'Issue #49'
+[#51]: https://github.com/JonathanCasey/asana_extensions/issues/51 'Issue #51'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -418,3 +493,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#41]: https://github.com/JonathanCasey/asana_extensions/pull/41 'PR #41'
 [#42]: https://github.com/JonathanCasey/asana_extensions/pull/42 'PR #42'
 [#43]: https://github.com/JonathanCasey/asana_extensions/pull/43 'PR #43'
+[#50]: https://github.com/JonathanCasey/asana_extensions/pull/50 'PR #50'
