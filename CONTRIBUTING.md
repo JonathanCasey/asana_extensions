@@ -107,9 +107,16 @@ python -m pylint asana_extensions
 python -m pylint tests
 python -m pylint ci_support
 python -m pylint conftest
+python ci_support/dir_init_checker.py asana_extensions
+python ci_support/dir_init_checker.py ci_support
+python ci_support/dir_init_checker.py tests
+python ci_support/version_checker.py dev-required
 pytest --cov=asana_extensions
 pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
 ```
+
+The `version_checker.py` could be run with different args, but during
+development, it is most likely that `dev-required` is the correct arg.
 
 When running `pytest` without the `-p no:warnings` option, the warnings provided
 may be from `pytest`, but may also be from other packages, such as deprecation

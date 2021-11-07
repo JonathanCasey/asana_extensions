@@ -50,7 +50,7 @@ def main(dev_state):                         # pylint: disable=too-many-branches
         sys.exit(3)
 
     is_dev_valid = None
-    if len(full_ver_parts) == 1:
+    if len(dotted_ver_parts) == 2:
         is_dev_valid = is_version_dev_valid(dotted_ver_parts[1])
 
     if is_dev_valid is False:
@@ -132,7 +132,7 @@ def is_version_dev_valid(dotted_ver_dev):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process inputs.')
-    parser.add_argument('dev-state',
+    parser.add_argument('dev_state',
             choices=['dev-disallowed', 'dev-required', 'dev-any'],
             help='Indicate the development state of the project for checking'
                 + ' if the version is appropriate.  It gives all 3 possibilies:'
