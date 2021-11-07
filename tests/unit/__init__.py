@@ -2,4 +2,5 @@
 __all__ = [
     'test__main__',
     'test_main',
+    'test_version',
 ]
