@@ -44,6 +44,23 @@ workflows:
       - find-changelog-pr-ref:
           context:
             - docker-hub-creds
+  version-format:
+    jobs:
+      - version-dev:
+        context:
+          - docker-hub-creds
+        filters:
+          branches:
+            ignore:
+              - stable
+              - /release\/.*/
+      - version-stable:
+        context:
+          - docker-hub-creds
+        filters:
+          branches:
+            only:
+              - stable
 
 
 
@@ -236,3 +253,27 @@ jobs:
                 exit 1
               fi
             fi
+  version-dev:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run version checker with dev marker required
+          command: |
+            . venv/bin/activate
+            python ci_support/version_checker.py dev-required
+  version-stable:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run version checker with dev marker disallowed
+          command: |
+            . venv/bin/activate
+            python ci_support/version_checker.py dev-disallowed
