@@ -389,6 +389,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Docs: Usage
 - [Added] `usage.md` added with workflow tips ([#5][]).
 - [Added] Added note to run through setup prior to first use ([#1][]).
+- [Fixed] Execution changed to run as a module so it actually works ([#44][]).
 - [Fixed] Python 3.6 removed as an example of a possible earlier python version
       to use now that it is confirmed to not work ([#3][]).
 - [Added] Executing shell script in Ubuntu added ([#3][]).
