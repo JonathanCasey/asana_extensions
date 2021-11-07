@@ -16,6 +16,9 @@ Module Attributes:
 
 import datetime as dt
 import re
+import subprocess
+
+import pytest
 
 from asana_extensions import version
 
@@ -90,6 +93,27 @@ def test__get_git_commit_hash__real():
 
 
 
+def test__get_git_commit_hash__fake(fake_process):
+    """
+    Tests the `_get_git_commit_hash()` method.
+
+    This will mock all subprocess calls to return specific fixed values so all
+    logic paths can be followed.
+    """
+    git_cmd = ('git', 'rev-parse', '--short', 'HEAD')
+    fake_process.register_subprocess(git_cmd, stdout='1234567')
+    assert version._get_git_commit_hash() == '1234567'
+
+    fake_process.register_subprocess(git_cmd, returncode=1)
+    assert version._get_git_commit_hash() == 'x'
+
+    fake_process.register_subprocess(git_cmd, returncode=999)
+    with pytest.raises(subprocess.CalledProcessError) as ex:
+        version._get_git_commit_hash()
+    assert ex.value.returncode == 999
+
+
+
 def test__get_git_branch_code__real():
     """
     Tests the `_get_git_branch_code()` method.
@@ -100,6 +124,36 @@ def test__get_git_branch_code__real():
     """
     git_branch_code = version._get_git_branch_code()
     assert any(git_branch_code == c for c in ['b', 'd', 'h', 's']) is True
+
+
+
+def test__get_git_branch_code__fake(fake_process):
+    """
+    Tests the `_get_git_branch_code()` method.
+
+    This will mock all subprocess calls to return specific fixed values so all
+    logic paths can be followed.
+    """
+    git_cmd = ('git', 'symbolic-ref', 'HEAD')
+    fake_process.register_subprocess(git_cmd, stdout='refs/heads/stable')
+    assert version._get_git_branch_code() == 's'
+
+    fake_process.register_subprocess(git_cmd, stdout='refs/heads/develop  ')
+    assert version._get_git_branch_code() == 'd'
+
+    fake_process.register_subprocess(git_cmd, stdout='refs/heads/feature/cool')
+    assert version._get_git_branch_code() == 'b'
+
+    fake_process.register_subprocess(git_cmd, returncode=1)
+    assert version._get_git_branch_code() == 'x'
+
+    fake_process.register_subprocess(git_cmd, returncode=128)
+    assert version._get_git_branch_code() == 'h'
+
+    fake_process.register_subprocess(git_cmd, returncode=999)
+    with pytest.raises(subprocess.CalledProcessError) as ex:
+        version._get_git_branch_code()
+    assert ex.value.returncode == 999
 
 
 
@@ -114,3 +168,31 @@ def test__get_git_status_code__real():
     git_status_code = version._get_git_status_code()
     assert re.match(r'^[ACDMRUiu]*-[ACDMRUiu]*$', git_status_code) is not None \
             or git_status_code == ''
+
+
+
+def test__get_git_status_code__fake(fake_process):
+    """
+    Tests the `_get_git_status_code()` method.
+
+    This will mock all subprocess calls to return specific fixed values so all
+    logic paths can be followed.
+    """
+    git_cmd = ('git', 'status', '--short')
+    fake_process.register_subprocess(git_cmd, stdout=[''])
+    assert version._get_git_status_code() == ''
+
+    fake_process.register_subprocess(git_cmd, stdout=[' M', 'A '])
+    assert version._get_git_status_code() == 'A-M'
+
+    fake_process.register_subprocess(git_cmd,
+            stdout=[' M', 'A ', 'CU', 'RD', '! ', ' ?'])
+    assert version._get_git_status_code() == 'ACRi-DMUu'
+
+    fake_process.register_subprocess(git_cmd, returncode=1)
+    assert version._get_git_status_code() == 'x-x'
+
+    fake_process.register_subprocess(git_cmd, returncode=999)
+    with pytest.raises(subprocess.CalledProcessError) as ex:
+        version._get_git_status_code()
+    assert ex.value.returncode == 999

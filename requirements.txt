@@ -2,4 +2,5 @@ asana
 pylint
 pytest
 pytest-cov
+pytest-subprocess
 python-dateutil
