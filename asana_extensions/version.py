@@ -8,9 +8,9 @@ attributes for the `version` attribute.
 Module Attributes:
   _VERSION (string): The current version of the code per SemVer.  Format should
     be `M.m.P-p`.  The `-p` can and should be omitted if it is `0`.  When in
-    development, a `+dev` should be appended to the version on which it is
-    based.  This should be removed as a last step on a `release/` branch before
-    merging into `stable`.
+    development, a `+dev` must be appended to the version on which it is based.
+    This should be removed as a last step on a `release/` branch and must be
+    removed before merging into `stable`.
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
@@ -75,7 +75,7 @@ def _get_git_commit_hash():
                 capture_output=True, encoding='utf-8', check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
-            # No .git dir / not cloned
+            # No .git dir / not cloned / git not installed
             return 'x'
         raise
 
@@ -86,7 +86,7 @@ def _get_git_commit_hash():
 
 def _get_git_branch_code():
     """Gets the git branch and encodes into a code.
-    Format is the branch code of `m`aster, `d`evelop, or other `b`ranch.
+    Format is the branch code of `s`table, `d`evelop, or other `b`ranch.
     Detached head will be reported as `h`.  Git not being installed will be
     reported as `x`.
 
@@ -103,7 +103,7 @@ def _get_git_branch_code():
                 capture_output=True, encoding='utf-8', check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
-            # No .git dir / not cloned
+            # No .git dir / not cloned / git not installed
             return 'x'
         if ex.returncode == 128:
             # Detached head
@@ -144,7 +144,7 @@ def _get_git_status_code():
                 capture_output=True, encoding='utf-8', check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
-            # No .git dir / not cloned
+            # No .git dir / not cloned / git not installed
             return 'x-x'
         raise
 
