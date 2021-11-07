@@ -24,6 +24,26 @@ from asana_extensions.rules import rules as rules_mod
 
 
 
+@pytest.fixture(autouse=True)
+def fixture_ensure_logging_framework_not_altered():
+    """
+    This fixes an issue where some tests could fail when run together.  This is
+    related to the StreamHandler use by the root logger in this project and
+    `capsys`.
+
+    Since `main.py` is the only place where the `_config_root_logger()` calls
+    are made (at least one of those tests using `capsys`), this is the only test
+    module that should need this.
+
+    Thanks to gaborbernat for this code suggestion in a comment on
+    [pytest-dev/pytest#14](https://github.com/pytest-dev/pytest/issues/14).
+    """
+    before_handlers = list(logging.getLogger().handlers)
+    yield
+    logging.getLogger().handlers = before_handlers
+
+
+
 def test_global():
     """
     Tests items at the global scope not otherwise fully tested.
