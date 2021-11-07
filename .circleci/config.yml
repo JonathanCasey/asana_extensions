@@ -82,6 +82,20 @@ aliases:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
 
+  - &default_python_git_image
+    docker:
+      - image: circleci/python:3.10
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          # By default there is no PYTHONPATH defined at all, so nothing to lose
+          PYTHONPATH: /home/circleci/project
+      - image: docker:stable-git
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+
   - &default_restore_cache
     restore_cache:
       key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
@@ -166,7 +180,7 @@ jobs:
             python ci_support/dir_init_checker.py ci_support
             python ci_support/dir_init_checker.py tests
   unit-tests:
-    <<: *default_python_image
+    <<: *default_python_git_image
     steps:
       - checkout
       - *default_restore_cache
