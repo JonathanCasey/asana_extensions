@@ -31,6 +31,26 @@ Release change log convention via
 Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/stable...develop)
 
 
+### Ref Links
+
+#### Milestones & Projects
+-
+
+#### Issues
+-
+
+#### PRs
+-
+
+
+---
+
+
+# [v1.0.0](https://github.com/JonathanCasey/asana_extensions/releases/tag/v1.0.0) - 2021-11-07
+
+Compare to [initial](https://github.com/JonathanCasey/asana_extensions/compare/f6b4c37...v1.0.0)
+
+
 ### Project & Toolchain: `.git*`, `.editorconfig`
 - [Added] `.editorconfig` and `.gitattributes` added ([#5][]).
 - [Added] VS Code related items added to `.gitignore` ([#5][]).
@@ -362,6 +382,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `version.py` added, with initial dev version set and methods to build
       a full build version str including git status items ([#52][]).
 - [Added] Version initialized to `0.0.0` ([#52][]).
+- [Changed] Version set to `1.0.0` for initial release ([#56][])!
 
 
 ### Docs: CHANGELOG
@@ -451,6 +472,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#51][]
 - [#52][]
 - [#53][]
+- [#56][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -472,6 +494,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#50][] for [#3][], [#44][], [#45][], [#46][], [#48][], [#49][], [#51][]
 - [#54][] for [#52][]
 - [#55][] for [#53][]
+- [#57][] for [#56][]
+- [#58][] for [#56][]
 
 
 ---
@@ -505,6 +529,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#51]: https://github.com/JonathanCasey/asana_extensions/issues/51 'Issue #51'
 [#52]: https://github.com/JonathanCasey/asana_extensions/issues/52 'Issue #52'
 [#53]: https://github.com/JonathanCasey/asana_extensions/issues/53 'Issue #53'
+[#56]: https://github.com/JonathanCasey/asana_extensions/issues/56 'Issue #56'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -525,3 +550,5 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#50]: https://github.com/JonathanCasey/asana_extensions/pull/50 'PR #50'
 [#54]: https://github.com/JonathanCasey/asana_extensions/pull/54 'PR #54'
 [#55]: https://github.com/JonathanCasey/asana_extensions/pull/55 'PR #55'
+[#57]: https://github.com/JonathanCasey/asana_extensions/pull/57 'PR #57'
+[#58]: https://github.com/JonathanCasey/asana_extensions/pull/58 'PR #58'
