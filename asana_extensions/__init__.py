@@ -2,4 +2,5 @@
 __all__ = [
     '__main__',
     'main',
+    'version',
 ]

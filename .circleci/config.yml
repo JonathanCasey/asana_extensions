@@ -44,6 +44,23 @@ workflows:
       - find-changelog-pr-ref:
           context:
             - docker-hub-creds
+  version-format:
+    jobs:
+      - version-dev:
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              ignore:
+                - stable
+                - /release\/.*/
+      - version-stable:
+          context:
+            - docker-hub-creds
+          filters:
+            branches:
+              only:
+                - stable
 
 
 
@@ -60,6 +77,20 @@ aliases:
 
   - &default_git_image
     docker:
+      - image: docker:stable-git
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+
+  - &default_python_git_image
+    docker:
+      - image: circleci/python:3.10
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          # By default there is no PYTHONPATH defined at all, so nothing to lose
+          PYTHONPATH: /home/circleci/project
       - image: docker:stable-git
         auth:
           username: $DOCKERHUB_USERNAME
@@ -149,7 +180,7 @@ jobs:
             python ci_support/dir_init_checker.py ci_support
             python ci_support/dir_init_checker.py tests
   unit-tests:
-    <<: *default_python_image
+    <<: *default_python_git_image
     steps:
       - checkout
       - *default_restore_cache
@@ -236,3 +267,27 @@ jobs:
                 exit 1
               fi
             fi
+  version-dev:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run version checker with dev marker required
+          command: |
+            . venv/bin/activate
+            python ci_support/version_checker.py dev-required
+  version-stable:
+    <<: *default_python_image
+    steps:
+      - checkout
+      - *default_restore_cache
+      - *default_install_deps
+      - *default_save_cache
+      - run:
+          name: Run version checker with dev marker disallowed
+          command: |
+            . venv/bin/activate
+            python ci_support/version_checker.py dev-disallowed
