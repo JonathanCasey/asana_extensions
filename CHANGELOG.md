@@ -82,6 +82,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 ### Project & Toolchain: Conventions
 - [Added] Set convention to use leading `_` for class instance members only
       intended for private access ([#5][]).
+- [Changed] Reviewed and corrected all for convention deviations ([#53][]).
 
 
 ### Project & Toolchain: Package, Requirements
@@ -449,6 +450,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#49][]
 - [#51][]
 - [#52][]
+- [#53][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -469,6 +471,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#43][] for [#37][]
 - [#50][] for [#3][], [#44][], [#45][], [#46][], [#48][], [#49][], [#51][]
 - [#54][] for [#52][]
+- [#55][] for [#53][]
 
 
 ---
@@ -501,6 +504,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#49]: https://github.com/JonathanCasey/asana_extensions/issues/49 'Issue #49'
 [#51]: https://github.com/JonathanCasey/asana_extensions/issues/51 'Issue #51'
 [#52]: https://github.com/JonathanCasey/asana_extensions/issues/52 'Issue #52'
+[#53]: https://github.com/JonathanCasey/asana_extensions/issues/53 'Issue #53'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -520,3 +524,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#43]: https://github.com/JonathanCasey/asana_extensions/pull/43 'PR #43'
 [#50]: https://github.com/JonathanCasey/asana_extensions/pull/50 'PR #50'
 [#54]: https://github.com/JonathanCasey/asana_extensions/pull/54 'PR #54'
+[#55]: https://github.com/JonathanCasey/asana_extensions/pull/55 'PR #55'

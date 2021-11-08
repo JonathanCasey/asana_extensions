@@ -12,8 +12,8 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
-#pylint: disable=protected-access  # Allow for purpose of testing those elements
-#pylint: disable=too-many-lines
+# pylint: disable=protected-access # Allow for purpose of testing those elements
+# pylint: disable=too-many-lines
 
 import logging
 import types
