@@ -1,0 +1,171 @@
+# Rules configuration
+# Can list as many rules as needed, each in their own section.
+# Rules will be run in order listed and will NOT be checked for conflicts.
+# Defaults are in uppercase.
+# Keys can be deleted unless they are commented as required.
+
+
+
+[<move-tasks-user-task-list>]
+# Template rule for a move task rule operating on the user task list.
+# If not using, delete this section.
+
+# Rule type is required
+rule type : move tasks
+
+# Test Report Only being set to True will only simulate actions
+test report only : # <yes/NO> or delete
+
+# If targetting user task list, must set `for my tasks list` or
+#  `user task list id`, but not both.
+# `project name/gid` can NOT be provided.
+for my tasks list : # <yes/NO>
+user task list id : # <id>
+
+# Workspace is required, either by name, ID, or both.  If both, must match what
+#  the API reports.
+workspace name : # <name>
+workspace gid : # <id>
+
+# Timeframe is required, and can be specified a few ways.
+# If `no due date` is yes, `min/max time until due` cannot be specified.
+# `min time until due` will default to beginning of time.
+# `max time until due` will default to end of time.
+# `min/max time until due` are inclusive bounds.
+# `assumed time for min/max due` will use the provided time if the task does not
+#   have a due time, combining it with the task's due date.  This is ignored if
+#  `min/max time until due` do not have any time durations or if `no due date`
+#  is used.  Omitting this when time durations are used will result in only
+#  tasks with due times to be included (effectively, omitting just 1 of these
+#  parameters will exclude date-only due dates).
+# As hinted above, handling is different whether or not `min/max time until due`
+#  have any time duration args (minute, hour).  Using `0` for these values won't
+#  work to count as including a time duration, so if want to target 'now'
+#  (i.e. the current time), something like `-1m` will work.  Cutting things so
+#  close that a minute would make or break would not be recommended anyways due
+#  to script execution time.
+# Timeframe keys can be given in short or long form, with or without space
+#  separators, plural or singular.  Value must precede timeframe.  Only the
+#  short form is case sensitive.  Keys as `<short>, <long>` are:
+# - m, minute
+# - h, hour
+# - d, day
+# - w, week
+# - M, month
+# - y, year
+# Examples:
+# - Today = `min: 0d, max: 0d`
+# - Tomorrow = `min: 1d, max: 1d`
+# - Yesterday = `min: -1d, max: -1d`
+# - All before yesterday =  `max: -2d`
+# - Upcoming week, excluding today: `min: 1d, max: 1w`
+# - Upcoming month, excluding upcoming week: `min: 1w1d, max: 1M`
+no due date : # <yes/NO>
+min time until due : # <timeframe>
+max time until due : # <timeframe>
+assumed time for min due : # <HH:MM> or delete
+assumed time for max due : # <HH:MM> or delete
+
+# Source sections to include and/or exclude can be specified by name or ID.
+# Inclusion means tasks in these section will be moved.
+# Exclusion means tasks in these sections will NOT be moved.
+# The names and IDs do NOT need to match; the combination of names and IDs will
+#  all be used.
+# Sections in both the inclusion and exclusion lists at the same time will raise
+#  as error and cause the rule to be skipped.
+# Multiple names can be listed with newline separate ONLY.
+# Multiple gids can be listed with newline separator and/or comma separator.
+# If inclusion provided, will default to excluding all.
+# Otherwise, if exclusion or nothing provided, will default to including all.
+src sections include names : # <names>
+src sections include gids : # <ids>
+src sections exclude names : # <names>
+src sections exclude gids : # <ids>
+
+# Destination is required, either by name, ID, or both.  If both, must match
+#  what the API reports.
+dst section name : # <name>
+dst section gid : # <id>
+
+
+
+[<move-tasks-project>]
+# Template rule for a move task rule operating on a project.
+# If not using, delete this section.
+
+# Rule type is required
+rule type : move tasks
+
+# Test Report Only being set to True will only simulate actions
+test report only : # <yes/NO> or delete
+
+# Project is required, either by name, ID, or both.  If both, must match what
+#  the API reports.
+# `for my tasks list`/`user task list id` can NOT be provided.
+project name : # <name>
+project gid : # <id>
+
+# Workspace is required, either by name, ID, or both.  If both, must match what
+#  the API reports.
+workspace name : # <name>
+workspace gid : # <id>
+
+# Timeframe is required, and can be specified a few ways.
+# If `no due date` is yes, `min/max time until due` cannot be specified.
+# `min time until due` will default to beginning of time.
+# `max time until due` will default to end of time.
+# `min/max time until due` are inclusive bounds.
+# `assumed time for min/max due` will use the provided time if the task does not
+#   have a due time, combining it with the task's due date.  This is ignored if
+#  `min/max time until due` do not have any time durations or if `no due date`
+#  is used.  Omitting this when time durations are used will result in only
+#  tasks with due times to be included (effectively, omitting just 1 of these
+#  parameters will exclude date-only due dates).
+# As hinted above, handling is different whether or not `min/max time until due`
+#  have any time duration args (minute, hour).  Using `0` for these values won't
+#  work to count as including a time duration, so if want to target 'now'
+#  (i.e. the current time), something like `-1m` will work.  Cutting things so
+#  close that a minute would make or break would not be recommended anyways due
+#  to script execution time.
+# Timeframe keys can be given in short or long form, with or without space
+#  separators, plural or singular.  Value must precede timeframe.  Only the
+#  short form is case sensitive.  Keys as `<short>, <long>` are:
+# - m, minute
+# - h, hour
+# - d, day
+# - w, week
+# - M, month
+# - y, year
+# Examples:
+# - Today = `min: 0d, max: 0d`
+# - Tomorrow = `min: 1d, max: 1d`
+# - Yesterday = `min: -1d, max: -1d`
+# - All before yesterday =  `max: -2d`
+# - Upcoming week, excluding today: `min: 1d, max: 1w`
+# - Upcoming month, excluding upcoming week: `min: 1w1d, max: 1M`
+no due date : # <yes/NO>
+min time until due : # <timeframe>
+max time until due : # <timeframe>
+assumed time for min due : # <HH:MM> or delete
+assumed time for max due : # <HH:MM> or delete
+
+# Source sections to include and/or exclude can be specified by name or ID.
+# Inclusion means tasks in these section will be moved.
+# Exclusion means tasks in these sections will NOT be moved.
+# The names and IDs do NOT need to match; the combination of names and IDs will
+#  all be used.
+# Sections in both the inclusion and exclusion lists at the same time will raise
+#  as error and cause the rule to be skipped.
+# Multiple names can be listed with newline separate ONLY.
+# Multiple gids can be listed with newline separator and/or comma separator.
+# If inclusion provided, will default to excluding all.
+# Otherwise, if exclusion or nothing provided, will default to including all.
+src sections include names : # <names>
+src sections include gids : # <ids>
+src sections exclude names : # <names>
+src sections exclude gids : # <ids>
+
+# Destination is required, either by name, ID, or both.  If both, must match
+#  what the API reports.
+dst section name : # <name>
+dst section gid : # <id>
