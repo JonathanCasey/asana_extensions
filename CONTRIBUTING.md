@@ -9,6 +9,7 @@ Respect the CI and the CI will respect you.
 
 - [One-time Setup](#one-time-setup)
 - [Usage](#usage)
+- [Conventions](#conventions)
 
 
 
@@ -121,3 +122,13 @@ development, it is most likely that `dev-required` is the correct arg.
 When running `pytest` without the `-p no:warnings` option, the warnings provided
 may be from `pytest`, but may also be from other packages, such as deprecation
 warnings from `asana`.
+
+
+
+# Conventions
+
+## Versioning
+See the top of `/asana_extensions/version.py` for information on the version
+information.  The general idea is that development versions must have a `+dev`
+appended while stable branch commits must not have this.  `release/*` branches
+are where this is allowed to be either to allow for the transition.

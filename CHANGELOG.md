@@ -51,6 +51,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Changed] Codecov uploader migrated from deprecated bash uploader to new
       uploader ([#28][]).
 - [Changed] Python version changed from 3.8 to 3.10 ([#33][]).
+- [Added] `version-format` workflow added to run `version-dev` and
+      `version-stable` jobs based on branch to confirm version format correct
+      ([#52][]).
+- [Added] `default_python_git_image` added to support new requirements for unit
+      tests that need python and git ([#52][]).
 
 
 ### Project & Toolchain: CI Support
@@ -62,6 +67,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
   - From groboclown; with modifications to add ignore for empty list as well as
         options for ignoring `if`, tuples, and functions.
   - Source code updated with fixes, but no functional changes.
+- [Added] `version_checker.py` added to verify that the version format conforms
+      to standard practice based on branch ([#52][]).
 
 
 ### Project & Toolchain: CodeCov
@@ -83,6 +90,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] `python-dateutil` added to `requirements.txt` ([#1][]).
 - [Added] `asana` added to `requirements.txt` ([#9][]).
 - [Changed] Python version changed from 3.7/3.8 to 3.10 ([#33][]).
+- [Added] `pytest-subprocess` added to `requirements.txt` ([#52][]).
 
 
 ### Project & Toolchain: Pylint
@@ -279,6 +287,8 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Fixed] In `_config_root_logger()`, raising the `ValueError` from string
       parsing is deferred until after trying int parsing so numbers passed as
       strings will work ([#46][]).
+- [Added] `--version` arg added to argparse to allow retrieving version string
+      or app/package, along with setting prog name ([#52][]).
 
 ##### Unit Tests
 - [Fixed] `fixture_ensure_logging_framework_not_altered()` added with `autouse`
@@ -346,6 +356,13 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
       ([#2][]).
 
 
+### Version
+(This does not need to note every version change, but can if issue tied to it.)
+- [Added] `version.py` added, with initial dev version set and methods to build
+      a full build version str including git status items ([#52][]).
+- [Added] Version initialized to `0.0.0` ([#52][]).
+
+
 ### Docs: CHANGELOG
 - [Added] This `CHANGELOG.md` file created and updated with all project work
       to-date (+1 self reference) ([#5][]).
@@ -362,6 +379,10 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [Added] Additional workflow steps and details added for additional
       modules/packages to pylint, as well as 2nd pytest invocation with
       `--run-no-warnings-only` ([#10][]).
+- [Added] Workflow steps updated with new version checker step (and filled in
+      missing dir init checker steps too) ([#52][]).
+- [Added] `Conventions` section added, with `Versioning` subsection to cover how
+      versioning is done ([#52][]).
 
 
 ### Docs: README
@@ -427,6 +448,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#48][]
 - [#49][]
 - [#51][]
+- [#52][]
 
 #### PRs
 - [#6][] for [#5][]
@@ -446,6 +468,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 - [#42][] for [#20][]
 - [#43][] for [#37][]
 - [#50][] for [#3][], [#44][], [#45][], [#46][], [#48][], [#49][], [#51][]
+- [#54][] for [#52][]
 
 
 ---
@@ -477,6 +500,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#48]: https://github.com/JonathanCasey/asana_extensions/issues/48 'Issue #48'
 [#49]: https://github.com/JonathanCasey/asana_extensions/issues/49 'Issue #49'
 [#51]: https://github.com/JonathanCasey/asana_extensions/issues/51 'Issue #51'
+[#52]: https://github.com/JonathanCasey/asana_extensions/issues/52 'Issue #52'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -495,3 +519,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#42]: https://github.com/JonathanCasey/asana_extensions/pull/42 'PR #42'
 [#43]: https://github.com/JonathanCasey/asana_extensions/pull/43 'PR #43'
 [#50]: https://github.com/JonathanCasey/asana_extensions/pull/50 'PR #50'
+[#54]: https://github.com/JonathanCasey/asana_extensions/pull/54 'PR #54'
