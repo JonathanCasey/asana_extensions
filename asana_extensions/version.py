@@ -22,7 +22,7 @@ from asana_extensions.general import dirs
 
 
 
-_VERSION = '1.0.0'
+_VERSION = '1.0.0+dev'
 
 
 
