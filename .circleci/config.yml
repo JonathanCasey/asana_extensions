@@ -192,19 +192,6 @@ jobs:
             echo -e '\n[asana]\n' >> config/.secrets.conf
             echo -e 'personal access token : '$ASANA_PERSONAL_ACCESS_TOKEN'\n'  >> config/.secrets.conf
       - run:
-          name: Temp test git commands
-          command: |
-            git rev-parse --short HEAD
-            git symbolic-ref HEAD
-            git status --short
-      - run:
-          name: Temp test git commands with venv
-          command: |
-            . venv/bin/activate
-            git rev-parse --short HEAD
-            git symbolic-ref HEAD
-            git status --short
-      - run:
           name: Run pytest unit tests
           command: |
             . venv/bin/activate

@@ -71,8 +71,8 @@ def _get_git_commit_hash():
     """
     try:
         result = subprocess.run(('git', 'rev-parse', '--short', 'HEAD'),
-                cwd=dirs.get_root_path(), shell=True,
-                capture_output=True, encoding='utf-8', check=True)
+                cwd=dirs.get_root_path(), capture_output=True, encoding='utf-8',
+                check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
             # No .git dir / not cloned / git not installed
@@ -99,8 +99,8 @@ def _get_git_branch_code():
     """
     try:
         result = subprocess.run(('git', 'symbolic-ref', 'HEAD'),
-                cwd=dirs.get_root_path(), shell=True,
-                capture_output=True, encoding='utf-8', check=True)
+                cwd=dirs.get_root_path(), capture_output=True, encoding='utf-8',
+                check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
             # No .git dir / not cloned / git not installed
@@ -140,8 +140,8 @@ def _get_git_status_code():
     """
     try:
         result = subprocess.run(('git', 'status', '--short'),
-                cwd=dirs.get_root_path(), shell=True,
-                capture_output=True, encoding='utf-8', check=True)
+                cwd=dirs.get_root_path(), capture_output=True, encoding='utf-8',
+                check=True)
     except subprocess.CalledProcessError as ex:
         if ex.returncode == 1:
             # No .git dir / not cloned / git not installed
