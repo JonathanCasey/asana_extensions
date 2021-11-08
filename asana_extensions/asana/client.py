@@ -68,7 +68,7 @@ def asana_error_handler(f):
                     + f' [{ex.status}] {ex.message}')
             raise
 
-    wrapper._is_wrapped_by_asana_error_handler = True #pylint: disable=protected-access
+    wrapper._is_wrapped_by_asana_error_handler = True # pylint: disable=protected-access
     return wrapper
 
 
