@@ -11,6 +11,9 @@ Module Attributes:
 
 (C) Copyright 2021 Jonathan Casey.  All Rights Reserved Worldwide.
 """
+#pylint: disable=use-implicit-booleaness-not-comparison
+#   +-> want to specifically check type in most tests -- `None` is a fail
+
 import logging
 import os.path
 

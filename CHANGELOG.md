@@ -37,6 +37,7 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 
 ### Project & Toolchain: Pylint
 - [Changed] `init-hook` updated to only do bare minimum setup ([#61][]).
+- [Fixed] Code made compliant with latest version of pylint (v2.12) ([#63][]).
 
 
 ### Docs: CONTRIBUTING
@@ -58,9 +59,11 @@ Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/st
 
 #### Issues
 - [#61][]
+- [#63][]
 
 #### PRs
 - [#62][] for [#61][]
+- [#64][] for [#63][]
 
 
 ---
@@ -551,6 +554,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#53]: https://github.com/JonathanCasey/asana_extensions/issues/53 'Issue #53'
 [#56]: https://github.com/JonathanCasey/asana_extensions/issues/56 'Issue #56'
 [#61]: https://github.com/JonathanCasey/asana_extensions/issues/61 'Issue #61'
+[#63]: https://github.com/JonathanCasey/asana_extensions/issues/63 'Issue #63'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -574,3 +578,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#57]: https://github.com/JonathanCasey/asana_extensions/pull/57 'PR #57'
 [#58]: https://github.com/JonathanCasey/asana_extensions/pull/58 'PR #58'
 [#62]: https://github.com/JonathanCasey/asana_extensions/pull/62 'PR #62'
+[#64]: https://github.com/JonathanCasey/asana_extensions/pull/64 'PR #64'
