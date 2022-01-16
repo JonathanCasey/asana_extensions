@@ -31,16 +31,36 @@ Release change log convention via
 Compare to [stable](https://github.com/JonathanCasey/asana_extensions/compare/stable...develop)
 
 
+### Project & Toolchain: `.git*`, `.editorconfig`
+- [Added] `.json` support added to `.editorconfig`, `.gitattributes` ([#61][]).
+
+
+### Project & Toolchain: Pylint
+- [Changed] `init-hook` updated to only do bare minimum setup ([#61][]).
+
+
+### Docs: CONTRIBUTING
+- [Changed] Env variable setup, particularly in VSCode updated to more foolproof
+      method ([#61][]).
+- [Changed] Workflow steps updated with running `pytest` as module, and added
+      whitespace ([#61][]).
+
+
+### Docs: Setup
+- [Changed] Improved notes on setting up rsyslog to avoid syslog duplication,
+      permission issues ([#61][]).
+
+
 ### Ref Links
 
 #### Milestones & Projects
 -
 
 #### Issues
--
+- [#61][]
 
 #### PRs
--
+- [#62][] for [#61][]
 
 
 ---
@@ -530,6 +550,7 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#52]: https://github.com/JonathanCasey/asana_extensions/issues/52 'Issue #52'
 [#53]: https://github.com/JonathanCasey/asana_extensions/issues/53 'Issue #53'
 [#56]: https://github.com/JonathanCasey/asana_extensions/issues/56 'Issue #56'
+[#61]: https://github.com/JonathanCasey/asana_extensions/issues/61 'Issue #61'
 
 [#6]: https://github.com/JonathanCasey/asana_extensions/pull/6 'PR #6'
 [#8]: https://github.com/JonathanCasey/asana_extensions/pull/8 'PR #8'
@@ -552,3 +573,4 @@ Reference-style links here (see below, only in source) in develop-merge order.
 [#55]: https://github.com/JonathanCasey/asana_extensions/pull/55 'PR #55'
 [#57]: https://github.com/JonathanCasey/asana_extensions/pull/57 'PR #57'
 [#58]: https://github.com/JonathanCasey/asana_extensions/pull/58 'PR #58'
+[#62]: https://github.com/JonathanCasey/asana_extensions/pull/62 'PR #62'

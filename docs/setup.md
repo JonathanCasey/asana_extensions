@@ -116,6 +116,9 @@ template(name="preciseLevelFormat" type="list") {
     }
 
 local7.*                /var/log/asana_extensions.log;preciseLevelFormat
+
+# Prevent this from also being logged in syslog
+&stop
 ```
 
 Then the appropriate system command:
@@ -124,6 +127,16 @@ sudo systemctl restart rsyslog.service
 or
 sudo service rsyslogd restart
 ```
+
+It may be necessary to set the file permissions and owner.  For this, something
+like the following might work, but will vary depending on which groups/users you
+need for your sysstem:
+```bash
+touch /var/log/asana_extensions.log
+sudo chown syslog:adm /var/log/asana_extenions.log
+sudo chmod 0664 /var/log/asana_extensions.log
+```
+
 
 
 ## Scheduling
