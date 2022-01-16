@@ -15,36 +15,64 @@ Respect the CI and the CI will respect you.
 
 # One-time Setup
 
-### Python environment in VSC
-To support pytest, add the following to `.vscode/settings.json` in the root of
-the repo:
+### Python environment and VSCode Setup
+In general the repo root should be added to the python path environment
+variable.  Python automatically adds the directory of the module being executed
+to the path, but elements of this project will not work unless the repo root is
+in the path, and there are no modules that execute from the repo root.
+
+Save this workspace, and edit the workspace settings (Ctrl+Shift+P >
+`Preferences: Open Workspace Settings (JSON)`) and ADD the following to the
+existing settings.  This workspace file should be the one opened everytime
+evelopment is being started.  The workspace will need to be closed and reopened
+after editing these workspace settings:
 ```json
 {
-    "python.envFile": "${workspaceFolder}/.env",
-    "python.testing.pytestArgs": [
-        "."
-    ],
-    "python.testing.pytestEnabled": true,
-    "terminal.integrated.env.windows": {
-        "PYTHONPATH": "${workspaceFolder}/asana_extensions;${env:PYTHONPATH}",
-    }
+	"settings": {
+		"terminal.integrated.env.linux": {               // If developing on Linux
+			"PYTHONPATH": "/path/to/repo/root"
+		},
+    "terminal.integrated.env.osx": {                 // If developing on Mac OSX
+			"PYTHONPATH": "/path/to/repo/root"
+		},
+    "terminal.integrated.env.windows": {             // If developing on Windows
+			"PYTHONPATH": "C:/path/to/repo/root",
+			"WSLENV": "PYTHONPATH/l"                       // If using WSL in Windows
+		}
+	}
 }
 ```
 
-Also create a `.env` file in the root of the repo with the following line:
-```
-PYTHONPATH=C:\path\to\the\repo\root;${PYTHONPATH}
+
+In Windows, one way of using a specific version of python is to open a cmd
+prompt (not powershell) -- probably as admin -- and navigate to the desired
+older python version's folder.  Then, run
+`mklink python3.7.exe C:\path\to\python37\python.exe` to make a sym link for
+python 3.7, for example.  Now this can be evoked with `python3.7`.
+
+While the admin prompt is open, this might be the best time to install
+required pacakges with pip (can use `pip3.7` in this example) as installing as a
+user can cause some headaches...  It has been observed that after installing
+`pytest-order` as admin, the first run of `pytest` needs to be run as an admin
+to finish some sort of init it seems -- after that, it should work as a user.
+
+
+To support pytest and pylint, add the following to `.vscode/settings.json` in
+the root of the repo:
+```json
+{
+    "python.linting.pylintEnabled": true,
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.pytestEnabled": true
+}
 ```
 
-Note that in the above, if not on Windows, the semicolon `;` separator should be
-replaced with a colon `:`.
-
-This only works when opening the folder.  If opened as part of a multi-folder
-project, the `"terminal.integrated.env.windows"` will not be applied.  While not
-the most elegant, running
-`$env:PYTHONPATH = 'C:\path\to\repo\asana_extensions;' + $env:PYTHONPATH` will
-do the trick (the last part for the plus `+` sign and onwards can be omitted if
-it is not set at all yet).
+In the `python.testing.pytestArgs` list above, it is likely desireable to put
+some pytest args.  This does mean other args needs to be tested separately.
+Without this, there may be inconsistent test results since some tests can be
+mutually exclusive.
 
 
 ### CircleCI
@@ -108,12 +136,15 @@ python -m pylint asana_extensions
 python -m pylint tests
 python -m pylint ci_support
 python -m pylint conftest
+
 python ci_support/dir_init_checker.py asana_extensions
 python ci_support/dir_init_checker.py ci_support
 python ci_support/dir_init_checker.py tests
+
 python ci_support/version_checker.py dev-required
-pytest --cov=asana_extensions
-pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
+
+python -m pytest --cov=asana_extensions
+python -m pytest --cov=asana_extensions --cov-append --run-no-warnings-only -p no:warnings
 ```
 
 The `version_checker.py` could be run with different args, but during
